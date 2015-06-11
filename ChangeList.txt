@@ -1,0 +1,11 @@
+Changelog
+=========
+
+%%version%% (unreleased)
+------------------------
+
+- Done project structure. [promisejohn]
+
+- Initial commit. [Promise]
+
+
