@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Hello World! with DS"
+    return "Hello World!"
 
 
 @app.route('/_add_numbers')
