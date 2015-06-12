@@ -3,3 +3,25 @@
 
 
 Hello World for Team mgmt
+
+## Prerequests
+
+* python 2.7
+* git
+* easy_install && pip
+* pyenv && pyenv-virtualenv
+
+[参考这里](http://promisejohn.github.io/2015/04/15/PythonDevEnvSetting/)
+
+## Usage
+
+TBD
+
+## Dev
+
+```bash
+$ git clone https://github.com/tecstack/helloworld.git
+$ cd helloworld
+$ tox # 多环境自动化单元测试
+$ nosetests --with-coverage --cover-package=hello # 代码单元测试覆盖率
+```
