@@ -2,4 +2,3 @@
 
 print "From Az's cave"
 print "second commit"
-print "third commit"
