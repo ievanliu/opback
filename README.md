@@ -15,7 +15,22 @@ Hello World for Team mgmt
 
 ## Usage
 
-TBD
+```bash
+$ git clone https://github.com/tecstack/helloworld.git
+$ cd helloworld
+$ pip install -r requirements.txt -r test-requirements.txt
+$ python src/hello/app.py
+```
+出现如下提示表示运行正常：
+
+```
+ * Running on http://0.0.0.0:8080/ (Press CTRL+C to quit)
+ * Restarting with stat
+```
+
+* 打开浏览器，访问："http://localhost:8080"
+* 访问："http://localhost:8080/_add_numbers?a=1&b=1"
+
 
 ## Dev
 
