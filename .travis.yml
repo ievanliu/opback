@@ -10,7 +10,6 @@ script:
 notifications:
     email:
         recipients:
-            - promise.john@gmail.com
             - promisejohn@qq.com
         on_success: always
         on_failure: always
