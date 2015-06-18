@@ -10,14 +10,16 @@ import logging
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
 from flask.ext.sqlalchemy import SQLAlchemy
+from passlib.apps import custom_app_context as pwd_context
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s/../.data/sqlite3.db' \
-                                            % app.instance_path
+                                        % app.instance_path
 app.config['LOGGER_FILE'] = '.log/debug.log'
 
 db = SQLAlchemy(app)
 # auth = HTTPBasicAuth()
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -45,7 +47,9 @@ def add_numbers():
     return jsonify(result=a+b)
 
 if __name__ == '__main__':
-    handler = RotatingFileHandler(app.config['LOGGER_FILE'], maxBytes=102400, backupCount=1)
+    handler = RotatingFileHandler(app.config['LOGGER_FILE'],
+                                  maxBytes=102400,
+                                  backupCount=1)
     handler.setFormatter(Formatter(
         '%(asctime)s %(levelname)s: %(message)s '
         '[in %(pathname)s:%(lineno)d]'
