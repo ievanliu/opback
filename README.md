@@ -18,7 +18,7 @@ Hello World for Team mgmt
 ```bash
 $ git clone https://github.com/tecstack/helloworld.git
 $ cd helloworld
-$ pip install -r requirements.txt -r test-requirements.txt
+$ pip install -r requirements.txt
 $ python src/hello/app.py
 ```
 出现如下提示表示运行正常：
@@ -38,5 +38,5 @@ $ python src/hello/app.py
 $ git clone https://github.com/tecstack/helloworld.git
 $ cd helloworld
 $ tox # 多环境自动化单元测试
-$ nosetests --with-coverage --cover-package=hello # 代码单元测试覆盖率
+$ nosetests -v -s --with-coverage --cover-package=hello # 代码单元测试覆盖率
 ```
