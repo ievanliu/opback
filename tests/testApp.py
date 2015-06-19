@@ -7,7 +7,7 @@
 from nose.tools import with_setup, assert_equal
 import json
 
-from hello.app import app
+from tecstack.app import app
 
 
 class TestApp():
