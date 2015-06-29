@@ -2,12 +2,12 @@
 # @last revision: 29/6/2015 22:04
 # @version 0.0
 # Service Description:
-# GET		获取VM信息			http://host:port/api/v0.0/vminfos 
-# GET		分页获取VM信息		http://host:port/api/v0.0/vminfos?page=2&pp=20			page:当前页码/pp:每页条目数
-# GET		获取某个VM信息 		http://host:port/api/v0.0/vminfos/<string:vm_id>
-# POST		创建新的VM信息		http://host:port/api/v0.0/vminfos/<string:vm_id>
-# PUT		更新某个VM信息		http://host:port/api/v0.0/vminfos/<string:vm_id>
-# DELETE	删除某个VM信息		http://host:port/api/v0.0/vminfos/<string:vm_id>
+# GET		get all VMs						http://host:port/api/v0.0/vminfos 
+# GET		get VMs separated by page		http://host:port/api/v0.0/vminfos?page=2&pp=20			page:current page/pp:number of items per page
+# GET		get a VM 						http://host:port/api/v0.0/vminfos/<string:vm_id>
+# POST		add a VM						http://host:port/api/v0.0/vminfos/<string:vm_id>
+# PUT		update a VM						http://host:port/api/v0.0/vminfos/<string:vm_id>
+# DELETE	delete a VM						http://host:port/api/v0.0/vminfos/<string:vm_id>
 
 # all the imports
 from flask_restful import reqparse, abort, Api, Resource
