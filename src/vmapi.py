@@ -42,7 +42,7 @@ class VMINFOListAPI(Resource):
 				per_page = 20
 			query = Vm_info_tab.query.paginate(page, per_page, False)
 			vms = [row.to_json() for row in query.items]
-			return {'vm_infos':vms}
+			return {'total_page':query.pages, 'vm_infos':vms}
 		
 api.add_resource(VMINFOListAPI, '/api/v0.0/vminfos', endpoint = 'vminfos')
 		
