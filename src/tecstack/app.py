@@ -6,32 +6,44 @@
 
 
 from flask import Flask, request, jsonify
+
+
+# Main flask object
+app = Flask(__name__)
+
+# Config for database and log file location
+app.config.from_object('config')
+
+# Logging config
 import logging
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
+handler = RotatingFileHandler(app.config['LOGGER_FILE'],
+                              maxBytes=102400,
+                              backupCount=1)
+handler.setFormatter(Formatter(
+    '%(asctime)s %(levelname)s: %(message)s '
+    '[in %(pathname)s:%(lineno)d]'
+))
+handler.setLevel(logging.INFO)
+app.logger.addHandler(handler)
+
+
 from flask.ext.sqlalchemy import SQLAlchemy
-from passlib.apps import custom_app_context as pwd_context
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s/../.data/sqlite3.db' \
-                                        % app.instance_path
-app.config['LOGGER_FILE'] = '.log/debug.log'
-
 db = SQLAlchemy(app)
+# import models so that db can find models for table generation
+import models
+
+
+# Authentication config
 # auth = HTTPBasicAuth()
 
-
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(32), index=True)
-    password_hash = db.Column(db.String(128))
-
-    def hash_password(self, password):
-        self.password_hash = pwd_context.encrypt(password)
-
-    def verify_password(self, password):
-        return pwd_context.verify(password, self.password_hash)
+# API Registration
+from flask.ext.restful import Api
+api = Api(app)
+from api import TodoApi, TodoListApi
+api.add_resource(TodoListApi,'/demo/api/v1.0/todos')
+api.add_resource(TodoApi,'/demo/api/v1.0/todos/<todo_id>')
 
 
 @app.route('/')
@@ -47,17 +59,4 @@ def add_numbers():
     return jsonify(result=a+b)
 
 if __name__ == '__main__':
-    handler = RotatingFileHandler(app.config['LOGGER_FILE'],
-                                  maxBytes=102400,
-                                  backupCount=1)
-    handler.setFormatter(Formatter(
-        '%(asctime)s %(levelname)s: %(message)s '
-        '[in %(pathname)s:%(lineno)d]'
-    ))
-    handler.setLevel(logging.INFO)
-    app.logger.addHandler(handler)
-
-    db.drop_all()
-    db.create_all()
-
     app.run(host='0.0.0.0', port=5000, debug=True)

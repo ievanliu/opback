@@ -43,7 +43,12 @@ $ flake8 # 检查语法合规性，参照业内PEP8规范
 $ tox # 多环境自动化单元测试
 $ nosetests -v --with-coverage --cover-package=tecstack # 代码单元测试覆盖率
 $ python scripts/manager.py runserver # 通过manager启动
-$ python scripts/manager.py shell # 通过shell调测
+$ python scripts/manager.py shell # 通过shell调测，自动import app, db, models
+$ python scripts/manager.py initdb # 初始化数据库
+$ python scripts/manager.py dropdb # 删除数据库
+$ python scripts/manager.py db migrate # 修改models之后通过migrate检测模型变更
+$ python scripts/manager.py db upgrade # 根据自动检测变化更新数据库
+$ python scripts/manager.py db downgrade # 数据库版本降级
 ```
 
 ## 开发中的规约：
@@ -56,3 +61,4 @@ $ python scripts/manager.py shell # 通过shell调测
 * `tox`自动创建独立的python运行环境，并在每个独立环境内执行语法、单元测试任务，用于自动集成。
 * 所有代码 **本地** 提交之前建议通过flake8和nosetests检查错误，无误后可以提交到本地仓库。
 * 所有代码 **远程** 提交之前必须通过tox测试，无误后可以push到远程develop分支。
+* **Never** use manager.py to do database operation in **Production Environment**.
