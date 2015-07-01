@@ -38,7 +38,8 @@ class Vm_info_tab(db.Model):
     # 虚拟机状态：0-创建中，1-运行中
     VM_STATUS = db.Column(db.INT)
 
-    def __init__(self, vm_id, pm_id, vm_name, ip, creater_time, vn_id, vm_status):
+    def __init__(self, vm_id, pm_id, vm_name, ip, creater_time,
+                 vn_id, vm_status):
         self.VM_ID = vm_id
         self.PM_ID = pm_id
         self.VM_Name = vm_name

@@ -2,12 +2,13 @@
 # @last revision: 29/6/2015 22:04
 # @version 0.0
 # Service Description:
-# GET		get all VMs						http://host:port/api/v0.0/vminfos
-# GET		get VMs separated by page		http://host:port/api/v0.0/vminfos?page=2&pp=20			page:current page/pp:number of items per page
-# GET		get a VM 						http://host:port/api/v0.0/vminfos/<string:vm_id>
-# POST		add a VM						http://host:port/api/v0.0/vminfos/<string:vm_id>
-# PUT		update a VM						http://host:port/api/v0.0/vminfos/<string:vm_id>
-# DELETE	delete a VM						http://host:port/api/v0.0/vminfos/<string:vm_id>
+# GET get all VMs	http://host:port/api/v0.0/vminfos
+# GET get VMs separated by page http://host:port/api/v0.0/vminfos?page=2&pp=20
+#           page:current page/pp:number of items per page
+# GET		get a VM 		http://host:port/api/v0.0/vminfos/<string:vm_id>
+# POST		add a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
+# PUT		update a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
+# DELETE	delete a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
 
 # all the imports
 from flask_restful import reqparse, abort, Api, Resource
@@ -21,33 +22,36 @@ api = Api(app)
 
 class VMINFOListAPI(Resource):
 
-	# request parsing:
-	def __init__(self):
-		self.reqparse = reqparse.RequestParser()
-		# page
-		self.reqparse.add_argument('page', type = int, help='Page cannot be converted')
-		# pp: number of items per page
-		self.reqparse.add_argument('pp', type = int, help='PerPage cannot be converted', dest='per_page')
-		super(VMINFOListAPI, self).__init__()
+    # request parsing:
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        # page
+        self.reqparse.add_argument(
+            'page', type=int, help='Page cannot be converted')
+        # pp: number of items per page
+        self.reqparse.add_argument(
+            'pp', type=int,
+            help='PerPage cannot be converted', dest='per_page')
+        super(VMINFOListAPI, self).__init__()
 
-	# get the VM list (paging done)
-	def get(self):
-		args = self.reqparse.parse_args()
-		page = args['page']
-		if not page:
-			query = Vm_info_tab.query.order_by(Vm_info_tab.VM_ID).all()
-			vms = [row.to_json() for row in query]
-			return {'vm_infos':vms}
-		else:
-			per_page = args['per_page']
-			if not per_page:
-				# set default
-				per_page = 20
-			query = Vm_info_tab.query.paginate(page, per_page, False)
-			vms = [row.to_json() for row in query.items]
-			return {'total_page':query.pages, 'vm_infos':vms}
+    # get the VM list (paging done)
+    def get(self):
+        args = self.reqparse.parse_args()
+        page = args['page']
+        if not page:
+            query = Vm_info_tab.query.order_by(Vm_info_tab.VM_ID).all()
+            vms = [row.to_json() for row in query]
+            return {'vm_infos': vms}
+        else:
+            per_page = args['per_page']
+            if not per_page:
+                # set default
+                per_page = 20
+            query = Vm_info_tab.query.paginate(page, per_page, False)
+            vms = [row.to_json() for row in query.items]
+            return {'total_page': query.pages, 'vm_infos': vms}
 
-api.add_resource(VMINFOListAPI, '/api/v0.0/vminfos', endpoint = 'vminfos')
+api.add_resource(VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
 
 
 # VMINFO API : visit by unique vm_id
@@ -83,10 +87,12 @@ class VMINFOAPI(Resource):
             old_vm = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
             if not old_vm:
                 args = self.reqparse.parse_args()
-                new_vm = Vm_info_tab(vm_id=vm_id, pm_id=args['pm_id'], vm_name=args['vm_name'],
+                new_vm = Vm_info_tab(vm_id=vm_id, pm_id=args['pm_id'],
+                                     vm_name=args['vm_name'],
                                      ip=args['ip'], creater_time=args[
                                          'creater_time'],
-                                     vn_id=args['vn_id'], vm_status=args['vm_status'])
+                                     vn_id=args['vn_id'],
+                                     vm_status=args['vm_status'])
                 db.session.add(new_vm)
                 db.session.commit()
                 message = 'VM %s Successfully Added' % vm_id
