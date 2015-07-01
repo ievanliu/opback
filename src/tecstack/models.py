@@ -2,7 +2,9 @@
 from app import db
 from passlib.apps import custom_app_context as pwd_context
 
+
 class Todo(db.Model):
+
     '''
         Todo for demo
     '''
@@ -13,15 +15,15 @@ class Todo(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', backref=db.backref('todos', lazy='dynamic'))
 
-    def __init__(self, task, user):
+    def __init__(self, task):
         self.task = task
-        self.user = user
 
     def __repr__(self):
         return '<Todo %r>' % self.id
 
 
 class User(db.Model):
+
     '''
         User model
     '''
@@ -44,3 +46,7 @@ class User(db.Model):
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
+
+    # from http://stackoverflow.com/a/11884806
+    # def as_dict(self):
+    #   return {c.name: getattr(self, c.name) for c in self.__table__.columns}

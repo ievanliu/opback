@@ -14,6 +14,7 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
+
 @manager.command
 def initdb():
     import os
@@ -21,6 +22,7 @@ def initdb():
         os.mkdir(app.config['DB_FOLDER'])
     db.create_all()
     print 'Database inited, location: ' + app.config['SQLALCHEMY_DATABASE_URI']
+
 
 @manager.command
 def dropdb():

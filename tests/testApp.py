@@ -6,6 +6,8 @@
 
 from nose.tools import with_setup, assert_equal
 import json
+import os
+
 
 from tecstack.app import app
 

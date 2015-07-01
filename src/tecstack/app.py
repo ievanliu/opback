@@ -31,8 +31,6 @@ app.logger.addHandler(handler)
 
 from flask.ext.sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
-# import models so that db can find models for table generation
-import models
 
 
 # Authentication config
@@ -41,9 +39,11 @@ import models
 # API Registration
 from flask.ext.restful import Api
 api = Api(app)
-from api import TodoApi, TodoListApi
-api.add_resource(TodoListApi,'/demo/api/v1.0/todos')
-api.add_resource(TodoApi,'/demo/api/v1.0/todos/<todo_id>')
+from api import TodoApi, TodoListApi, UserListApi, UserApi
+api.add_resource(UserListApi, '/demo/api/v1.0/users', endpoint='user_list_ep')
+api.add_resource(UserApi, '/demo/api/v1.0/users/<user_id>', endpoint='user_ep')
+api.add_resource(TodoListApi, '/demo/api/v1.0/todos', endpoint='todo_list_ep')
+api.add_resource(TodoApi, '/demo/api/v1.0/todos/<todo_id>', endpoint='todo_ep')
 
 
 @app.route('/')
@@ -56,7 +56,7 @@ def index():
 def add_numbers():
     a = request.args.get('a', 0, type=int)
     b = request.args.get('b', 0, type=int)
-    return jsonify(result=a+b)
+    return jsonify(result=a + b)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
