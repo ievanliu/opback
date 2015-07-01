@@ -20,36 +20,34 @@ api = Api(app)
 
 
 class VMINFOListAPI(Resource):
-    # request parsing:
 
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        # page
-        self.reqparse.add_argument(
-            'page', type=int, help='Page cannot be converted')
-        # pp: number of items per page
-        self.reqparse.add_argument(
-            'pp', type=int, help='PerPage cannot be converted', dest='per_page')
-        super(VMINFOListAPI, self).__init__()
+	# request parsing:
+	def __init__(self):
+		self.reqparse = reqparse.RequestParser()
+		# page
+		self.reqparse.add_argument('page', type = int, help='Page cannot be converted')
+		# pp: number of items per page
+		self.reqparse.add_argument('pp', type = int, help='PerPage cannot be converted', dest='per_page')
+		super(VMINFOListAPI, self).__init__()
 
-    # get the VM list (paging done)
-    def get(self):
-        args = self.reqparse.parse_args()
-        page = args['page']
-        if not page:
-            query = Vm_info_tab.query.order_by(Vm_info_tab.VM_ID).all()
-            vms = [row.to_json() for row in query]
-            return {'vm_infos': vms}
-        else:
-            per_page = args['per_page']
-            if not per_page:
-                # set default
-                per_page = 20
-            query = Vm_info_tab.query.paginate(page, per_page, False)
-            vms = [row.to_json() for row in query.items]
-            return {'vm_infos': vms}
+	# get the VM list (paging done)
+	def get(self):
+		args = self.reqparse.parse_args()
+		page = args['page']
+		if not page:
+			query = Vm_info_tab.query.order_by(Vm_info_tab.VM_ID).all()
+			vms = [row.to_json() for row in query]
+			return {'vm_infos':vms}
+		else:
+			per_page = args['per_page']
+			if not per_page:
+				# set default
+				per_page = 20
+			query = Vm_info_tab.query.paginate(page, per_page, False)
+			vms = [row.to_json() for row in query.items]
+			return {'total_page':query.pages, 'vm_infos':vms}
 
-api.add_resource(VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
+api.add_resource(VMINFOListAPI, '/api/v0.0/vminfos', endpoint = 'vminfos')
 
 
 # VMINFO API : visit by unique vm_id
