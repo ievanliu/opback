@@ -1,5 +1,5 @@
-# helloworld
-[![Build Status](https://travis-ci.org/tecstack/helloworld.svg?branch=develop)](https://travis-ci.org/tecstack/helloworld) [![Coverage Status](https://coveralls.io/repos/tecstack/helloworld/badge.svg?branch=develop)](https://coveralls.io/r/tecstack/helloworld?branch=develop) [![Download Status](https://img.shields.io/badge/download-1024%2Fmonth-green.svg)](https://github.com/tecstack/helloworld/)
+# opback
+[![Build Status](https://travis-ci.org/tecstack/opback.svg?branch=develop)](https://travis-ci.org/tecstack/opback) [![Coverage Status](https://coveralls.io/repos/tecstack/opback/badge.svg?branch=develop)](https://coveralls.io/r/tecstack/opback?branch=develop) [![Download Status](https://img.shields.io/badge/download-1024%2Fmonth-green.svg)](https://github.com/tecstack/opback/)
 
 
 Hello World for Team mgmt
@@ -18,8 +18,8 @@ Hello World for Team mgmt
 ### 基本用法
 
 ```bash
-$ git clone https://github.com/tecstack/helloworld.git
-$ cd helloworld
+$ git clone https://github.com/tecstack/opback.git
+$ cd opback
 $ pip install -r requirements.txt
 $ python src/hello/app.py
 ```
@@ -37,8 +37,8 @@ $ python src/hello/app.py
 ### Dev时用到的一些命令：
 
 ```bash
-$ git clone https://github.com/tecstack/helloworld.git
-$ cd helloworld
+$ git clone https://github.com/tecstack/opback.git
+$ cd opback
 $ flake8 # 检查语法合规性，参照业内PEP8规范
 $ tox # 多环境自动化单元测试
 $ nosetests -v --with-coverage --cover-package=tecstack # 代码单元测试覆盖率

@@ -6,6 +6,7 @@
 
 
 from flask import Flask, request, jsonify
+import os
 
 
 # Main flask object
@@ -15,6 +16,8 @@ app = Flask(__name__)
 app.config.from_object('config')
 
 # Logging config
+if not os.path.exists(app.config['LOGGER_FOLDER']):
+    os.mkdir(app.config['LOGGER_FOLDER'])
 import logging
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
