@@ -1,6 +1,6 @@
 
 from flask.ext.restful import Resource, reqparse
-from app import db
+from tecstack import db
 
 
 class UserListApi(Resource):
@@ -40,7 +40,7 @@ class UserListApi(Resource):
             db.session.add(user)
             db.session.commit()
         except Exception as e:
-            return {'error': e.message()}, 500
+            return {'error': e}, 500
 
         return UserApi.to_dict(user), 201
 
@@ -112,7 +112,7 @@ class TodoListApi(Resource):
             db.session.add(todo)
             db.session.commit()
         except Exception as e:
-            return {'error': e.message()}, 500
+            return {'error': e}, 500
 
         return TodoApi.to_dict(todo), 201
 

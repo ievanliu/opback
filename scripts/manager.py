@@ -1,6 +1,5 @@
 
 import sys
-sys.path.append('src')
 sys.path.append('.')
 
 from flask.ext.script import Manager, Shell
