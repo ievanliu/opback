@@ -9,7 +9,7 @@ import json
 import os
 
 
-from tecstack.app import app
+from tecstack import app, controllers
 
 
 class TestApp():

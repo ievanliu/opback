@@ -3,7 +3,7 @@ from nose.tools import *
 import json
 import os
 from tecstack import app, db
-from tecstack.service import TodoListApi, TodoApi, UserListApi, UserApi
+from tecstack.services import TodoListApi, TodoApi, UserListApi, UserApi
 from utils import *
 from tecstack.models import User, Todo
 
