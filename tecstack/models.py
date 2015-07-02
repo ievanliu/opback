@@ -1,5 +1,5 @@
 
-from app import db
+from tecstack import db
 from passlib.apps import custom_app_context as pwd_context
 
 

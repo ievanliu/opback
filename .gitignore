@@ -64,3 +64,4 @@ target/
 # tmp data and log folder for test, ex. sqlite3 database
 .data
 .log
+migrations

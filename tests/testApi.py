@@ -2,11 +2,9 @@
 from nose.tools import *
 import json
 import os
-
-from tecstack.app import app, db
-from tecstack.api import TodoListApi, TodoApi, UserListApi, UserApi
+from tecstack import app, db
+from tecstack.service import TodoListApi, TodoApi, UserListApi, UserApi
 from utils import *
-
 from tecstack.models import User, Todo
 
 class TestApi():

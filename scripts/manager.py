@@ -3,10 +3,10 @@ import sys
 sys.path.append('.')
 
 from flask.ext.script import Manager, Shell
-from tecstack.app import app, db
 from flask.ext.migrate import Migrate, MigrateCommand
 
-import tecstack.models
+from tecstack import app, db
+from tecstack import models
 
 migrate = Migrate(app, db)
 
@@ -30,7 +30,7 @@ def dropdb():
 
 
 def _make_context():
-    return dict(app=app, db=db, models=tecstack.models)
+    return dict(app=app, db=db, models=models)
 
 manager.add_command("shell", Shell(make_context=_make_context))
 

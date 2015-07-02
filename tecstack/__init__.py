@@ -40,3 +40,12 @@ db = SQLAlchemy(app)
 # API Registration
 from flask.ext.restful import Api
 api = Api(app)
+import service
+api.add_resource(
+    service.UserListApi, '/demo/api/v1.0/users', endpoint='user_list_ep')
+api.add_resource(
+    service.UserApi, '/demo/api/v1.0/users/<user_id>', endpoint='user_ep')
+api.add_resource(
+    service.TodoListApi, '/demo/api/v1.0/todos', endpoint='todo_list_ep')
+api.add_resource(
+    service.TodoApi, '/demo/api/v1.0/todos/<todo_id>', endpoint='todo_ep')
