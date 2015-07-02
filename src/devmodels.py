@@ -43,6 +43,9 @@ class Pm_info_tab(db.Model):
     IPMI_USER = db.Column(db.VARCHAR(length=60))
     IPMI_PASSWD = db.Column(db.VARCHAR(length=60))
 
+    vm_info = db.relationship('Vm_info', backref='pm_info_tab',
+                                lazy='dynamic')
+
     def __init__(self, pm_id, pm_name, ip, creat_time,
                  iscsi_name, ipmi_user, ipmi_passwd):
         self.PM_ID = pm_id
@@ -78,7 +81,7 @@ class Vm_info_tab(db.Model):
     # 虚拟机ID
     VM_ID = db.Column(db.VARCHAR(length=64), primary_key=True)
     # 物理机ID
-    PM_ID = db.Column(db.VARCHAR(length=64))
+    PM_ID = db.Column(db.VARCHAR(length=64), db.ForeignKey('pm_info_tab.PM_ID'))
     # 虚拟机名称
     VM_Name = db.Column(db.VARCHAR(length=64))
     # 虚拟机内网IP
@@ -180,5 +183,5 @@ def import_data():
         rv.cursor().executescript(f.read())
     rv.commit()
 
-init_db()
-import_data()
+# init_db()
+# import_data()
