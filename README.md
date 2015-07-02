@@ -49,6 +49,8 @@ $ python scripts/manager.py dropdb # 删除数据库: .data/app.db
 $ python scripts/manager.py db migrate # 修改models之后通过migrate检测模型变更
 $ python scripts/manager.py db upgrade # 根据自动检测变化更新数据库
 $ python scripts/manager.py db downgrade # 数据库版本降级
+$ autopep8 src/tecstack/xxx.py # 自动根据PEP8规范输出修改正代码
+$ autopep8 -i src/tecstack/xxx.py # 自动根据PEP8规范修正代码，不会调整单行长度等
 ```
 
 ## 开发中的规约：
