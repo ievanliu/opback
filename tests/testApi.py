@@ -21,6 +21,9 @@ class TestApi():
                         os.path.join(app.config['DB_FOLDER'],
                         app.config['DB_FILE'])
 
+        if not os.path.exists(app.config['DB_FOLDER']):
+            os.mkdir(app.config['DB_FOLDER'])
+
         self.tester = app.test_client(self)
         db.create_all()
         u = User('testuser1','testuser1@tecstack.org')
