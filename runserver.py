@@ -6,7 +6,7 @@
 
 from flask import request, jsonify
 from tecstack import app, api
-from tecstack.service import *
+from tecstack.service import UserListApi, UserApi, TodoListApi, TodoApi
 
 api.add_resource(UserListApi, '/demo/api/v1.0/users', endpoint='user_list_ep')
 api.add_resource(UserApi, '/demo/api/v1.0/users/<user_id>', endpoint='user_ep')
