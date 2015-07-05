@@ -49,3 +49,8 @@ api.add_resource(
     services.TodoListApi, '/demo/api/v1.0/todos', endpoint='todo_list_ep')
 api.add_resource(
     services.TodoApi, '/demo/api/v1.0/todos/<todo_id>', endpoint='todo_ep')
+
+from vminfo import vmapi
+api.add_resource(vmapi.VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
+api.add_resource(
+    vmapi.VMINFOAPI, '/api/v0.0/vminfos/<string:vm_id>', endpoint='vminfo')
