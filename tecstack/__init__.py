@@ -74,4 +74,3 @@ api.add_resource(
 '''
     end
 '''
-
