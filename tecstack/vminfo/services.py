@@ -11,17 +11,16 @@
 # DELETE	delete a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
 
 # all the imports
-from flask_restful import reqparse, abort, Resource
+from flask_restful import reqparse, Resource
 '''
     change by Shawn.T:
     from models import app, Vm_info_tab, db
 '''
-# from tecstack import db
-from models import db, Vm_info_tab
+from tecstack import db
+from models import Vm_info_tab
 '''
     end
 '''
-import logging
 
 
 # VMINFOList API
@@ -32,11 +31,11 @@ class VMINFOListAPI(Resource):
         self.reqparse = reqparse.RequestParser()
         # page
         self.reqparse.add_argument(
-            'page', type=int, help='Page cannot be converted')
+            'page', type=int, help='Page must be an integer')
         # pp: number of items per page
         self.reqparse.add_argument(
             'pp', type=int,
-            help='PerPage cannot be converted', dest='per_page')
+            help='PerPage must be an integer', dest='per_page')
         super(VMINFOListAPI, self).__init__()
 
     # get the VM list (paging done)
@@ -46,7 +45,7 @@ class VMINFOListAPI(Resource):
         if not page:
             query = Vm_info_tab.query.order_by(Vm_info_tab.VM_ID).all()
             vms = [row.to_json() for row in query]
-            return {'vm_infos': vms}
+            return {'vm_infos': vms}, 200
         else:
             per_page = args['per_page']
             if not per_page:
@@ -54,7 +53,7 @@ class VMINFOListAPI(Resource):
                 per_page = 20
             query = Vm_info_tab.query.paginate(page, per_page, False)
             vms = [row.to_json() for row in query.items]
-            return {'total_page': query.pages, 'vm_infos': vms}
+            return {'total_page': query.pages, 'vm_infos': vms}, 200
 
 
 # VMINFO API : visit by unique vm_id
@@ -64,25 +63,25 @@ class VMINFOAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument(
-            'pm_id', type=str, help='PM_ID cannot be converted')
+            'pm_id', type=str, help='PM_ID must be a string')
         self.reqparse.add_argument(
-            'vm_name', type=str, help='VM_Name cannot be converted')
+            'vm_name', type=str, help='VM_Name must be a string')
         self.reqparse.add_argument(
-            'ip', type=str, help='IP cannot be converted')
+            'ip', type=str, help='IP must be a string')
         self.reqparse.add_argument(
-            'creater_time', type=str, help='Creater_Time cannot be converted')
+            'creater_time', type=str, help='Creater_Time must be a string')
         self.reqparse.add_argument(
-            'vn_id', type=str, help='VN_ID cannot be converted')
+            'vn_id', type=str, help='VN_ID must be a string')
         self.reqparse.add_argument(
-            'vm_status', type=int, help='VM_STATUS cannot be converted')
+            'vm_status', type=int, help='VM_STATUS must be an integer')
         super(VMINFOAPI, self).__init__()
 
     # get a single VM
     def get(self, vm_id):
         vm_info = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
         if not vm_info:
-            abort(404, message='VM Not Found'.format(str))
-        return {'vm_info': vm_info.to_json()}
+            return {'error': 'VM %s Not Found' % vm_id}, 404
+        return {'vm_info': vm_info.to_json()}, 200
 
     # add a new VM
     def post(self, vm_id):
@@ -98,14 +97,11 @@ class VMINFOAPI(Resource):
                                      vm_status=args['vm_status'])
                 db.session.add(new_vm)
                 db.session.commit()
-                message = 'VM %s Successfully Added' % vm_id
-                return {'message': message, 'vm_info': new_vm.to_json()}
+                return {'vm_info': new_vm.to_json()}, 201
             else:
-                abort(
-                    403, message=('VM %s Already Existed' % vm_id).format(str))
-        except StandardError, e:
-            logging.exception(e)
-            abort(500, message='Server Error'.format(str))
+                return {'error': 'VM %s Already Existed' % vm_id}, 403
+        except Exception as e:
+            return {'error': e}, 500
 
     # delete a VM
     def delete(self, vm_id):
@@ -114,13 +110,11 @@ class VMINFOAPI(Resource):
             if old_vm:
                 db.session.delete(old_vm)
                 db.session.commit()
-                message = 'VM %s Successfully Deleted' % vm_id
-                return {'message': message}
+                return {}, 204
             else:
-                abort(404, message='VM Not Found'.format(str))
-        except StandardError, e:
-            logging.exception(e)
-            abort(500, message='Server Error'.format(str))
+                return {'error': 'VM %s Not Found' % vm_id}, 404
+        except Exception as e:
+            return {'error': e}, 500
 
     # update a VM
     def put(self, vm_id):
@@ -147,10 +141,8 @@ class VMINFOAPI(Resource):
                 if vm_status:
                     vm.VM_STATUS = vm_status
                 db.session.commit()
-                message = 'VM Info Successfully Updated'
-                return {'message': message, 'vm_info': vm.to_json()}
+                return {'vm_info': vm.to_json()}, 201
             else:
-                abort(404, message='VM Not Found'.format(str))
-        except StandardError, e:
-            logging.exception(e)
-            abort(500, message='Server Error'.format(str))
+                return {'error': 'VM %s Not Found' % vm_id}, 404
+        except Exception as e:
+            return {'error': e}, 500
