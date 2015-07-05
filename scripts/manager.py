@@ -4,6 +4,10 @@ sys.path.append('.')
 
 from flask.ext.script import Manager, Shell
 from flask.ext.migrate import Migrate, MigrateCommand
+'''
+    add by daisheng
+'''
+from sqlite3 import dbapi2 as sqlite3
 
 from tecstack import app, db
 from tecstack import models
@@ -21,6 +25,21 @@ def initdb():
         os.mkdir(app.config['DB_FOLDER'])
     db.create_all()
     print 'Database inited, location: ' + app.config['SQLALCHEMY_DATABASE_URI']
+
+'''
+    add by Shawn.T
+'''
+
+
+@manager.command
+def importdata():
+    rv = sqlite3.connect(app.config['DB_FILEPATH'])
+    rv.row_factory = sqlite3.Row
+    with app.open_resource(app.config['DB_SOURCEFILEPATH'], mode='r') as f:
+        rv.cursor().executescript(f.read())
+    rv.commit()
+    print 'vminfo Data imported, source file: ' \
+          + app.config['DB_SOURCEFILEPATH']
 
 
 @manager.command
