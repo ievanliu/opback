@@ -11,6 +11,13 @@ from sqlite3 import dbapi2 as sqlite3
 
 from tecstack import app, db
 from tecstack import models
+'''
+    add by Leann Mak 2015/7/5
+'''
+import tecstack.vminfo.models as models_vminfo
+'''
+    end
+'''
 
 migrate = Migrate(app, db)
 
@@ -38,6 +45,13 @@ def importdata():
     with app.open_resource(app.config['DB_SOURCEFILEPATH'], mode='r') as f:
         rv.cursor().executescript(f.read())
     rv.commit()
+    '''
+        add by Leann Mak 2015/7/5
+    '''
+    rv.close()
+    '''
+        end
+    '''
     print 'vminfo Data imported, source file: ' \
           + app.config['DB_SOURCEFILEPATH']
 
@@ -49,7 +63,7 @@ def dropdb():
 
 
 def _make_context():
-    return dict(app=app, db=db, models=models)
+    return dict(app=app, db=db, models=models, models_vminfo=models_vminfo)
 
 manager.add_command("shell", Shell(make_context=_make_context))
 
