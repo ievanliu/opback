@@ -4,7 +4,7 @@
 
 # from flask import Flask
 # from flask.ext.sqlalchemy import SQLAlchemy
-# from sqlite3 import dbapi2 as sqlite3
+# from tecstack import app, db
 from tecstack import db
 
 import sys
@@ -171,19 +171,24 @@ class Publicip_tab(db.Model):
 
 
 # def init_db():
-#     db.drop_all()
-#     db.create_all()
+    # # db.drop_all()
+    # db.create_all()
 
 
-# 导入数据
+# # 导入数据
 
 
 # def import_data():
-#     rv = sqlite3.connect(app.config['DTATBASE_FILE'])
-#     rv.row_factory = sqlite3.Row
-#     with app.open_resource(app.config['DATA_SOURCEFILE'], mode='r') as f:
-#         rv.cursor().executescript(f.read())
-#     rv.commit()
+    # import os
+    # db_path = os.path.join(app.config['DB_FOLDER'],app.config['DB_FILE'])
+    # print db_path
+    # from sqlite3 import dbapi2 as sqlite3
+    # rv = sqlite3.connect('D:\\Codes\\Python\\opback\\.data\\app.db')
+    # rv.row_factory = sqlite3.Row
+    # with app.open_resource('data0702.sql', mode='r') as f:
+        # rv.cursor().executescript(f.read())
+    # rv.commit()
+    # rv.close()
 
 # init_db()
-# import_data()
+# # import_data()

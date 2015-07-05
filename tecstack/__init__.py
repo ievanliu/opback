@@ -6,6 +6,17 @@ import os
 # Main flask object
 app = Flask(__name__)
 
+'''
+    add by Leann Mak
+    2015/7/15
+'''
+# Config for cross domain access
+from flask.ext.cors import CORS
+cors = CORS(app)
+'''
+    end
+'''
+
 # Config for database and log file location
 app.config.from_object('config')
 
@@ -33,7 +44,6 @@ app.logger.addHandler(handler)
 from flask.ext.sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
 
-
 # Authentication config
 # auth = HTTPBasicAuth()
 
@@ -49,3 +59,17 @@ api.add_resource(
     services.TodoListApi, '/demo/api/v1.0/todos', endpoint='todo_list_ep')
 api.add_resource(
     services.TodoApi, '/demo/api/v1.0/todos/<todo_id>', endpoint='todo_ep')
+
+'''
+    add by Leann Mak
+    2015/7/15
+'''
+import vminfo.services as services_vminfo
+api.add_resource(
+    services_vminfo.VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
+api.add_resource(
+    services_vminfo.VMINFOAPI, '/api/v0.0/vminfos/<string:vm_id>',
+    endpoint='vminfo')
+'''
+    end
+'''

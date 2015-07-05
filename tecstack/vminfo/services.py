@@ -16,19 +16,15 @@ from flask_restful import reqparse, abort, Resource
     change by Shawn.T:
     from models import app, Vm_info_tab, db
 '''
-from tecstack import db
-from models import Vm_info_tab
-
+# from tecstack import db
+from models import db, Vm_info_tab
 '''
     end
 '''
 import logging
 
-# api = Api(app)
 
 # VMINFOList API
-
-
 class VMINFOListAPI(Resource):
 
     # request parsing:
@@ -60,13 +56,11 @@ class VMINFOListAPI(Resource):
             vms = [row.to_json() for row in query.items]
             return {'total_page': query.pages, 'vm_infos': vms}
 
-# api.add_resource(VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
-
 
 # VMINFO API : visit by unique vm_id
 class VMINFOAPI(Resource):
-    # request parsing
 
+    # request parsing
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument(
@@ -160,10 +154,3 @@ class VMINFOAPI(Resource):
         except StandardError, e:
             logging.exception(e)
             abort(500, message='Server Error'.format(str))
-
-# api.add_resource(
-#     VMINFOAPI, '/api/v0.0/vminfos/<string:vm_id>', endpoint='vminfo')
-
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
