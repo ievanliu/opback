@@ -57,6 +57,22 @@ class TestVminfoApi():
         eq_(2, v['total_page'])
 
     @with_setup(setUp, tearDown)
+    def test_vminfo_get(self):
+        '''
+        Get a VMINFO.
+        '''
+        response = self.tester.get(
+            '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000658',
+            content_type="application/json")
+        eq_(response.status_code, 200)
+        check_content_type(response.headers)
+        v = json.loads(response.data)
+        eq_(1, len(v))
+        vminfo = v['vm_info']
+        eq_(7, len(vminfo))
+        eq_('CIDC-R-01-000-VM-00000658', vminfo['vm_id'])
+
+    @with_setup(setUp, tearDown)
     def test_vminfo_list_post(self):
         '''
         Post new VMINFO.
