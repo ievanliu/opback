@@ -69,6 +69,9 @@ import vminfo.services as services_vminfo
 api.add_resource(
     services_vminfo.VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
 api.add_resource(
+    services_vminfo.VMINFOAPI, '/api/v0.0/vminfos',
+    endpoint='vminfo_p')
+api.add_resource(
     services_vminfo.VMINFOAPI, '/api/v0.0/vminfos/<string:vm_id>',
     endpoint='vminfo')
 '''

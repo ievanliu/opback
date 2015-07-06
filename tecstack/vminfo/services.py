@@ -11,7 +11,7 @@
 # DELETE	delete a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
 
 # all the imports
-from flask_restful import reqparse, Resource
+from flask_restful import reqparse, Resource, inputs
 '''
     change by Shawn.T:
     from models import app, Vm_info_tab, db
@@ -47,10 +47,26 @@ class VMINFOListAPI(Resource):
             vms = [row.to_json() for row in query]
             return {'vm_infos': vms}, 200
         else:
+            '''
+                parameter verification 4 page
+            '''
+            if args['page'] <= 0:
+                return {'error': 'Page must be positive'}, 400
+            '''
+                end
+            '''
             per_page = args['per_page']
             if not per_page:
                 # set default
                 per_page = 20
+            '''
+                parameter verification 4 pp/per_page
+            '''
+            if args['per_page'] <= 0:
+                return {'error': 'Per Page must be positive'}, 400
+            '''
+                end
+            '''
             query = Vm_info_tab.query.paginate(page, per_page, False)
             vms = [row.to_json() for row in query.items]
             return {'total_page': query.pages, 'vm_infos': vms}, 200
@@ -63,11 +79,20 @@ class VMINFOAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument(
+            'vm_id', type=str, help='VM_ID must be a string')
+        self.reqparse.add_argument(
             'pm_id', type=str, help='PM_ID must be a string')
         self.reqparse.add_argument(
             'vm_name', type=str, help='VM_Name must be a string')
+        '''
+            basic format detection 4 IP
+        '''
         self.reqparse.add_argument(
-            'ip', type=str, help='IP must be a string')
+            'ip', type=inputs.regex(r'^(\d{1,3}\.){3}\d{1,3}$'),
+            help='Not an IP')
+        '''
+            end
+        '''
         self.reqparse.add_argument(
             'creater_time', type=str, help='Creater_Time must be a string')
         self.reqparse.add_argument(
@@ -84,22 +109,25 @@ class VMINFOAPI(Resource):
         return {'vm_info': vm_info.to_json()}, 200
 
     # add a new VM
-    def post(self, vm_id):
+    def post(self):
         try:
-            old_vm = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
-            if not old_vm:
-                args = self.reqparse.parse_args()
-                new_vm = Vm_info_tab(vm_id=vm_id, pm_id=args['pm_id'],
-                                     vm_name=args['vm_name'],
-                                     ip=args['ip'], creater_time=args[
-                                         'creater_time'],
-                                     vn_id=args['vn_id'],
-                                     vm_status=args['vm_status'])
-                db.session.add(new_vm)
-                db.session.commit()
-                return {'vm_info': new_vm.to_json()}, 201
+            args = self.reqparse.parse_args()
+            vm_id = args['vm_id']
+            if vm_id:
+                old_vm = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
+                if not old_vm:
+                    new_vm = Vm_info_tab(
+                        vm_id=vm_id, pm_id=args['pm_id'],
+                        vm_name=args['vm_name'], ip=args['ip'],
+                        creater_time=args['creater_time'],
+                        vn_id=args['vn_id'], vm_status=args['vm_status'])
+                    db.session.add(new_vm)
+                    db.session.commit()
+                    return {'vm_info': new_vm.to_json()}, 201
+                else:
+                    return {'error': 'VM %s Already Existed' % vm_id}, 403
             else:
-                return {'error': 'VM %s Already Existed' % vm_id}, 403
+                return {'error': 'VM_ID must be a string'}, 400
         except Exception as e:
             return {'error': e}, 500
 

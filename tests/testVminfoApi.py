@@ -73,17 +73,18 @@ class TestVminfoApi():
         eq_('CIDC-R-01-000-VM-00000658', vminfo['vm_id'])
 
     @with_setup(setUp, tearDown)
-    def test_vminfo_list_post(self):
+    def test_vminfo_post(self):
         '''
         Post new VMINFO.
         '''
-        args = dict(pm_id='CIDC-R-01-046-SRV-00002381',
+        args = dict(vm_id='CIDC-R-01-000-VM-00000236',
+            pm_id='CIDC-R-01-046-SRV-00002381',
             vm_name='BCI00000152', ip='192.168.62.10',
             creater_time='20121011112416',
             vn_id='CIDC-R-01-000-VN-00000811',
             vm_status=2)
         response = self.tester.post(
-            '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000236',
+            '/api/v0.0/vminfos',
             content_type='application/json',
             data=json.dumps(args))
         check_content_type(response.headers)
@@ -95,7 +96,7 @@ class TestVminfoApi():
         eq_('CIDC-R-01-000-VM-00000236', vminfo['vm_id'])
 
     @with_setup(setUp,tearDown)
-    def test_vminfo_list_put(self):
+    def test_vminfo_put(self):
         '''
         Put/Update existing VMINFO.
         pay attension to the difference between dict and json string.
@@ -114,7 +115,7 @@ class TestVminfoApi():
         eq_('192.168.53.26', vminfo['ip'])
 
     @with_setup(setUp,tearDown)
-    def test_vminfo_list_delete(self):
+    def test_vminfo_delete(self):
         '''
         Delete existing VMINFO.
         '''
