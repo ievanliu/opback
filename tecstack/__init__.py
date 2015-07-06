@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-#!/usr/bin/env python
+# !/usr/bin/env python
 #
 # Author: promisejohn
 # Email: promise.john@gmail.com
@@ -63,9 +63,6 @@ ma = Marshmallow(app)
 from flask.ext.restful import Api
 api = Api(app)
 
-
-from tecstack import auth
-
 '''
     add by Leann Mak
     2015/7/15
@@ -79,3 +76,5 @@ api.add_resource(
 '''
     end
 '''
+
+from tecstack import auth # flake8: noqa

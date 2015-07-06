@@ -63,8 +63,7 @@ def dropdb():
 
 
 def _make_context():
-    return dict(app=app, db=db, models=models,
-                auth=auth, models_vminfo=models_vminfo)
+    return dict(app=app, db=db, auth=auth, models_vminfo=models_vminfo)
 
 manager.add_command("shell", Shell(make_context=_make_context))
 

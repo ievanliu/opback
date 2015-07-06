@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
-#!/usr/bin/env python
+# !/usr/bin/env python
 #
 # Author: promisejohn
 # Email: promise.john@gmail.com
 #
 
 from flask.ext.restful import Resource, reqparse
-from tecstack import db, api, ma
+from tecstack import db, ma
 from tecstack.auth.models import User, Book
 
 

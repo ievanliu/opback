@@ -1,11 +1,13 @@
 # -*- coding:utf-8 -*-
-#!/usr/bin/env python
+# !/usr/bin/env python
 #
 # Author: promisejohn
 # Email: promise.john@gmail.com
 #
 
 from tecstack import db, api
+from passlib.apps import custom_app_context as pwd_context
+
 
 class User(db.Model):
 
@@ -35,7 +37,7 @@ class User(db.Model):
     @property
     def url(self):
         import services
-        return api.url_for(services.UserApi, user_id = self.id)
+        return api.url_for(services.UserApi, user_id=self.id)
 
 
 class Book(db.Model):
