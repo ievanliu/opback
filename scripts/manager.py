@@ -10,7 +10,7 @@ from flask.ext.migrate import Migrate, MigrateCommand
 from sqlite3 import dbapi2 as sqlite3
 
 from tecstack import app, db
-from tecstack import models
+from tecstack import auth
 '''
     add by Leann Mak 2015/7/5
 '''
@@ -63,7 +63,7 @@ def dropdb():
 
 
 def _make_context():
-    return dict(app=app, db=db, models=models, models_vminfo=models_vminfo)
+    return dict(app=app, db=db, auth=auth, models_vminfo=models_vminfo)
 
 manager.add_command("shell", Shell(make_context=_make_context))
 
