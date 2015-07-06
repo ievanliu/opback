@@ -3,75 +3,7 @@ from flask.ext.restful import Resource, reqparse
 from tecstack import db
 
 
-class UserListApi(Resource):
 
-    '''
-        UserList Restful API.
-    '''
-
-    @classmethod
-    def to_list(cls, user_list):
-        '''
-            TBD: try serization with marshmallow
-        '''
-        return [{'id': u.id, 'username': u.username, 'email': u.email}
-                for u in user_list]
-
-    def __init__(self):
-        super(UserListApi, self).__init__()
-        self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            'username', type=str, help='task must be provided with string')
-        self.parser.add_argument(
-            'email', type=str, help='email must be provided with string')
-
-    def get(self):
-        from models import User
-        users = User.query.all()
-        d = UserListApi.to_list(users)
-        return {'users': d}
-
-    def post(self):
-        from models import User
-        args = self.parser.parse_args()
-        user = User(username=args['username'], email=args['email'])
-
-        try:
-            db.session.add(user)
-            db.session.commit()
-        except Exception as e:
-            return {'error': e}, 500
-
-        return UserApi.to_dict(user), 201
-
-
-class UserApi(Resource):
-
-    """
-        User Api.
-    """
-
-    @classmethod
-    def to_dict(cls, user):
-        d = {'id': user.id, 'username': user.username, 'email': user.email}
-        return d
-
-    def __init__(self):
-        super(UserApi, self).__init__()
-        self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            'username', type=str, help='task must be provided with string')
-        self.parser.add_argument(
-            'email', type=str, help='email must be provided with string')
-
-    def get(self):
-        pass
-
-    def put(self):
-        pass
-
-    def delete(self):
-        pass
 
 
 class TodoListApi(Resource):

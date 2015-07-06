@@ -6,7 +6,7 @@ from flask.ext.script import Manager, Shell
 from flask.ext.migrate import Migrate, MigrateCommand
 
 from tecstack import app, db
-from tecstack import models
+from tecstack import auth
 
 migrate = Migrate(app, db)
 
@@ -30,7 +30,7 @@ def dropdb():
 
 
 def _make_context():
-    return dict(app=app, db=db, models=models)
+    return dict(app=app, db=db, models=auth.models)
 
 manager.add_command("shell", Shell(make_context=_make_context))
 

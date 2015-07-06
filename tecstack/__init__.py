@@ -1,3 +1,12 @@
+# -*- coding:utf-8 -*-
+#!/usr/bin/env python
+#
+# Author: promisejohn
+# Email: promise.john@gmail.com
+#
+# This is the Global package of tecstack,
+# holding flask app, restful api, sqlalchemy db, marshmallow ma, etc.
+#
 
 from flask import Flask
 import os
@@ -33,6 +42,8 @@ app.logger.addHandler(handler)
 from flask.ext.sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
 
+from flask.ext.marshmallow import Marshmallow
+ma = Marshmallow(app)
 
 # Authentication config
 # auth = HTTPBasicAuth()
@@ -40,12 +51,5 @@ db = SQLAlchemy(app)
 # API Registration
 from flask.ext.restful import Api
 api = Api(app)
-import services
-api.add_resource(
-    services.UserListApi, '/demo/api/v1.0/users', endpoint='user_list_ep')
-api.add_resource(
-    services.UserApi, '/demo/api/v1.0/users/<user_id>', endpoint='user_ep')
-api.add_resource(
-    services.TodoListApi, '/demo/api/v1.0/todos', endpoint='todo_list_ep')
-api.add_resource(
-    services.TodoApi, '/demo/api/v1.0/todos/<todo_id>', endpoint='todo_ep')
+
+import auth
