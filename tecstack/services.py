@@ -2,10 +2,6 @@
 from flask.ext.restful import Resource, reqparse
 from tecstack import db
 
-
-
-
-
 class TodoListApi(Resource):
 
     '''

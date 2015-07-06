@@ -15,6 +15,17 @@ import os
 # Main flask object
 app = Flask(__name__)
 
+'''
+    add by Leann Mak
+    2015/7/15
+'''
+# Config for cross domain access
+from flask.ext.cors import CORS
+cors = CORS(app)
+'''
+    end
+'''
+
 # Config for database and log file location
 app.config.from_object('config')
 
@@ -52,4 +63,19 @@ ma = Marshmallow(app)
 from flask.ext.restful import Api
 api = Api(app)
 
-import auth
+
+from tecstack import auth
+
+'''
+    add by Leann Mak
+    2015/7/15
+'''
+import vminfo.services as services_vminfo
+api.add_resource(
+    services_vminfo.VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
+api.add_resource(
+    services_vminfo.VMINFOAPI, '/api/v0.0/vminfos/<string:vm_id>',
+    endpoint='vminfo')
+'''
+    end
+'''
