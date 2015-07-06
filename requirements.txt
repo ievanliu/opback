@@ -13,6 +13,7 @@ Flask-Migrate==1.4.0
 Flask-RESTful==0.3.3
 Flask-Script==2.0.5
 Flask-SQLAlchemy==2.0
+Flask-Cors==2.0.1
 gitchangelog==2.2.1
 itsdangerous==0.24
 Jinja2==2.7.3

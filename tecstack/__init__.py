@@ -6,16 +6,16 @@ import os
 # Main flask object
 app = Flask(__name__)
 
-# '''
-# add by Leann Mak
-# 2015/7/15
-# '''
-# # Config for cross domain access
-# from flask.ext.cors import CORS
-# CORS(app)
-# '''
-# end
-# '''
+'''
+    add by Leann Mak
+    2015/7/15
+'''
+# Config for cross domain access
+from flask.ext.cors import CORS
+cors = CORS(app)
+'''
+    end
+'''
 
 # Config for database and log file location
 app.config.from_object('config')
