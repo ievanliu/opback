@@ -6,7 +6,7 @@
 #
 
 from flask.ext.restful import Resource, reqparse
-from tecstack import db, ma
+from tecstack import ma
 from tecstack.auth.models import User, Book
 
 
@@ -56,16 +56,20 @@ class UserListApi(Resource):
         return d
 
     def post(self):
-        args = self.parser.parse_args()
-        user = User(username=args['username'], email=args['email'])
-
-        try:
-            db.session.add(user)
-            db.session.commit()
-        except Exception as e:
-            return {'error': e}, 500
-
-        return UserSchema.dumps(user), 201
+        '''
+            User request a registration with email.
+            System validates email(unique in sys).
+            System sends an validation email to user.
+            User opens url contained in the email.
+            Url redirects user to complete registration with other infos.
+            User created.
+        '''
+        # decode json obj containing email, username, password(text)
+        # validate email, password
+        # hash with bcrypt
+        # validate username and email is unique
+        # insert new user into database
+        # send a welcome email to user's email
 
 
 class UserApi(Resource):
