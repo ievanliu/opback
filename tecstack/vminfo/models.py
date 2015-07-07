@@ -28,7 +28,7 @@ sys.setdefaultencoding('utf-8')
 '''
 
 
-class Pm_info_tab(db.Model):
+class PhysicalMachine(db.Model):
     __tablename__ = 'pm_info_tab'
     # 物理机ID
     PM_ID = db.Column(db.VARCHAR(length=64), primary_key=True)
@@ -44,7 +44,7 @@ class Pm_info_tab(db.Model):
     IPMI_USER = db.Column(db.VARCHAR(length=60))
     IPMI_PASSWD = db.Column(db.VARCHAR(length=60))
 
-    vm_info = db.relationship('Vm_info_tab', backref='pm_info_tab',
+    vm_info = db.relationship('VirtualMachine', backref='pm_info_tab',
                               lazy='dynamic')
 
     def __init__(self, pm_id, pm_name, ip, creat_time,
@@ -77,7 +77,7 @@ class Pm_info_tab(db.Model):
 '''
 
 
-class Vm_info_tab(db.Model):
+class VirtualMachine(db.Model):
     __tablename__ = 'vm_info_tab'
     # 虚拟机ID
     VM_ID = db.Column(db.VARCHAR(length=64), primary_key=True)
@@ -125,7 +125,7 @@ class Vm_info_tab(db.Model):
 '''
 
 
-class Publicip_tab(db.Model):
+class PublicIP(db.Model):
     __tablename__ = 'publicip_tab'
     # 公网IP ID
     Local_ID = db.Column(db.VARCHAR(length=50), primary_key=True)

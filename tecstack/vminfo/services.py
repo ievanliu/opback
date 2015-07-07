@@ -14,10 +14,10 @@
 from flask_restful import reqparse, Resource, inputs
 '''
     change by Shawn.T:
-    from models import app, Vm_info_tab, db
+    from models import app, VirtualMachine, db
 '''
 from tecstack import db
-from models import Vm_info_tab
+from models import VirtualMachine
 '''
     end
 '''
@@ -43,7 +43,7 @@ class VMINFOListAPI(Resource):
         args = self.reqparse.parse_args()
         page = args['page']
         if not page:
-            query = Vm_info_tab.query.order_by(Vm_info_tab.VM_ID).all()
+            query = VirtualMachine.query.order_by(VirtualMachine.VM_ID).all()
             vms = [row.to_json() for row in query]
             return {'vm_infos': vms}, 200
         else:
@@ -67,7 +67,7 @@ class VMINFOListAPI(Resource):
             '''
                 end
             '''
-            query = Vm_info_tab.query.paginate(page, per_page, False)
+            query = VirtualMachine.query.paginate(page, per_page, False)
             vms = [row.to_json() for row in query.items]
             return {'total_page': query.pages, 'vm_infos': vms}, 200
 
@@ -103,7 +103,7 @@ class VMINFOAPI(Resource):
 
     # get a single VM
     def get(self, vm_id):
-        vm_info = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
+        vm_info = VirtualMachine.query.filter_by(VM_ID=vm_id).first()
         if not vm_info:
             return {'error': 'VM %s Not Found' % vm_id}, 404
         return {'vm_info': vm_info.to_json()}, 200
@@ -114,9 +114,9 @@ class VMINFOAPI(Resource):
             args = self.reqparse.parse_args()
             vm_id = args['vm_id']
             if vm_id:
-                old_vm = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
+                old_vm = VirtualMachine.query.filter_by(VM_ID=vm_id).first()
                 if not old_vm:
-                    new_vm = Vm_info_tab(
+                    new_vm = VirtualMachine(
                         vm_id=vm_id, pm_id=args['pm_id'],
                         vm_name=args['vm_name'], ip=args['ip'],
                         creater_time=args['creater_time'],
@@ -134,7 +134,7 @@ class VMINFOAPI(Resource):
     # delete a VM
     def delete(self, vm_id):
         try:
-            old_vm = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
+            old_vm = VirtualMachine.query.filter_by(VM_ID=vm_id).first()
             if old_vm:
                 db.session.delete(old_vm)
                 db.session.commit()
@@ -147,7 +147,7 @@ class VMINFOAPI(Resource):
     # update a VM
     def put(self, vm_id):
         try:
-            vm = Vm_info_tab.query.filter_by(VM_ID=vm_id).first()
+            vm = VirtualMachine.query.filter_by(VM_ID=vm_id).first()
             if vm:
                 args = self.reqparse.parse_args()
                 pm_id = args['pm_id']
