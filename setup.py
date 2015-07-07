@@ -2,13 +2,13 @@
 
 from distutils.core import setup
 
-setup(name='helloworld',
+setup(name='opback',
       version='0.1.0',
-      description='hello world for python dev',
-      author='promisejohn',
+      description='operation system backend from tecstack.',
+      author='tecstack',
       author_email='promise.john@gmail.com',
-      url='http://promisejohn.github.io',
-      packages=['hello'],
+      url='http://github.com/tecstack',
+      packages=['tecstack'],
       # py_modules=['app']
       # install_requires = [],
       # dependency_links = []

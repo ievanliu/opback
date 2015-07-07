@@ -60,3 +60,8 @@ target/
 .project
 .pydevproject
 .settings/org.eclipse.core.resources.prefs
+
+# tmp data and log folder for test, ex. sqlite3 database
+.data
+.log
+migrations
