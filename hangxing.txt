@@ -1,6 +1,0 @@
-test1
-test2
-test3
-creating a new branch is quick and simple
-add a merge
-test git stash
