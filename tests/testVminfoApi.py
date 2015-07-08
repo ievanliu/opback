@@ -5,7 +5,7 @@ import os
 from tecstack import app, db
 from tecstack.vminfo.services import VMINFOListAPI, VMINFOAPI
 from utils import *
-from tecstack.vminfo.models import Vm_info_tab
+from tecstack.vminfo.models import VirtualMachine
 
 class TestVminfoApi():
     '''
@@ -24,11 +24,11 @@ class TestVminfoApi():
 
         self.tester = app.test_client(self)
         db.create_all()
-        v1 = Vm_info_tab('CIDC-R-01-000-VM-00000622',
+        v1 = VirtualMachine('CIDC-R-01-000-VM-00000622',
             'CIDC-R-01-090-SRV-00002588', 'BCI000002d4',
             '192.168.41.11', '20121018145925',
             'CIDC-R-01-000-VN-00000790', 2)
-        v2 = Vm_info_tab('CIDC-R-01-000-VM-00000658',
+        v2 = VirtualMachine('CIDC-R-01-000-VM-00000658',
             'CIDC-R-01-013-SRV-00002068', 'BCI000002fb',
             '192.168.62.14', '20121022162725',
             'CIDC-R-01-000-VN-00000811', 2)
