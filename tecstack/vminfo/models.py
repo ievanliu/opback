@@ -40,22 +40,17 @@ class PhysicalMachine(db.Model):
     Creat_Time = db.Column(db.VARCHAR(length=14))
     # iscsi连接名
     iscsiName = db.Column(db.VARCHAR(length=256))
-    # IPMI用户名密码
-    IPMI_USER = db.Column(db.VARCHAR(length=60))
-    IPMI_PASSWD = db.Column(db.VARCHAR(length=60))
 
-    vm_info = db.relationship('VirtualMachine', backref='pm_info_tab',
+    vm_info = db.relationship('VirtualMachine', backref='pm',
                               lazy='dynamic')
 
     def __init__(self, pm_id, pm_name, ip, creat_time,
-                 iscsi_name, ipmi_user, ipmi_passwd):
+                 iscsi_name):
         self.PM_ID = pm_id
         self.PM_Name = pm_name
         self.IP = ip
         self.Creat_Time = creat_time
         self.iscsiName = iscsi_name
-        self.IPMI_USER = ipmi_user
-        self.IPMI_PASSWD = ipmi_passwd
 
     def __repr__(self):
         return '<PMname %r>' % self.PM_Name
@@ -66,9 +61,7 @@ class PhysicalMachine(db.Model):
             'pm_name': self.PM_Name,
             'ip': self.IP,
             'creat_time': self.Creat_Time,
-            'iscsi_name': self.iscsiName,
-            'ipmi_user': self.IPMI_USER,
-            'ipmi_passwd': self.IPMI_PASSWD
+            'iscsi_name': self.iscsiName
         }
 
 
