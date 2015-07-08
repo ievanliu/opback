@@ -17,7 +17,7 @@ app = Flask(__name__)
 
 '''
     add by Leann Mak
-    2015/7/15
+    2015/7/5
 '''
 # Config for cross domain access
 from flask.ext.cors import CORS
@@ -63,21 +63,5 @@ ma = Marshmallow(app)
 from flask.ext.restful import Api
 api = Api(app)
 
-'''
-    add by Leann Mak
-    2015/7/15
-'''
-import vminfo.services as services_vminfo
-api.add_resource(
-    services_vminfo.VMINFOListAPI, '/api/v0.0/vminfos', endpoint='vminfos')
-api.add_resource(
-    services_vminfo.VMINFOAPI, '/api/v0.0/vminfos',
-    endpoint='vminfo_p')
-api.add_resource(
-    services_vminfo.VMINFOAPI, '/api/v0.0/vminfos/<string:vm_id>',
-    endpoint='vminfo')
-'''
-    end
-'''
-
+from tecstack import vminfo
 from tecstack import auth # flake8: noqa
