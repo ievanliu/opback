@@ -28,6 +28,7 @@ cors = CORS(app)
 
 # Config for database and log file location
 app.config.from_object('config')
+app.config.from_object('config.'+app.config['STAGE'])
 
 # init .data and .log folder in root dir
 if not os.path.exists(app.config['LOGGER_FOLDER']):

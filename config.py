@@ -6,7 +6,7 @@ DB_FILE = 'app.db'
 '''
     add by Shawn.T
 '''
-DB_SOURCEFILE = 'data0703.sql'
+DB_SOURCEFILE = 'data.sql'
 DB_FILEPATH = os.path.join(DB_FOLDER, DB_FILE)
 DB_SOURCEFILEPATH = os.path.join(DB_FOLDER, DB_SOURCEFILE)
 
