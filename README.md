@@ -46,7 +46,7 @@ $ python runserver.py # 直接启动
 $ python scripts/manager.py runserver # 通过manager启动
 $ python scripts/manager.py shell # 通过shell调测，自动import app, db, models
 $ python scripts/manager.py initdb # 初始化数据库: .data/app.db
-$ python scripts/manager.py importdata # 导入数据: .data/xx.sql -- > .data/app.db
+$ python scripts/manager.py importdata # 导入数据: .data/data.sql -- > .data/app.db
 $ python scripts/manager.py dropdb # 删除数据库: .data/app.db
 $ python scripts/manager.py db migrate # 修改models之后通过migrate检测模型变更
 $ python scripts/manager.py db upgrade # 根据自动检测变化更新数据库
@@ -67,4 +67,4 @@ $ autopep8 -i src/tecstack/xxx.py # 自动根据PEP8规范修正代码，不会�
 * 所有代码 **远程** 提交之前必须通过tox测试，无误后可以push到远程develop分支。
 * **Never** use manager.py to do database operation in **Production Environment**.
 * 单元测试中数据库采用.data/test.db，每个测试用例都会重新创建数据库
-* 首次启动请先使用manager初始化数据库并导入数据，需要导入的.sql请置于.data目录下。
+* 首次启动请使用manager初始化数据库并导入数据，待导入文件默认为data.sql，请确保其在.data目录下。
