@@ -1,22 +1,23 @@
 FROM ubuntu:14.04
+MAINTAINER promisejohn
+
+ENV DEBIAN_FRONTEND noninteractive
 
 # Install Python Setuptools
-RUN apt-get install -y python-setuptools
+RUN apt-get -y update && apt-get -y install python2.7 python-pip python-dev build-essential && pip install --upgrade pip
 
-# Install pip
-RUN easy_install pip
-
-# Add and install Python modules
-ADD requirements.txt /src/requirements.txt
-RUN cd /src; pip install -r requirements.txt
-
-# Bundle app source
+# add files and folders
 ADD . /src
+ADD pip.conf /etc/pip.conf
 
-# Expose
-EXPOSE  5000
+# change current workspace
+WORKDIR /src
 
-# Run
-CMD ["python", "/src/scripts/manager.py", "initdb"]
-CMD ["python", "/src/scripts/manager.py", "importdata"]
-CMD ["python", "/src/runserver.py"]
+# install dependencies
+RUN pip install -r requirements.txt
+
+# init db structure and data
+RUN python scripts/manager.py initdb
+RUN python scripts/manager.py importdata
+
+CMD ["python", "runserver.py"]

@@ -13,3 +13,4 @@ DB_SOURCEFILEPATH = os.path.join(DB_FOLDER, DB_SOURCEFILE)
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DB_FOLDER, DB_FILE)
 LOGGER_FOLDER = os.path.join(basedir,  '.log')
 LOGGER_FILE = os.path.join(LOGGER_FOLDER, 'debug.log')
+
