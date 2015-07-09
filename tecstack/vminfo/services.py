@@ -31,11 +31,12 @@ class VMINFOListAPI(Resource):
         self.reqparse = reqparse.RequestParser()
         # page
         self.reqparse.add_argument(
-            'page', type=int, help='Page must be an integer')
+            'page', type=inputs.positive,
+            help='Page must be a positive integer')
         # pp: number of items per page
         self.reqparse.add_argument(
-            'pp', type=int,
-            help='PerPage must be an integer', dest='per_page')
+            'pp', type=inputs.positive,
+            help='PerPage must be a positive integer', dest='per_page')
         super(VMINFOListAPI, self).__init__()
 
     # get the VM list (paging done)
@@ -47,26 +48,10 @@ class VMINFOListAPI(Resource):
             vms = [row.to_json() for row in query]
             return {'vm_infos': vms}, 200
         else:
-            '''
-                parameter verification 4 page
-            '''
-            if args['page'] <= 0:
-                return {'error': 'Page must be positive'}, 400
-            '''
-                end
-            '''
             per_page = args['per_page']
             if not per_page:
                 # set default
                 per_page = 20
-            '''
-                parameter verification 4 pp/per_page
-            '''
-            if args['per_page'] <= 0:
-                return {'error': 'Per Page must be positive'}, 400
-            '''
-                end
-            '''
             query = VirtualMachine.query.paginate(page, per_page, False)
             vms = [row.to_json() for row in query.items]
             return {'total_page': query.pages, 'vm_infos': vms}, 200
@@ -89,7 +74,7 @@ class VMINFOAPI(Resource):
         '''
         self.reqparse.add_argument(
             'ip', type=inputs.regex(r'^(\d{1,3}\.){3}\d{1,3}$'),
-            help='Not an IP')
+            help='IP must be a string like XXX.XXX.XXX.XXX')
         '''
             end
         '''

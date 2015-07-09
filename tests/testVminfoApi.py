@@ -19,8 +19,8 @@ class TestVminfoApi():
                         os.path.join(app.config['DB_FOLDER'],
                         app.config['DB_FILE'])
 
-#        if not os.path.exists(app.config['DB_FOLDER']):
-#            os.mkdir(app.config['DB_FOLDER'])
+        if not os.path.exists(app.config['DB_FOLDER']):
+            os.mkdir(app.config['DB_FOLDER'])
 
         self.tester = app.test_client(self)
         db.create_all()
@@ -40,11 +40,25 @@ class TestVminfoApi():
         db.drop_all()
 
     @with_setup(setUp, tearDown)
-    def test_vminfo_list_get(self):
+    def test_vminfo_list_get_all(self):
         '''
         Get VMINFO list.
         '''
-        args = dict(page=1, pp=1)
+        response = self.tester.get(
+            '/api/v0.0/vminfos',
+            content_type="application/json",
+            data=json.dumps({}))
+        eq_(response.status_code, 200)
+        check_content_type(response.headers)
+        v = json.loads(response.data)
+        eq_(2, len(v['vm_infos']))
+
+    @with_setup(setUp, tearDown)
+    def test_vminfo_list_get_by_page(self):
+        '''
+        Get VMINFO list by page.
+        '''
+        args = dict(page=2, pp=1)
         response = self.tester.get(
             '/api/v0.0/vminfos',
             content_type="application/json",
@@ -103,6 +117,7 @@ class TestVminfoApi():
         {'test':'test'} vs. '{"test":"test"}'
         '''
         d = dict(vm_name='BCI000003e7', ip='192.168.53.26')
+        # 1. VM existing
         response = self.tester.put(
             '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000622',
             content_type='application/json',
@@ -113,12 +128,23 @@ class TestVminfoApi():
         vminfo = v['vm_info']
         eq_('BCI000003e7', vminfo['vm_name'])
         eq_('192.168.53.26', vminfo['ip'])
+        # 2. VM not existing
+        response = self.tester.put(
+            '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000657',
+            content_type='application/json',
+            data=json.dumps(d))
+        eq_(response.status_code, 404)
 
     @with_setup(setUp,tearDown)
     def test_vminfo_delete(self):
         '''
         Delete existing VMINFO.
         '''
+        # 1. VM existing
         response = self.tester.delete(
             '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000658')
         eq_(response.status_code, 204)
+        # 2. VM not existing
+        response = self.tester.delete(
+            '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000657')
+        eq_(response.status_code, 404)

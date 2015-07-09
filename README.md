@@ -67,4 +67,4 @@ $ autopep8 -i src/tecstack/xxx.py # 自动根据PEP8规范修正代码，不会�
 * 所有代码 **远程** 提交之前必须通过tox测试，无误后可以push到远程develop分支。
 * **Never** use manager.py to do database operation in **Production Environment**.
 * 单元测试中数据库采用.data/test.db，每个测试用例都会重新创建数据库
-* 首次启动请使用manager初始化数据库并导入数据，待导入文件默认为data.sql，请确保其在.data目录下。
+* **首次启动** 请使用manager初始化数据库并导入数据，待导入文件默认为data.sql，请确保其在.data目录下。
