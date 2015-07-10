@@ -1,29 +1,26 @@
 # @author: leannmak
-# @last revision: 29/6/2015 22:04
+# @last revised: 9/7/2015 22:04
 # @version 0.0
 # Service Description:
-# GET get all VMs	http://host:port/api/v0.0/vminfos
-# GET get VMs separated by page http://host:port/api/v0.0/vminfos?page=2&pp=20
-#           page:current page/pp:number of items per page
+# GET	get all VMs			http://host:port/api/v0.0/vminfos
+# GET	get VMs by page		http://host:port/api/v0.0/vminfos?page=2&pp=20
+# 							page:current page / pp:number of items per page
 # GET		get a VM 		http://host:port/api/v0.0/vminfos/<string:vm_id>
-# POST		add a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
+# POST		add a VM		http://host:port/api/v0.0/vminfos
 # PUT		update a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
 # DELETE	delete a VM		http://host:port/api/v0.0/vminfos/<string:vm_id>
 
 # all the imports
 from flask_restful import reqparse, Resource, inputs
-'''
-    change by Shawn.T:
-    from models import app, VirtualMachine, db
-'''
 from tecstack import db
 from models import VirtualMachine
+
+
 '''
-    end
+    VMINFOList API
 '''
 
 
-# VMINFOList API
 class VMINFOListAPI(Resource):
 
     # request parsing:
@@ -57,7 +54,11 @@ class VMINFOListAPI(Resource):
             return {'total_page': query.pages, 'vm_infos': vms}, 200
 
 
-# VMINFO API : visit by unique vm_id
+'''
+    VMINFO API : visit by unique vm_id
+'''
+
+
 class VMINFOAPI(Resource):
 
     # request parsing

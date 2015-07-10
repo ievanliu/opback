@@ -75,6 +75,7 @@ class TestVminfoApi():
         '''
         Get a VMINFO.
         '''
+        # 1. VM existing
         response = self.tester.get(
             '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000658',
             content_type="application/json")
@@ -85,6 +86,13 @@ class TestVminfoApi():
         vminfo = v['vm_info']
         eq_(7, len(vminfo))
         eq_('CIDC-R-01-000-VM-00000658', vminfo['vm_id'])
+        # 2. VM not existing
+        response = self.tester.get(
+            '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000657',
+            content_type="application/json")
+        eq_(response.status_code, 404)
+        v = json.loads(response.data)
+        eq_('VM CIDC-R-01-000-VM-00000657 Not Found', v['error'])
 
     @with_setup(setUp, tearDown)
     def test_vminfo_post(self):
