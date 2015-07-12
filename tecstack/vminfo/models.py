@@ -34,8 +34,16 @@ class PhysicalMachine(db.Model):
     PM_ID = db.Column(db.VARCHAR(length=64), primary_key=True)
     # 物理机名称
     PM_Name = db.Column(db.VARCHAR(length=64))
+    '''
+        add ForeignKey by leannmak
+        2015/7/12
+    '''
     # 物理机内网IP
-    IP = db.Column(db.VARCHAR(length=32))
+    IP = db.Column(db.VARCHAR(length=32),
+                   db.ForeignKey('publicip_tab.Binding_PublicIP_LocalIP'))
+    '''
+        end
+    '''
     # 物理机创建时间
     Creat_Time = db.Column(db.VARCHAR(length=14))
     # iscsi连接名
@@ -79,8 +87,16 @@ class VirtualMachine(db.Model):
                       db.ForeignKey('pm_info_tab.PM_ID'))
     # 虚拟机名称
     VM_Name = db.Column(db.VARCHAR(length=64))
+    '''
+        add ForeignKey by leannmak
+        2015/7/12
+    '''
     # 虚拟机内网IP
-    IP = db.Column(db.VARCHAR(length=32))
+    IP = db.Column(db.VARCHAR(length=32),
+                   db.ForeignKey('publicip_tab.Binding_PublicIP_LocalIP'))
+    '''
+        end
+    '''
     # 虚拟机创建时间
     Creater_Time = db.Column(db.VARCHAR(length=14))
     # 子网ID
@@ -132,6 +148,17 @@ class PublicIP(db.Model):
     Prop_Time = db.Column(db.VARCHAR(length=14))
     # 操作时间
     operate_time = db.Column(db.INT)
+    '''
+        add by leannmak
+        2015/7/12
+    '''
+    vm_info = db.relationship('VirtualMachine', backref='pub',
+                              lazy='dynamic')
+    pm_info = db.relationship('PhysicalMachine', backref='pub',
+                              lazy='dynamic')
+    '''
+        end
+    '''
 
     def __init__(self, local_id, ip, ip_status,
                  binding_publicip_localip, prop_time,

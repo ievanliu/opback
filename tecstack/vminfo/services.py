@@ -160,3 +160,35 @@ class VMINFOAPI(Resource):
                 return {'error': 'VM %s Not Found' % vm_id}, 404
         except Exception as e:
             return {'error': e}, 500
+
+
+'''
+    VMHELP API : view more by vm_id
+'''
+
+
+class VMHELPAPI(Resource):
+
+    # get additional infos to current VM
+    def get(self, vm_id):
+        vm_info = VirtualMachine.query.filter_by(VM_ID=vm_id).first()
+        if not vm_info:
+            return {'error': 'VM %s Not Found' % vm_id}, 404
+        vm_pub = vm_info.pub
+        vm_public_ip = ''
+        if vm_pub:
+            vm_public_ip = vm_pub.IP
+        pm_info = vm_info.pm
+        pm_id, pm_name, pm_ip = '', '', ''
+        if pm_info:
+            pm_id = pm_info.PM_ID
+            pm_name = pm_info.PM_Name
+            pm_ip = pm_info.IP
+        pm_pub = pm_info.pub
+        pm_public_ip = ''
+        if pm_pub:
+            pm_public_ip = pm_pub.IP
+        help_list = {'vm_public_ip': vm_public_ip,
+                     'pm_id': pm_id, 'pm_name': pm_name,
+                     'pm_local_ip': pm_ip, 'pm_public_ip': pm_public_ip}
+        return {'help_info': help_list}, 200

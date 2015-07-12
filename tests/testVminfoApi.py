@@ -3,9 +3,9 @@ from nose.tools import *
 import json
 import os
 from tecstack import app, db
-from tecstack.vminfo.services import VMINFOListAPI, VMINFOAPI
+from tecstack.vminfo.services import VMINFOListAPI, VMINFOAPI, VMHELPAPI
 from utils import *
-from tecstack.vminfo.models import VirtualMachine
+from tecstack.vminfo.models import VirtualMachine, PhysicalMachine, PublicIP
 
 class TestVminfoApi():
     '''
@@ -25,15 +25,29 @@ class TestVminfoApi():
         self.tester = app.test_client(self)
         db.create_all()
         v1 = VirtualMachine('CIDC-R-01-000-VM-00000622',
-            'CIDC-R-01-090-SRV-00002588', 'BCI000002d4',
+            'CIDC-R-01-004-SRV-00002009', 'BCI000002d4',
             '192.168.41.11', '20121018145925',
             'CIDC-R-01-000-VN-00000790', 2)
         v2 = VirtualMachine('CIDC-R-01-000-VM-00000658',
-            'CIDC-R-01-013-SRV-00002068', 'BCI000002fb',
+            'CIDC-R-01-004-SRV-00002009', 'BCI000002fb',
             '192.168.62.14', '20121022162725',
             'CIDC-R-01-000-VN-00000811', 2)
+        p1 = PhysicalMachine('CIDC-R-01-004-SRV-00002009', 
+            'NFJD-PSC-IBMH-SV129', '172.16.1.132', 
+            '20120615180101', 
+            'iqn.1994-05.com.redhat:665a922a8')
+        i1 = PublicIP('CIDC-R-01-002-IP-00037227', '1.2.13.148',
+            '1', '192.168.41.11', '20150331093132', '20150331093541')
+        i2 = PublicIP('CIDC-R-01-002-IP-00037224', '1.2.13.145',
+            '1', '172.16.1.132', '20150611111055', '20150611111137')
+        i3 = PublicIP('CIDC-R-01-002-IP-00037244', '1.2.13.165',
+            '1', '192.168.62.14', '20150331150024', '20150401143030')
         db.session.add(v1)
         db.session.add(v2)
+        db.session.add(p1)
+        db.session.add(i1)
+        db.session.add(i2)
+        db.session.add(i3)
         db.session.commit()
 
     def tearDown(self):
@@ -156,3 +170,21 @@ class TestVminfoApi():
         response = self.tester.delete(
             '/api/v0.0/vminfos/CIDC-R-01-000-VM-00000657')
         eq_(response.status_code, 404)
+
+    @with_setup(setUp, tearDown)
+    def test_vmhelp_get(self):
+        '''
+        Get HELPINFO for a VM.
+        '''
+        response = self.tester.get(
+            '/api/v0.0/vminfos/help/CIDC-R-01-000-VM-00000622',
+            content_type="application/json")
+        eq_(response.status_code, 200)
+        check_content_type(response.headers)
+        v = json.loads(response.data)
+        eq_(1, len(v))
+        help_info = v['help_info']
+        eq_(5, len(help_info))
+        eq_('1.2.13.148', help_info['vm_public_ip'])
+        eq_('NFJD-PSC-IBMH-SV129', help_info['pm_name'])
+        eq_('1.2.13.145', help_info['pm_public_ip'])

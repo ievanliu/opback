@@ -60,25 +60,25 @@ ma = Marshmallow(app)
 # Authentication config
 # auth = HTTPBasicAuth()
 
-# errors = {
-    # 'VMIsNotFoundError': {
-        # 'message': "A virtual machine with that id is not found.",
-        # 'status': 404,
-    # },
-    # 'VMAlreadyExistsError': {
-        # 'message': "A virtual machine with that id already exists.",
-        # 'status': 409,
-    # },
-    # 'VMDoesNotExistError': {
-        # 'message': "A virtual machine with that id no longer exists.",
-        # 'status': 410,
-        # 'extra': "Any extra information you want.",
-    # }
-# }
+errors = {
+    'VMIsNotFoundError': {
+        'message': "A virtual machine with that id is not found.",
+        'status': 404,
+    },
+    'VMAlreadyExistsError': {
+        'message': "A virtual machine with that id already exists.",
+        'status': 409,
+    },
+    'VMDoesNotExistError': {
+        'message': "A virtual machine with that id no longer exists.",
+        'status': 410,
+        'extra': "Any extra information you want.",
+    }
+}
 # API Registration
 from flask.ext.restful import Api
-api = Api(app)
-# api = Api(app, errors=errors)
+# api = Api(app)
+api = Api(app, errors=errors)
 
 from tecstack import vminfo
 from tecstack import auth # flake8: noqa
