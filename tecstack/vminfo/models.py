@@ -152,9 +152,9 @@ class PublicIP(db.Model):
         add by leannmak
         2015/7/12
     '''
-    vm_info = db.relationship('VirtualMachine', backref='pub',
+    vm_info = db.relationship('VirtualMachine', backref='pubip',
                               lazy='dynamic')
-    pm_info = db.relationship('PhysicalMachine', backref='pub',
+    pm_info = db.relationship('PhysicalMachine', backref='pubip',
                               lazy='dynamic')
     '''
         end

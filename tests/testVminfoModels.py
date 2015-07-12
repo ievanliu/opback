@@ -51,6 +51,12 @@ class TestModelsVirtualMachine():
             'NFJD-PSC-IBMH-SV130', '172.16.1.133',
             '20120615180101',
             'iqn.1994-05.com.redhat:d137da297aeb')
+        ip1 = PublicIP('CIDC-R-01-002-IP-00037433',
+            '1.2.14.93', '1', '192.168.41.11', 
+            '20150521163200', '20150521163541')
+        ip2 = PublicIP('CIDC-R-01-002-IP-00037434', 
+            '1.2.14.94', '1', '172.16.1.132', 
+            '20150522103129', '20150522103341')
         db.session.add(v1)
         db.session.add(v2)
         db.session.add(p1)
@@ -111,7 +117,9 @@ class TestModelsVirtualMachine():
         vm = VirtualMachine.query.filter_by(VM_ID="CIDC-R-01-000-VM-00000622").first()
         vmDic = vm.to_json()
         pm = vm.pm
+        pubip = vm.pubip
         eq_(vmDic['vm_name'], "BCI000002d4")
+        eq_(pubip['IP'], "1.2.14.93")
         eq_(pm.PM_Name, "NFJD-PSC-IBMH-SV129")
 
 
@@ -150,6 +158,12 @@ class TestModelsPhysicalMachine():
             'NFJD-PSC-IBMH-SV130', '172.16.1.133',
             '20120615180101',
             'iqn.1994-05.com.redhat:d137da297aeb')
+        ip1 = PublicIP('CIDC-R-01-002-IP-00037433',
+            '1.2.14.93', '1', '192.168.41.11', 
+            '20150521163200', '20150521163541')
+        ip2 = PublicIP('CIDC-R-01-002-IP-00037434', 
+            '1.2.14.94', '1', '172.16.1.132', 
+            '20150522103129', '20150522103341')
         db.session.add(v1)
         db.session.add(v2)
         db.session.add(p1)
@@ -210,6 +224,8 @@ class TestModelsPhysicalMachine():
         '''
         pm = PhysicalMachine.query.filter_by(PM_ID="CIDC-R-01-004-SRV-00002009").first()
         pmDic = pm.to_json()
+        pubip = pm.pubip
+        eq_(pubip['IP'], '1.2.14.94')
         eq_(pmDic['pm_name'], "NFJD-PSC-IBMH-SV129")
 
 
