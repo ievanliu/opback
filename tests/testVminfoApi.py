@@ -32,9 +32,9 @@ class TestVminfoApi():
             'CIDC-R-01-004-SRV-00002009', 'BCI000002fb',
             '192.168.62.14', '20121022162725',
             'CIDC-R-01-000-VN-00000811', 2)
-        p1 = PhysicalMachine('CIDC-R-01-004-SRV-00002009', 
-            'NFJD-PSC-IBMH-SV129', '172.16.1.132', 
-            '20120615180101', 
+        p1 = PhysicalMachine('CIDC-R-01-004-SRV-00002009',
+            'NFJD-PSC-IBMH-SV129', '172.16.1.132',
+            '20120615180101',
             'iqn.1994-05.com.redhat:665a922a8')
         i1 = PublicIP('CIDC-R-01-002-IP-00037227', '1.2.13.148',
             '1', '192.168.41.11', '20150331093132', '20150331093541')
@@ -113,6 +113,7 @@ class TestVminfoApi():
         '''
         Post new VMINFO.
         '''
+        # 1. VM not existing
         args = dict(vm_id='CIDC-R-01-000-VM-00000236',
             pm_id='CIDC-R-01-046-SRV-00002381',
             vm_name='BCI00000152', ip='192.168.62.10',
@@ -130,6 +131,30 @@ class TestVminfoApi():
         vminfo = v['vm_info']
         eq_(7, len(vminfo))
         eq_('CIDC-R-01-000-VM-00000236', vminfo['vm_id'])
+        # 2. VM existing
+        args = dict(vm_id='CIDC-R-01-000-VM-00000236',
+            pm_id='CIDC-R-01-046-SRV-00002381',
+            vm_name='BCI00000152', ip='192.168.62.10',
+            creater_time='20121011112416',
+            vn_id='CIDC-R-01-000-VN-00000811',
+            vm_status=2)
+        response = self.tester.post(
+            '/api/v0.0/vminfos',
+            content_type='application/json',
+            data=json.dumps(args))
+        eq_(response.status_code, 403)
+        # 3. VM_ID is NULL
+        args = dict(
+            pm_id='CIDC-R-01-046-SRV-00002381',
+            vm_name='BCI00000152', ip='192.168.62.10',
+            creater_time='20121011112416',
+            vn_id='CIDC-R-01-000-VN-00000811',
+            vm_status=2)
+        response = self.tester.post(
+            '/api/v0.0/vminfos',
+            content_type='application/json',
+            data=json.dumps(args))
+        eq_(response.status_code, 400)
 
     @with_setup(setUp,tearDown)
     def test_vminfo_put(self):
@@ -176,6 +201,7 @@ class TestVminfoApi():
         '''
         Get HELPINFO for a VM.
         '''
+        # 1. VM existing
         response = self.tester.get(
             '/api/v0.0/vminfos/help/CIDC-R-01-000-VM-00000622',
             content_type="application/json")
@@ -188,3 +214,7 @@ class TestVminfoApi():
         eq_('1.2.13.148', help_info['vm_public_ip'])
         eq_('NFJD-PSC-IBMH-SV129', help_info['pm_name'])
         eq_('1.2.13.145', help_info['pm_public_ip'])
+        # 2. VM not existing
+        response = self.tester.get(
+            '/api/v0.0/vminfos/help/CIDC-R-01-000-VM-00000657')
+        eq_(response.status_code, 404)

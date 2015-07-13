@@ -113,7 +113,7 @@ class VMINFOAPI(Resource):
                 else:
                     return {'error': 'VM %s Already Existed' % vm_id}, 403
             else:
-                return {'error': 'VM_ID must be a string'}, 400
+                return {'error': 'VM_ID must not be NULL'}, 400
         except Exception as e:
             return {'error': e}, 500
 
