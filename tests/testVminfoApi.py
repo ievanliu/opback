@@ -210,8 +210,8 @@ class TestVminfoApi():
         v = json.loads(response.data)
         eq_(1, len(v))
         help_info = v['help_info']
-        eq_(4, len(help_info))
-        eq_('1.2.13.148', help_info['vm_public_ip'])
+        eq_(3, len(help_info))
+        # eq_('1.2.13.148', help_info['vm_public_ip'])
         eq_('NFJD-PSC-IBMH-SV129', help_info['pm_name'])
         # 2. VM not existing
         response = self.tester.get(
