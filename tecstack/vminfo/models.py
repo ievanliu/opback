@@ -39,8 +39,7 @@ class PhysicalMachine(db.Model):
         2015/7/12
     '''
     # 物理机内网IP
-    IP = db.Column(db.VARCHAR(length=32),
-                   db.ForeignKey('publicip_tab.Binding_PublicIP_LocalIP'))
+    IP = db.Column(db.VARCHAR(length=32))
     '''
         end
     '''
@@ -74,6 +73,59 @@ class PhysicalMachine(db.Model):
 
 
 '''
+    公网IP信息模型
+'''
+
+
+class PublicIP(db.Model):
+    __tablename__ = 'publicip_tab'
+    # 公网IP ID
+    Local_ID = db.Column(db.VARCHAR(length=50), primary_key=True)
+    # 公网IP
+    IP = db.Column(db.VARCHAR(length=150), nullable=False)
+    # 公网IP状态：0：空闲，1：占用，2：未绑定, 5：弃用
+    IP_Status = db.Column(db.VARCHAR(length=1), nullable=False)
+    # 对应的内网IP
+    Binding_PublicIP_LocalIP = db.Column(db.VARCHAR(length=150))
+    # 申请时间
+    Prop_Time = db.Column(db.VARCHAR(length=14))
+    # 操作时间
+    operate_time = db.Column(db.INT)
+    '''
+        add by leannmak
+        2015/7/12
+    '''
+    # vm_info = db.relationship('VirtualMachine', backref='pubip',
+    #                           lazy='dynamic')
+    '''
+        end
+    '''
+
+    def __init__(self, local_id, ip, ip_status,
+                 binding_publicip_localip, prop_time,
+                 operate_time):
+        self.Local_ID = local_id
+        self.IP = ip
+        self.IP_Status = ip_status
+        self.Binding_PublicIP_LocalIP = binding_publicip_localip
+        self.Prop_Time = prop_time
+        self.operate_time = operate_time
+
+    def __repr__(self):
+        return '<Public IP %r>' % self.IP
+
+    def to_json(self):
+        return {
+            'local_id': self.Local_ID,
+            'ip': self.IP,
+            'ip_status': self.IP_Status,
+            'bingding_publicip_localip': self.Binding_PublicIP_LocalIP,
+            'prop_time': self.Prop_Time,
+            'operate_time': self.operate_time
+        }
+
+
+'''
     虚拟机信息模型
 '''
 
@@ -92,8 +144,9 @@ class VirtualMachine(db.Model):
         2015/7/12
     '''
     # 虚拟机内网IP
-    IP = db.Column(db.VARCHAR(length=32),
-                   db.ForeignKey('publicip_tab.Binding_PublicIP_LocalIP'))
+    # IP = db.Column(db.VARCHAR(length=32),
+    #                db.ForeignKey('publicip_tab.Binding_PublicIP_LocalIP'))
+    IP = db.Column(db.VARCHAR(length=32))
     '''
         end
     '''
@@ -128,61 +181,12 @@ class VirtualMachine(db.Model):
             'vm_status': self.VM_STATUS
         }
 
-
-'''
-    公网IP信息模型
-'''
-
-
-class PublicIP(db.Model):
-    __tablename__ = 'publicip_tab'
-    # 公网IP ID
-    Local_ID = db.Column(db.VARCHAR(length=50), primary_key=True)
-    # 公网IP
-    IP = db.Column(db.VARCHAR(length=150), nullable=False)
-    # 公网IP状态：0：空闲，1：占用，2：未绑定, 5：弃用
-    IP_Status = db.Column(db.VARCHAR(length=1), nullable=False)
-    # 对应的内网IP
-    Binding_PublicIP_LocalIP = db.Column(db.VARCHAR(length=150))
-    # 申请时间
-    Prop_Time = db.Column(db.VARCHAR(length=14))
-    # 操作时间
-    operate_time = db.Column(db.INT)
-    '''
-        add by leannmak
-        2015/7/12
-    '''
-    vm_info = db.relationship('VirtualMachine', backref='pubip',
-                              lazy='dynamic')
-    pm_info = db.relationship('PhysicalMachine', backref='pubip',
-                              lazy='dynamic')
-    '''
-        end
-    '''
-
-    def __init__(self, local_id, ip, ip_status,
-                 binding_publicip_localip, prop_time,
-                 operate_time):
-        self.Local_ID = local_id
-        self.IP = ip
-        self.IP_Status = ip_status
-        self.Binding_PublicIP_LocalIP = binding_publicip_localip
-        self.Prop_Time = prop_time
-        self.operate_time = operate_time
-
-    def __repr__(self):
-        return '<Public IP %r>' % self.IP
-
-    def to_json(self):
-        return {
-            'local_id': self.Local_ID,
-            'ip': self.IP,
-            'ip_status': self.IP_Status,
-            'bingding_publicip_localip': self.Binding_PublicIP_LocalIP,
-            'prop_time': self.Prop_Time,
-            'operate_time': self.operate_time
-        }
-
+    def get_pubip(self):
+        if self.IP:
+            pubip = PublicIP.query.filter_by(
+                Binding_PublicIP_LocalIP=self.IP).first()
+            return pubip
+        return None
 
 # '''
 #     初始化数据库

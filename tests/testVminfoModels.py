@@ -55,12 +55,19 @@ class TestModelsVirtualMachine():
             '1.2.14.93', '1', '192.168.41.11', 
             '20150521163200', '20150521163541')
         ip2 = PublicIP('CIDC-R-01-002-IP-00037434', 
-            '1.2.14.94', '1', '172.16.1.132', 
+            '1.2.14.94', '1', '192.168.62.14', 
             '20150522103129', '20150522103341')
+        ip3 = PublicIP('CIDC-R-01-002-IP-00037435', 
+            '1.2.14.95', '1', '192.168.0.1', 
+            '20150522103130', '20150522103342')
         db.session.add(v1)
         db.session.add(v2)
         db.session.add(p1)
         db.session.add(p2)
+        db.session.add(ip1)
+        db.session.add(ip2)
+        db.session.add(ip3)
+
         db.session.commit()
 
     # drop db
@@ -74,8 +81,8 @@ class TestModelsVirtualMachine():
         insert virtualmachine
         '''
         vm_insert = VirtualMachine('TEST-R-01-000-VM-00000623',
-                         'TEST-R-01-090-SRV-00002588', 'BCI000002d4',
-                         '192.168.41.11', '20121018145925',
+                         'CIDC-R-01-004-SRV-00002009', 'BCI000002d4',
+                         '192.168.0.1', '20121018145925',
                          'TEST-R-01-000-VN-00000790', 2) 
         db.session.add(vm_insert)
         db.session.commit()
@@ -99,14 +106,14 @@ class TestModelsVirtualMachine():
     @with_setup(setUp, tearDown)
     def test_virtualmachine_updateinfo(self):
         '''
-        updata virtualmachine
+        update virtualmachine
         '''
         vm = VirtualMachine.query.filter_by(VM_ID="CIDC-R-01-000-VM-00000622").first()
         vm.VM_Name = "TEST00002d4"
         db.session.commit()
 
-        vm = VirtualMachine.query.filter_by(VM_ID="CIDC-R-01-000-VM-00000622").first()
-        eq_(vm.VM_Name, "TEST00002d4")
+        vm_get = VirtualMachine.query.filter_by(VM_ID="CIDC-R-01-000-VM-00000622").first()
+        eq_(vm_get.VM_Name, "TEST00002d4")
 
     # test to get data
     @with_setup(setUp, tearDown)
@@ -117,10 +124,10 @@ class TestModelsVirtualMachine():
         vm = VirtualMachine.query.filter_by(VM_ID="CIDC-R-01-000-VM-00000622").first()
         vmDic = vm.to_json()
         pm = vm.pm
-        pubip = vm.pubip
+        pubip = vm.get_pubip()
         eq_(vmDic['vm_name'], "BCI000002d4")
-        eq_(pubip['IP'], "1.2.14.93")
         eq_(pm.PM_Name, "NFJD-PSC-IBMH-SV129")
+        eq_(pubip.IP, "1.2.14.93")
 
 
 
@@ -162,14 +169,16 @@ class TestModelsPhysicalMachine():
             '1.2.14.93', '1', '192.168.41.11', 
             '20150521163200', '20150521163541')
         ip2 = PublicIP('CIDC-R-01-002-IP-00037434', 
-            '1.2.14.94', '1', '172.16.1.132', 
+            '1.2.14.94', '1', '192.168.62.14', 
             '20150522103129', '20150522103341')
         db.session.add(v1)
         db.session.add(v2)
         db.session.add(p1)
         db.session.add(p2)
-
+        db.session.add(ip1)
+        db.session.add(ip2)
         db.session.commit()
+
 
     # drop db
     def tearDown(self):
@@ -224,8 +233,8 @@ class TestModelsPhysicalMachine():
         '''
         pm = PhysicalMachine.query.filter_by(PM_ID="CIDC-R-01-004-SRV-00002009").first()
         pmDic = pm.to_json()
-        pubip = pm.pubip
-        eq_(pubip['IP'], '1.2.14.94')
+        # pubip = pm.pubip
+        # eq_(pubip.IP, '1.2.14.94')
         eq_(pmDic['pm_name'], "NFJD-PSC-IBMH-SV129")
 
 
@@ -264,10 +273,10 @@ class TestModelsPublicIP():
             '20120615180101',
             'iqn.1994-05.com.redhat:d137da297aeb')
         ip1 = PublicIP('CIDC-R-01-002-IP-00037433',
-            '1.2.14.93', '1', '10.102.240.18', 
+            '1.2.14.93', '1', '192.168.41.11', 
             '20150521163200', '20150521163541')
         ip2 = PublicIP('CIDC-R-01-002-IP-00037434', 
-            '1.2.14.94', '1', '10.102.240.19', 
+            '1.2.14.94', '1', '192.168.62.14', 
             '20150522103129', '20150522103341')
         db.session.add(v1)
         db.session.add(v2)
