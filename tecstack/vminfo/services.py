@@ -184,7 +184,8 @@ class VMHELPAPI(Resource):
             pm_id = pm_info.PM_ID
             pm_name = pm_info.PM_Name
             pm_ip = pm_info.IP
-        help_list = {#'vm_public_ip': vm_public_ip,
+        help_list = {
+            # 'vm_public_ip': vm_public_ip,
             'pm_id': pm_id, 'pm_name': pm_name,
             'pm_local_ip': pm_ip}
         return {'help_info': help_list}, 200
