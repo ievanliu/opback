@@ -2,25 +2,11 @@
 # BY Daisheng
 # Jul,02,2015
 
-# from flask import Flask
-# from flask.ext.sqlalchemy import SQLAlchemy
-# from tecstack import app, db
 from tecstack import db
 
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
-
-# app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/\
-# share/helwldv001/data/test.db'
-# app.config['DTATBASE_FILE'] = '/home/share/helwldv001/dat\
-# a/test.db'
-# app.config['DATA_SOURCEFILE'] = '/home/share/helwldv001/d\
-# ata/data0702/data0702.sql'
-# db = SQLAlchemy(app)
-# db.init_app(app)
 
 
 '''
@@ -34,15 +20,8 @@ class PhysicalMachine(db.Model):
     PM_ID = db.Column(db.VARCHAR(length=64), primary_key=True)
     # 物理机名称
     PM_Name = db.Column(db.VARCHAR(length=64))
-    '''
-        add ForeignKey by leannmak
-        2015/7/12
-    '''
     # 物理机内网IP
     IP = db.Column(db.VARCHAR(length=32))
-    '''
-        end
-    '''
     # 物理机创建时间
     Creat_Time = db.Column(db.VARCHAR(length=14))
     # iscsi连接名
@@ -91,15 +70,6 @@ class PublicIP(db.Model):
     Prop_Time = db.Column(db.VARCHAR(length=14))
     # 操作时间
     operate_time = db.Column(db.INT)
-    '''
-        add by leannmak
-        2015/7/12
-    '''
-    # vm_info = db.relationship('VirtualMachine', backref='pubip',
-    #                           lazy='dynamic')
-    '''
-        end
-    '''
 
     def __init__(self, local_id, ip, ip_status,
                  binding_publicip_localip, prop_time,
@@ -132,6 +102,7 @@ class PublicIP(db.Model):
 
 class VirtualMachine(db.Model):
     __tablename__ = 'vm_info_tab'
+
     # 虚拟机ID
     VM_ID = db.Column(db.VARCHAR(length=64), primary_key=True)
     # 物理机ID
@@ -139,17 +110,8 @@ class VirtualMachine(db.Model):
                       db.ForeignKey('pm_info_tab.PM_ID'))
     # 虚拟机名称
     VM_Name = db.Column(db.VARCHAR(length=64))
-    '''
-        add ForeignKey by leannmak
-        2015/7/12
-    '''
-    # 虚拟机内网IP
-    # IP = db.Column(db.VARCHAR(length=32),
-    #                db.ForeignKey('publicip_tab.Binding_PublicIP_LocalIP'))
+    # 虚拟机IP
     IP = db.Column(db.VARCHAR(length=32))
-    '''
-        end
-    '''
     # 虚拟机创建时间
     Creater_Time = db.Column(db.VARCHAR(length=14))
     # 子网ID
@@ -187,32 +149,3 @@ class VirtualMachine(db.Model):
                 Binding_PublicIP_LocalIP=self.IP).first()
             return pubip
         return None
-
-# '''
-#     初始化数据库
-# '''
-# 创建数据库
-
-
-# def init_db():
-    # # db.drop_all()
-    # db.create_all()
-
-
-# # 导入数据
-
-
-# def import_data():
-    # import os
-    # db_path = os.path.join(app.config['DB_FOLDER'],app.config['DB_FILE'])
-    # print db_path
-    # from sqlite3 import dbapi2 as sqlite3
-    # rv = sqlite3.connect('D:\\Codes\\Python\\opback\\.data\\app.db')
-    # rv.row_factory = sqlite3.Row
-    # with app.open_resource('data0702.sql', mode='r') as f:
-        # rv.cursor().executescript(f.read())
-    # rv.commit()
-    # rv.close()
-
-# init_db()
-# # import_data()

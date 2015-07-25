@@ -41,13 +41,14 @@ $ git clone https://github.com/tecstack/opback.git
 $ cd opback
 $ flake8 # 检查语法合规性，参照业内PEP8规范
 $ tox # 多环境自动化单元测试
-$ nosetests -v --with-coverage --cover-package=tecstack # 代码单元测试覆盖率
+$ nosetests -v --with-coverage --cover-package=tecstack --exe# 代码单元测试覆盖率
 $ python runserver.py # 直接启动
 $ python scripts/manager.py runserver # 通过manager启动
 $ python scripts/manager.py shell # 通过shell调测，自动import app, db, models
 $ python scripts/manager.py initdb # 初始化数据库: .data/app.db
 $ python scripts/manager.py importdata # 导入数据: .data/data.sql -- > .data/app.db
 $ python scripts/manager.py dropdb # 删除数据库: .data/app.db
+$ python scripts/manager.py recreatedb # 删除并重新创建数据库和导入数据: .data/app.db
 $ python scripts/manager.py db migrate # 修改models之后通过migrate检测模型变更
 $ python scripts/manager.py db upgrade # 根据自动检测变化更新数据库
 $ python scripts/manager.py db downgrade # 数据库版本降级
