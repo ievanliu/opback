@@ -174,10 +174,10 @@ class VMHELPAPI(Resource):
         vm_info = VirtualMachine.query.filter_by(VM_ID=vm_id).first()
         if not vm_info:
             return {'error': 'VM %s Not Found' % vm_id}, 404
-        # vm_pub = vm_info.pubip
-        # vm_public_ip = ''
-        # if vm_pub:
-            # vm_public_ip = vm_pub.IP
+        vm_pub = vm_info.get_pubip()
+        vm_public_ip = ''
+        if vm_pub:
+            vm_public_ip = vm_pub.IP
         pm_info = vm_info.pm
         pm_id, pm_name, pm_ip = '', '', ''
         if pm_info:
@@ -185,7 +185,7 @@ class VMHELPAPI(Resource):
             pm_name = pm_info.PM_Name
             pm_ip = pm_info.IP
         help_list = {
-            # 'vm_public_ip': vm_public_ip,
+            'vm_public_ip': vm_public_ip,
             'pm_id': pm_id, 'pm_name': pm_name,
             'pm_local_ip': pm_ip}
         return {'help_info': help_list}, 200
