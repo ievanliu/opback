@@ -1,0 +1,11 @@
+MAIL_SERVER = 'smtp.sina.com'
+MAIL_PORT = 25
+MAIL_USE_TLS = False
+MAIL_USE_SSL = False
+MAIL_DEBUG = False
+MAIL_USERNAME = 'tecstack'
+MAIL_PASSWORD = 'tec000000'
+MAIL_DEFAULT_SENDER = 'tecstack@sina.com'
+MAIL_MAX_EMAILS = None
+MAIL_SUPPRESS_SEND = False
+MAIL_ASCII_ATTACHMENTS = False
