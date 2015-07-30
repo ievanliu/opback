@@ -1,0 +1,10 @@
+actionid: py27
+msg: getenv
+cmdargs: ['/root/.pyenv/versions/flask/bin/python2.7', '-m', 'virtualenv', '--python', '/root/.pyenv/versions/flask/bin/python2.7', 'py27']
+env: {'LANG': 'en_US.UTF-8', 'PATH': '/home/maiyifan/leannmak/share/codes/opback/.tox/py27/bin:/root/.pyenv/versions/flask/bin:/root/.pyenv/libexec:/root/.pyenv/plugins/python-build/bin:/root/.pyenv/plugins/pyenv-virtualenv/bin:/root/.pyenv/shims:/root/.pyenv/bin:/opt/jdk8/jdk1.8.0_45//bin:/opt/maven/apache-maven-3.3.3/bin:/sbin:/bin:/usr/sbin:/usr/bin', 'VIRTUAL_ENV': '/home/maiyifan/leannmak/share/codes/opback/.tox/py27', 'PYTHONHASHSEED': '635806713'}
+
+Already using interpreter /root/.pyenv/versions/flask/bin/python2.7
+Using real prefix '/root/.pyenv/versions/2.7.8'
+New python executable in py27/bin/python2.7
+Also creating executable in py27/bin/python
+Installing setuptools, pip, wheel...done.
