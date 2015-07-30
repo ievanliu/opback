@@ -111,7 +111,7 @@ class TestUserApi():
         # 1. User not existing
         args = dict(
             username='jochlam',
-            email='13802882778@139.com',
+            email='13802882681@139.com',
             phone_number='13802882778',
             password='000111')
         response = self.tester.post(

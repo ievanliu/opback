@@ -41,7 +41,7 @@ $ git clone https://github.com/tecstack/opback.git
 $ cd opback
 $ flake8 # 检查语法合规性，参照业内PEP8规范
 $ tox # 多环境自动化单元测试
-$ nosetests -v --with-coverage --cover-package=tecstack --exe# 代码单元测试覆盖率
+$ nosetests -v --with-coverage --cover-package=tecstack --exe # 代码单元测试覆盖率
 $ python runserver.py # 直接启动
 $ python scripts/manager.py runserver # 通过manager启动
 $ python scripts/manager.py shell # 通过shell调测，自动import app, db, models
