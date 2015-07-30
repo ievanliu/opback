@@ -11,23 +11,23 @@
 from flask import Flask
 import os
 
+# flask mail
+from flask.ext.mail import Mail
+mail = Mail()
 
 # Main flask object
 app = Flask(__name__)
+app.config.from_object('config')
 
-'''
-    add by Leann Mak
-    2015/7/5
-'''
+# Config for mail
+app.config.from_object('config.'+app.config['MAIL'])
+mail.init_app(app)
+
 # Config for cross domain access
 from flask.ext.cors import CORS
 cors = CORS(app)
-'''
-    end
-'''
 
 # Config for database and log file location
-app.config.from_object('config')
 app.config.from_object('config.'+app.config['STAGE'])
 
 # init .data and .log folder in root dir
@@ -81,4 +81,4 @@ from flask.ext.restful import Api
 api = Api(app, errors=errors)
 
 from tecstack import vminfo
-from tecstack import auth # flake8: noqa
+from tecstack import usrinfo # flake8: noqa
