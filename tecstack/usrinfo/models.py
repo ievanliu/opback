@@ -2,6 +2,8 @@
 
 from tecstack import db, api
 from passlib.apps import custom_app_context as pwd_context
+from itsdangerous import (TimedJSONWebSignatureSerializer
+                          as Serializer, BadSignature, SignatureExpired)
 
 
 class User(db.Model):
@@ -39,10 +41,58 @@ class User(db.Model):
                 self.password_hash = new_hash
         return valid
 
+    def generate_activate_code(self, expiration=120):
+        s = Serializer(
+            secret_key=api.app.config['SECRET_KEY'],
+            salt=api.app.config['ACTIVATE_SALT'],
+            expires_in=expiration)
+        return s.dumps({'username': self.username,
+                        'email': self.email,
+                        'phone_number': self.phone_number,
+                        'password': self.password_hash})
+
+    @staticmethod
+    def verify_activate_code(activate_code):
+        s = Serializer(
+            secret_key=api.app.config['SECRET_KEY'],
+            salt=api.app.config['ACTIVATE_SALT'])
+        try:
+            data = s.loads(activate_code)
+        except SignatureExpired:
+            return None  # valid activate_code, but expired
+        except BadSignature:
+            return None  # invalid activate_code
+        user = User(username=data['username'],
+                    email=data['email'],
+                    phone_number=data['phone_number'])
+        user.password_hash = data['password']
+        return user
+
+    def generate_auth_token(self, expiration=600):
+        s = Serializer(
+            secret_key=api.app.config['SECRET_KEY'],
+            salt=api.app.config['TOKEN_SALT'],
+            expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(
+            secret_key=api.app.config['SECRET_KEY'],
+            salt=api.app.config['TOKEN_SALT'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None  # valid token, but expired
+        except BadSignature:
+            return None  # invalid token
+        user = User.query.get(data['id'])
+        return user
+
     @property
     def url(self):
         import services
-        return api.url_for(services.UserApi, user_id=self.id)
+        return api.url_for(services.UserApi, username=self.username)
 
     def to_dict(self):
         return {

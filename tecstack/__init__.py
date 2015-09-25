@@ -27,6 +27,8 @@ mail.init_app(app)
 from flask.ext.cors import CORS
 cors = CORS(app)
 
+app.config.from_object('config.'+app.config['SECURITY'])
+
 # Config for database and log file location
 app.config.from_object('config.'+app.config['STAGE'])
 
@@ -80,5 +82,22 @@ from flask.ext.restful import Api
 # api = Api(app)
 api = Api(app, errors=errors)
 
+from flask.ext.httpauth import HTTPBasicAuth
+auth = HTTPBasicAuth()
+
 from tecstack import vminfo
-from tecstack import usrinfo # flake8: noqa
+from tecstack import usrinfo  # flake8: noqa
+from usrinfo.models import User
+from flask import g
+
+@auth.verify_password
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    user = User.verify_auth_token(username_or_token)
+    if not user:
+        # try to authenticate with username/password
+        user = User.query.filter_by(username = username_or_token).first()
+        if not user or not user.verify_password(password):
+            return False
+    g.user = user
+    return True
