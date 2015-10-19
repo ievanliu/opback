@@ -29,6 +29,8 @@ cors = CORS(app)
 
 app.config.from_object('config.'+app.config['SECURITY'])
 
+app.config.from_object('config.'+app.config['COMMON'])
+
 # Config for database and log file location
 app.config.from_object('config.'+app.config['STAGE'])
 
@@ -58,9 +60,6 @@ db = SQLAlchemy(app)
 
 from flask.ext.marshmallow import Marshmallow
 ma = Marshmallow(app)
-
-# Authentication config
-# auth = HTTPBasicAuth()
 
 errors = {
     'VMIsNotFoundError': {

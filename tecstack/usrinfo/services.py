@@ -58,7 +58,7 @@ class UserApi(Resource):
                 html='<p>Hello %s: </p><br/><p>Congratulations!</p><br/>Please click \
                       the link to sign in:</p><br/><p><a>%s?act=%s</a></p>'
                      % (user.username,
-                        url_for('user_ep', _external=True, _scheme='https'),
+                        url_for('user_ep', _external=True),
                         activate_code),
                 recipients=[user.email])
             mail.send(msg)

@@ -4,3 +4,4 @@
 STAGE = "dev"
 MAIL = "mail"
 SECURITY = "sec"
+COMMON = "com"
