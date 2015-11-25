@@ -61,7 +61,7 @@ $ autopep8 -i src/tecstack/xxx.py # 自动根据PEP8规范修正代码，不会�
 * `pip freeze`生成目前python环境依赖的类库，推荐pyenv独立环境（flask）内导出依赖库。
 * `gitchangelog`生成git提交记录，由发布者写入changelog发布。
 * `flake8`检查当前所写python的语法合规性，于业内规范PEP8做校验对比，不能有错误提示。
-* `nosetests -v --with-coverage --cover-package=tecstack`执行单元测试，\
+* `nosetests -v --with-coverage --cover-package=promise`执行单元测试，\
     要求通过所有写的测试。
 * `tox`自动创建独立的python运行环境，并在每个独立环境内执行语法、单元测试任务，用于自动集成。
 * 所有代码 **本地** 提交之前建议通过flake8和nosetests检查错误，无误后可以提交到本地仓库。
