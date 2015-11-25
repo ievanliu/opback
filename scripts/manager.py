@@ -1,34 +1,18 @@
-
+# -*- coding:utf-8 -*-
 import sys
 sys.path.append('.')
 
 from flask.ext.script import Manager, Shell, prompt_bool
 from flask.ext.migrate import Migrate, MigrateCommand
-'''
-    add by daisheng
-'''
-from sqlite3 import dbapi2 as sqlite3
 
-from tecstack import app, db
-from tecstack import usrinfo
-'''
-    add by leannmak
-    2015/7/5
-'''
-from tecstack import vminfo
-'''
-    end
-'''
+from promise import app, db
+from promise.user import utils as userUtils
+from promise.user.models import User, Privilege, Role
 
 migrate = Migrate(app, db)
-'''
-    add usage by leannmak
-    2015/7/13
-'''
+
 manager = Manager(app, usage="Perform database operations")
-'''
-    end
-'''
+
 manager.add_command('db', MigrateCommand)
 
 
@@ -41,47 +25,55 @@ def initdb():
     db.create_all()
     print 'Database inited, location: ' + app.config['SQLALCHEMY_DATABASE_URI']
 
-'''
-    add by Shawn.T
-'''
-
 
 @manager.command
 def importdata():
     "Import data into database tables"
-    rv = sqlite3.connect(app.config['DB_FILEPATH'])
-    rv.row_factory = sqlite3.Row
-    with app.open_resource(app.config['DB_SOURCEFILEPATH'], mode='r') as f:
-        rv.cursor().executescript(f.read())
-    rv.commit()
-    '''
-        add by leannmak
-        2015/7/5
-    '''
-    rv.close()
-    '''
-        end
-    '''
-    print 'vminfo Data imported, source file: ' \
-          + app.config['DB_SOURCEFILEPATH']
+
+    # init privileges
+    privilegeNameList = ['userAdmin', 'inventoryAdmin']
+    privilegeList = []
+    for item in privilegeNameList:
+        newPrivilege = Privilege(item)
+        db.session.add(newPrivilege)
+        privilegeList.append(newPrivilege)
+
+    # init roles
+    roleRoot = Role('root')
+    roleRoot.addPrivilege(privilegeList=privilegeList)
+    roleOperator = Role('operator')
+    roleInventoryAdmin = Role('InventoryAdmin')
+    roleInventoryAdmin.addPrivilege(privilege=newPrivilege)
+    db.session.add(roleRoot)
+    db.session.add(roleOperator)
+    db.session.add(roleInventoryAdmin)
+    db.session.commit()  # commit the roles before user init
+
+    # init users
+    user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
+    user2 = User(
+        'jerry', userUtils.hash_pass("jerrypass"), roleInventoryAdmin)
+    rootUser = User(
+        app.config['DEFAULT_ROOT_USER_NAME'],
+        userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']),
+        roleRoot)
+    visitor = User('visitor', 'visitor', roleOperator)
+
+    db.session.add(rootUser)
+    db.session.add(visitor)
+    db.session.add(user1)
+    db.session.add(user2)
+    db.session.commit()
+    print 'Data imported'
 
 
 @manager.command
 def dropdb():
-    '''
-        add prompt by leannmak
-        2015/7/13
-    '''
+
     "Drops database tables"
     if prompt_bool("Are you sure you want to lose all your data"):
         db.drop_all()
         print 'Database droped.'
-
-
-'''
-    add by leannmak
-    2015/7/13
-'''
 
 
 @manager.command
@@ -91,13 +83,10 @@ def recreatedb():
     dropdb()
     initdb()
     importdata()
-'''
-    end
-'''
 
 
 def _make_context():
-    return dict(app=app, db=db, usrinfo=usrinfo, vminfo=vminfo)
+    return dict(app=app, db=db)
 
 manager.add_command("shell", Shell(make_context=_make_context))
 
