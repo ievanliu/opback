@@ -2,7 +2,8 @@
 [![Build Status](https://travis-ci.org/tecstack/opback.svg?branch=develop)](https://travis-ci.org/tecstack/opback) [![Coverage Status](https://coveralls.io/repos/tecstack/opback/badge.svg?branch=develop)](https://coveralls.io/r/tecstack/opback?branch=develop) [![Download Status](https://img.shields.io/badge/download-1024%2Fmonth-green.svg)](https://github.com/tecstack/opback/)
 
 
-Hello World for Team mgmt
+This is the first stage of Promise.
+
 
 ## Prerequests
 
@@ -19,9 +20,11 @@ Hello World for Team mgmt
 
 ```bash
 $ git clone https://github.com/tecstack/opback.git
+$ git branch promise
 $ cd opback
 $ pip install -r requirements.txt
-$ python src/hello/app.py
+$ python scripts/manager.py recreatedb
+$ python runserver.py
 ```
 出现如下提示表示运行正常：
 
@@ -33,6 +36,8 @@ $ python src/hello/app.py
 * 打开浏览器，访问："http://localhost:5000"
 * 访问："http://localhost:5000/_add_numbers?a=1&b=1"
 
+* 配置文件 config.py
+* 测试时可重载配置文件：instance/config.py
 
 ### Dev时用到的一些命令：
 
@@ -41,7 +46,7 @@ $ git clone https://github.com/tecstack/opback.git
 $ cd opback
 $ flake8 # 检查语法合规性，参照业内PEP8规范
 $ tox # 多环境自动化单元测试
-$ nosetests -v --with-coverage --cover-package=tecstack --exe # 代码单元测试覆盖率
+$ nosetests -v --with-coverage --cover-package=promise --exe # 代码单元测试覆盖率
 $ python runserver.py # 直接启动
 $ python scripts/manager.py runserver # 通过manager启动
 $ python scripts/manager.py shell # 通过shell调测，自动import app, db, models
@@ -62,10 +67,18 @@ $ autopep8 -i src/tecstack/xxx.py # 自动根据PEP8规范修正代码，不会�
 * `gitchangelog`生成git提交记录，由发布者写入changelog发布。
 * `flake8`检查当前所写python的语法合规性，于业内规范PEP8做校验对比，不能有错误提示。
 * `nosetests -v --with-coverage --cover-package=promise`执行单元测试，\
-    要求通过所有写的测试。
+    要求通过所有写的测试，测试覆盖率80%以上。
 * `tox`自动创建独立的python运行环境，并在每个独立环境内执行语法、单元测试任务，用于自动集成。
 * 所有代码 **本地** 提交之前建议通过flake8和nosetests检查错误，无误后可以提交到本地仓库。
 * 所有代码 **远程** 提交之前必须通过tox测试，无误后可以push到远程develop分支。
 * **Never** use manager.py to do database operation in **Production Environment**.
 * 单元测试中数据库采用.data/test.db，每个测试用例都会重新创建数据库
 * **首次启动** 请使用manager初始化数据库并导入数据，待导入文件默认为data.sql，请确保其在.data目录下。
+
+## 以下为promise branch新增规约：
+
+* api与model隔离，在api中不import db，所有db操作封装在model中
+* import包或类时，对当前目录采用“.”，上一级目录采用“..”，以此类推
+* 单一配置文件
+
+
