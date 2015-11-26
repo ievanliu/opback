@@ -6,7 +6,7 @@ install:
 script:
     #- python scripts/manager.py recreatedb
     - tox
-    - nosetests -v --with-coverage --cover-package=promise
+    - nosetests -v tests/user/* --with-coverage --cover-package=promise
 notifications:
     email:
         recipients:
