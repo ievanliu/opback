@@ -12,8 +12,8 @@ notifications:
         recipients:
             #- promisejohn@qq.com
             - 13802882681@139.com
-            #- 13802880354@139.com
-            #- 13802882778@139.com
+            - 13802880354@139.com
+            - 13802882778@139.com
         on_success: always
         on_failure: always
 
