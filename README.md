@@ -1,5 +1,5 @@
 # opback
-[![Build Status](https://travis-ci.org/tecstack/opback.svg?branch=develop)](https://travis-ci.org/tecstack/opback) [![Coverage Status](https://coveralls.io/repos/tecstack/opback/badge.svg?branch=develop)](https://coveralls.io/r/tecstack/opback?branch=develop) [![Download Status](https://img.shields.io/badge/download-1024%2Fmonth-green.svg)](https://github.com/tecstack/opback/)
+[![Build Status](https://travis-ci.org/tecstack/opback.svg?branch=promise)](https://travis-ci.org/tecstack/promise) [![Coverage Status](https://coveralls.io/repos/tecstack/opback/badge.svg?branch=promise)](https://coveralls.io/r/tecstack/opback?branch=promise) [![Download Status](https://img.shields.io/badge/download-1024%2Fmonth-green.svg)](https://github.com/tecstack/opback/)
 
 
 This is the first stage of Promise.
