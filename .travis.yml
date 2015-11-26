@@ -6,7 +6,7 @@ install:
 script:
     - python scripts/manager.py initdb
     - tox
-    - nosetests -v --with-coverage --cover-package=tecstack
+    - nosetests -v --with-coverage --cover-package=promise
 notifications:
     email:
         recipients:
