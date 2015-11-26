@@ -25,7 +25,7 @@ DB_FILE = 'app.db'
 DB_SOURCEFILE = 'data.sql'
 DB_FILEPATH = os.path.join(DB_FOLDER, DB_FILE)
 DB_SOURCEFILEPATH = os.path.join(DB_FOLDER, DB_SOURCEFILE)
-#config the sqlite acces URI:
+# config the sqlite acces URI:
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DB_FOLDER, DB_FILE)
 
 
