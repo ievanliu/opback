@@ -21,6 +21,7 @@ branches:
     only:
         - master
         - develop
+        - promise
 
 after_success:
     - coveralls
