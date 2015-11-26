@@ -4,7 +4,7 @@ python:
 install:
     - "pip install -r requirements.txt"
 script:
-    - python scripts/manager.py recreatedb
+    #- python scripts/manager.py recreatedb
     - tox
     - nosetests -v --with-coverage --cover-package=promise
 notifications:
