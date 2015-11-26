@@ -18,8 +18,10 @@ app = Flask(__name__, instance_relative_config=True)
 # Config File:
 # use the instance/config.py to cover the default config object.
 # u can put some instance settings into the instance/config.py
+
 app.config.from_object('config')
-app.config.from_pyfile('config.py')
+if os.path.isfile('/instance/config.py'): #如果不存在就返回False
+	app.config.from_pyfile('config.py')
 
 # Init The Api Obj
 from flask.ext.restful import Api
