@@ -123,9 +123,8 @@ def handle_invalid_api_usage(error):
     response.status_code = error.status_code
     return response
 
-"""
-    return a normal restful json response
-"""
+
+# return a normal restful json response
 @api.representation('application/json')
 def responseJson(data, code, headers=None):
     resp = make_response(json.dumps(data), code)

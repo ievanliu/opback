@@ -47,9 +47,9 @@ from . import utils
 # init the logger obj
 app.logger.addHandler(utils.handler)
 
-# Config for cross domain access 
-from flask.ext.cors import CORS 
-cors = CORS(app) 
+# Config for cross domain access
+from flask.ext.cors import CORS
+cors = CORS(app)
 
 # what services u privide, import your packages or modules here
 from . import user

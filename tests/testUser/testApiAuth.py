@@ -98,7 +98,7 @@ class TestApiUserLogin():
             follow_redirects = True)
         assert 'wrong username & password' in rv.data
         assert 'token' not in rv.data
-        eq_(rv.status_code, 200)
+        eq_(rv.status_code, 400)
 
         # login with correct username & password
         rv = self.app.post(

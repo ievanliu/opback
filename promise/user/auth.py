@@ -9,7 +9,7 @@
 # login by user&password, login by token, privilege auth by token, etc.
 #
 
-from flask import g, jsonify
+from flask import g
 from flask_restful import reqparse, Resource
 from .models import User, Token, Privilege
 from .. import app, utils
@@ -46,7 +46,7 @@ class UserLogin(Resource):
         if token:
             g.logined = True
             app.logger.info(utils.logmsg(msg))
-            response = {"message":msg, "token":token.token_id}
+            response = {"message": msg, "token": token.token_id}
 #            response.status_code = 200
             return response, 200
         g.logined = False
@@ -79,7 +79,7 @@ class TokenAuth(Resource):
         if not user:
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
-        response = {"message":msg}
+        response = {"message": msg}
         return response, 200
 
 
