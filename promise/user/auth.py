@@ -46,12 +46,14 @@ class UserLogin(Resource):
         if token:
             g.logined = True
             app.logger.info(utils.logmsg(msg))
-            return jsonify(message=msg, token=token.token_id)
+            response = {"message":msg, "token":token.token_id}
+#            response.status_code = 200
+            return response, 200
         g.logined = False
         # rewrite the msg, yeah.. do not tell them too mutch.
         msg = 'wrong username & password'
         app.logger.info(utils.logmsg(msg))
-        return jsonify(message=msg)
+        raise utils.InvalidAPIUsage(msg)
 
 
 class TokenAuth(Resource):
@@ -77,7 +79,8 @@ class TokenAuth(Resource):
         if not user:
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
-        return jsonify(message=msg)
+        response = {"message":msg}
+        return response, 200
 
 
 class PrivilegeAuth(Resource):
@@ -87,7 +90,7 @@ class PrivilegeAuth(Resource):
     Your method's 'required privilege' should be set as argument of this
     decoretor. And this 'required privilege' should have been in the
     'privilege' table.
-    If user's privileges including your method's privilege, user will be
+    If your method's 'required privilege' is in user's privileges, user will be
     allowed to run the method, otherwise not.
     ps.user's privilege is checked by his token.
     """

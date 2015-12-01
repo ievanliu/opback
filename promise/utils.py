@@ -8,8 +8,8 @@
 # holding some useful tools, and setting up the Eceptions
 #
 import uuid
-from . import app
-from flask import request
+from . import app, api
+from flask import request, make_response, json
 
 
 def genUuid(seq):
@@ -122,3 +122,12 @@ def handle_invalid_api_usage(error):
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     return response
+
+"""
+    return a normal restful json response
+"""
+@api.representation('application/json')
+def responseJson(data, code, headers=None):
+    resp = make_response(json.dumps(data), code)
+    resp.headers.extend(headers or {})
+    return resp
