@@ -100,11 +100,11 @@ class User(db.Model):
         if not user:
             msg = 'cannot find user_name:'+userName
             app.logger.debug(msg)
-            return [None, None, msg]
+            return [None, None, None, msg]
         elif not userUtils.hash_pass(password) == user.hashed_password:
             msg = 'user name and password cannot match.'
             app.logger.debug(msg)
-            return [None, None, msg]
+            return [None, None, None, msg]
         # generate token sequence
         tokenId = user.genTokenSeq()
         # set the token expiration time by the config file
@@ -113,6 +113,7 @@ class User(db.Model):
             datetime.timedelta(0, app.config['TOKEN_DURATION'], 0)
         # generate token obj
         newToken = Token(tokenId, tokenExp, user.user_id)
+        refreshToken = 'refresh Token'
         # invalid the other tokens of the same user
         oldTokens = Token.getValidToken(userId=user.user_id)
         if oldTokens:
@@ -125,7 +126,7 @@ class User(db.Model):
             raise utils.InvalidModuleUsage(e)
         msg = 'user ('+userName+') logged in.'
         app.logger.debug(msg)
-        return [newToken, user, msg]
+        return [newToken, refreshToken, user, msg]
 
 
 class Token(db.Model):

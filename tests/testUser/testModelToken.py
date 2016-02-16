@@ -122,6 +122,6 @@ class TestModelsToken():
         '''
         get token
         '''
-        [token, user, msg] = User.userLogin4token('tom','tompass')
+        [token, refreshToken, user, msg] = User.userLogin4token('tom','tompass')
         token = Token.getValidToken(tokenId=token.token_id)
         eq_(token.user_id, user.user_id)

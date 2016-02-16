@@ -42,7 +42,8 @@ class UserLogin(Resource):
             raise utils.InvalidAPIUsage(msg)
 
         # try to log in
-        [token, user, msg] = User.userLogin4token(userName, password)
+        [token, refreshToken, user, msg] = User.userLogin4token(
+            userName, password)
         if token:
             g.logined = True
             app.logger.info(utils.logmsg(msg))
