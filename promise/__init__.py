@@ -53,5 +53,5 @@ cors = CORS(app)
 
 # what services u privide, import your packages or modules here
 from . import user
-# use 'assert' to quiet flake
+# use 'assert' to quiet flake8
 assert user
