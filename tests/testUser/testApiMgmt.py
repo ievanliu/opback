@@ -155,7 +155,34 @@ class TestApiUserList():
         eq_(rv.status_code, 400)
 
     @with_setup(setUp, tearDown)
-    def test_user_api(self):
+    def test_user_api_get(self):
+        """
+        test get one user info
+        """
+        rv = self.app.post(
+            '/api/v0.0/user/login', 
+            data = dict(
+                username = app.config['DEFAULT_ROOT_USER_NAME'],
+                password = app.config['DEFAULT_ROOT_PASSWORD']),
+            follow_redirects = True)
+        assert 'logged in' in rv.data
+        assert 'token' in rv.data
+        eq_(rv.status_code, 200)
+        # use the token to add user
+        response = json.loads(rv.data)
+        gotToken = response['token']
+        user = User.getValidUser(userName='tom')
+        rv = self.app.get(
+            '/api/v0.0/user', 
+            headers = {'token': gotToken},
+            data = dict(
+                userid=user.user_id),
+            follow_redirects = True)
+        assert 'tom' in rv.data
+        eq_(rv.status_code, 200)
+
+    @with_setup(setUp, tearDown)
+    def test_user_api_post(self):
         """
         test user add
         """
