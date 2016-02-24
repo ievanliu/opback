@@ -18,7 +18,7 @@ SQLALCHEMY_DATABASE_URI = 'mysql://dbname:dbpassword@ip:port/dbname'
 
 # ADVISE：create instance/config.py, your sqlite setting might like this:
 # get some folders and dirs:
-import os
+# import os
 basedir = os.path.abspath(os.path.dirname('..'))
 DB_FOLDER = os.path.join(basedir,  '.data')
 DB_FILE = 'app.db'
