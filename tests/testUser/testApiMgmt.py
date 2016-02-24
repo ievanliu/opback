@@ -103,10 +103,9 @@ class TestApiUserList():
         # use the token to get user list
         response = json.loads(rv.data)
         gotToken = response['token']
-        rv = self.app.post(
+        rv = self.app.get(
             '/api/v0.0/user/list', 
-            data = dict(
-                token = gotToken),
+            headers = {'token': gotToken},
             follow_redirects = True)
         assert 'usr_infos' in rv.data
         eq_(rv.status_code, 200)
@@ -125,15 +124,14 @@ class TestApiUserList():
         # use the token to get user list
         response = json.loads(rv.data)
         gotToken = response['token']
-        rv = self.app.post(
+        rv = self.app.get(
             '/api/v0.0/user/list', 
-            data = dict(
-                token = gotToken),
+            headers = {'token': gotToken},
             follow_redirects = True)
         assert 'Privilege not Allowed.' in rv.data
         eq_(rv.status_code, 400)
 
-        # 3. test wrong token
+        # 3. test tampered token
         # login with correct username & password
         rv = self.app.post(
             '/api/v0.0/user/login', 
@@ -148,10 +146,10 @@ class TestApiUserList():
         response = json.loads(rv.data)
         # get the token and change it tobe a wrong token
         gotToken = response['token']+'addsth.'
-        rv = self.app.post(
+        rv = self.app.get(
             '/api/v0.0/user/list', 
-            data = dict(
-                token = gotToken),
+            headers = {'token': gotToken},
             follow_redirects = True)
-        assert 'illegal token series' in rv.data
+        print rv.data
+        assert 'token tampered' in rv.data
         eq_(rv.status_code, 400)

@@ -35,7 +35,7 @@ class UserList(Resource):
         super(UserList, self).__init__()
 
     @auth.PrivilegeAuth(privilegeRequired="userAdmin")
-    def post(self):
+    def get(self):
         users = User.query.all()
         d = users_schema.dump(users).data
         return {'usr_infos': d}, 200

@@ -10,8 +10,11 @@
 from .. import db, api, app
 from . import utils as userUtils
 from .. import utils
-from itsdangerous import JSONWebSignatureSerializer as Serializer
-import datetime
+# serializer for JWT
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+# exceptions for JWT
+from itsdangerous import SignatureExpired, BadSignature, BadData
+# import datetime
 import time
 
 
@@ -29,8 +32,8 @@ class User(db.Model):
     hashed_password = db.Column(db.String(128))
     valid = db.Column(db.SmallInteger)
     role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'))
-    token = db.relationship(
-        'Token', backref='user', lazy='select')
+#    token = db.relationship(
+#        'Token', backref='user', lazy='select')
 
     def __init__(self, userName, hashedPassword, role, valid=1):
         self.user_id = utils.genUuid(userName)
@@ -79,17 +82,19 @@ class User(db.Model):
     token is generated as the JWT protocol.
     JSON Web Tokens(JWT) are an open, industry standard RFC 7519 method
     """
-    def genTokenSeq(self):
+    def genTokenSeq(self, expires):
         s = Serializer(
             secret_key=app.config['SECRET_KEY'],
-            salt=app.config['AUTH_SALT'])
+            salt=app.config['AUTH_SALT'],
+            expires_in=expires)
         timestamp = time.time()
+        print self.user_id
         return s.dumps(
             {'user_id': self.user_id,
              'user_role': self.role_id,
              'timestamp': timestamp})
         # The token contains userid, user role and the token generation time.
-        # u can add sth more, if needed.
+        # u can add sth more inside, if needed.
 
     """
     user auth and return user token
@@ -98,7 +103,7 @@ class User(db.Model):
     def userLogin4token(userName, password):
         user = User.getValidUser(userName=userName)
         if not user:
-            msg = 'cannot find user_name:'+userName
+            msg = 'cannot find user_name:' + userName
             app.logger.debug(msg)
             return [None, None, None, msg]
         elif not userUtils.hash_pass(password) == user.hashed_password:
@@ -106,111 +111,134 @@ class User(db.Model):
             app.logger.debug(msg)
             return [None, None, None, msg]
         # generate token sequence
-        tokenId = user.genTokenSeq()
-        # set the token expiration time by the config file
+        # token expiration time is set in the config file
         # the value is set in seconds: (day,second,microsecond)
-        tokenExp = datetime.datetime.now() + \
-            datetime.timedelta(0, app.config['TOKEN_DURATION'], 0)
-        # generate token obj
-        newToken = Token(tokenId, tokenExp, user.user_id)
-        refreshToken = 'refresh Token'
-        # invalid the other tokens of the same user
-        oldTokens = Token.getValidToken(userId=user.user_id)
-        if oldTokens:
-            for i in range(len(oldTokens)):
-                oldTokens[i].valid = 0
-        try:
-            db.session.add(newToken)
-            db.session.commit()
-        except Exception as e:
-            raise utils.InvalidModuleUsage(e)
+        token = user.genTokenSeq(app.config['ACCESS_TOKEN_EXPIRATION'])
+#        tokenExp = datetime.datetime.now() + \
+#            datetime.timedelta(0, app.config['TOKEN_DURATION'], 0)
+#        # generate token obj
+#        newToken = Token(tokenId, tokenExp, user.user_id)
+        refreshToken = user.genTokenSeq(app.config['REFRESH_TOKEN_EXPIRATION'])
+#        # invalid the other tokens of the same user
+#        oldTokens = Token.getValidToken(userId=user.user_id)
+#        if oldTokens:
+#            for i in range(len(oldTokens)):
+#                oldTokens[i].valid = 0
+#        try:
+#            db.session.add(newToken)
+#            db.session.commit()
+#        except Exception as e:
+#            raise utils.InvalidModuleUsage(e)
         msg = 'user ('+userName+') logged in.'
         app.logger.debug(msg)
-        return [newToken, refreshToken, user, msg]
-
-
-class Token(db.Model):
-    """
-    token Model
-    """
-    __tablename__ = 'token'
-    # token_id means tocken sequence
-    token_id = db.Column(db.String(128), primary_key=True)
-    expires = db.Column(db.DATETIME)  # token expire time
-    valid = db.Column(db.SmallInteger)
-    user_id = db.Column(db.String(64), db.ForeignKey('user.user_id'))
-
-    def __init__(self, tokenSeq, expires, userId, valid=1):
-        self.token_id = tokenSeq
-        self.expires = expires
-        self.user_id = userId
-        self.valid = valid
+        return [token, refreshToken, user, msg]
 
     @staticmethod
-    def getValidToken(userId=None, tokenId=None):
-        if userId and not tokenId:
-            token = Token.query.filter_by(user_id=userId, valid=1).all()
-        elif not userId and tokenId:
-            token = Token.query.filter_by(token_id=tokenId, valid=1).first()
-        elif userId and tokenId:
-            token = Token.query.filter_by(
-                user_id=userId, token_id=tokenId, valid=1).first()
-        else:
-            token = Token.query.filter_by(valid=1).all()
-        return token
-
-#    @staticmethod
-#    def getFromUserId(userId):
-#        token = Token.query.filter_by(user_id=userId).all()
-#        return token if token else None
-
-#    @staticmethod
-#    def getFromTokenId(tokenId):
-#        token = Token.query.filter_by(token_id=tokenId).first()
-#        return token if token else None
-
-    @staticmethod
-    def tokenAuth(tokenId):
+    def tokenAuth(token):
         # token decoding
         s = Serializer(
             secret_key=api.app.config['SECRET_KEY'],
             salt=api.app.config['AUTH_SALT'])
         try:
-            data = s.loads(tokenId)
-        except:
+            data = s.loads(token)
             # token decoding faild
             # if it happend a plenty of times, there might be someone
-            # trying to attact your server, so i set it as 'warning'level.
-            msg = 'illegal token series'
+            # trying to attact your server, so it should be a warning.
+        except SignatureExpired:
+            msg = 'token expired'
             app.logger.warning(msg)
-            return [None, msg]
-        if 'user_id' not in data:
-            # token with wrong data inside
-            # if it happend a plenty of times, there might be someone
-            # trying to attact your server, so i set it as 'warning'level.
-            msg = 'illegal token data inside'
+            return [None, None, msg]
+        except BadSignature, e:
+            encoded_payload = e.payload
+            if encoded_payload is not None:
+                try:
+                    s.load_payload(encoded_payload)
+                except BadData:
+                    # the token is tampered.
+                    msg = 'token tampered'
+                    app.logger.warning(msg)
+                    return [None, None, msg]
+        if ('user_id' not in data) or ('user_role' not in data):
+            msg = 'illegal payload inside'
             app.logger.warning(msg)
-            return [None, msg]
-        # check token to the db
-        strDatetimeNow = str(datetime.datetime.now())
-        token = Token.query.filter(
-            Token.token_id == tokenId,
-            Token.valid == 1, Token.user_id == data['user_id'],
-            Token.expires > strDatetimeNow).first()
-        if not token:
-            # token invalid or expired
-            msg = 'token invalid or expired'
-            app.logger.info(msg)
+            return [None, None, msg]
+        msg = 'user('+data['user_id']+') logged in by token.'
+#        app.logger.info(msg)
+        userId = data['user_id']
+        roleId = data['user_role']
+        return [userId, roleId, msg]
+
+    @staticmethod
+    def tokenRefresh(refreshToken):
+        # varify the refreshToken
+        [userId, roleId, msg] = User.tokenAuth(refreshToken)
+        if userId:
+            user = User.getValidUser(userId=userId)
+            if not user:
+                msg = 'cannot find userid'
+                app.logger.warning(msg)
+                return [None, msg]
+        else:
+            msg = 'lost userid'
+            app.logger.warning(msg)
             return [None, msg]
 
-        user = token.user
-        # expand the expire time
-        token.expires = datetime.datetime.now() + \
-            datetime.timedelta(0, app.config['TOKEN_DURATION'], 0)
-        db.session.commit()
-        msg = 'user('+user.user_name+') logged in by token.'
-        app.logger.info(msg)
-        return [user, msg]
+        if roleId:
+            role = Role.getValidRole(roleId=roleId)
+            if not role:
+                msg = 'cannot find roleid'
+                app.logger.warning(msg)
+                return [None, msg]
+        else:
+            msg = 'lost roleid'
+            app.logger.warning(msg)
+            return [None, msg]
+
+        token = user.genTokenSeq(app.config['ACCESS_TOKEN_EXPIRATION'])
+        msg = "token refreshed"
+        return [token, msg]
+
+
+# class Token(db.Model):
+#     """
+#     token Model
+#     """
+#     __tablename__ = 'token'
+#     # token_id means tocken sequence
+#     token_id = db.Column(db.String(128), primary_key=True)
+#     expires = db.Column(db.DATETIME)  # token expire time
+#     valid = db.Column(db.SmallInteger)
+#     user_id = db.Column(db.String(64), db.ForeignKey('user.user_id'))#
+
+#     def __init__(self, tokenSeq, expires, userId, valid=1):
+#         self.token_id = tokenSeq
+#         self.expires = expires
+#         self.user_id = userId
+#         self.valid = valid
+
+#     @staticmethod
+#     def getValidToken(userId=None, tokenId=None):
+#         if userId and not tokenId:
+#             token = Token.query.filter_by(user_id=userId, valid=1).all()
+#         elif not userId and tokenId:
+#             token = Token.query.filter_by(token_id=tokenId, valid=1).first()
+#         elif userId and tokenId:
+#             token = Token.query.filter_by(
+#                 user_id=userId, token_id=tokenId, valid=1).first()
+#         else:
+#             token = Token.query.filter_by(valid=1).all()
+#         return token
+
+#     @staticmethod
+#     def getFromUserId(userId):
+#         token = Token.query.filter_by(user_id=userId).all()
+#         return token if token else None
+
+#     @staticmethod
+#     def getFromTokenId(tokenId):
+#         token = Token.query.filter_by(token_id=tokenId).first()
+#         return token if token else None
+
 
 """
 This is a HELPER table for the privilege_table and role_table to set up

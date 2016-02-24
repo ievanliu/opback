@@ -127,8 +127,33 @@ class TestApiUserLogin():
         gotToken = response['token']
         rv = self.app.post(
             '/api/v0.0/user/tokenauth', 
-            data = dict(
-                token = gotToken),
-            follow_redirects = True)#
+            headers={'token': gotToken},
+            follow_redirects = True)
+        print rv.data
         assert 'logged in' in rv.data
         eq_(rv.status_code, 200)
+
+    @with_setup(setUp, tearDown)
+    def test_user_tokenRefresh(self):
+        """
+        token refresh test using refreshToken
+        """
+        # login with correct username & password
+        rv = self.app.post(
+            '/api/v0.0/user/login', 
+            data = dict(
+                username = 'tom', password = 'tompass'),
+            follow_redirects = True)
+        # use the token to login
+        response = json.loads(rv.data)
+        refreshToken = response['rftoken']
+        rv = self.app.post(
+            '/api/v0.0/user/tokenrefresh', 
+            data = dict(
+                refreshtoken = refreshToken,
+                granttype = 'refreshtoken'),
+            follow_redirects = True)
+        print rv.data
+        assert 'token refreshed' in rv.data
+        eq_(rv.status_code, 200)
+
