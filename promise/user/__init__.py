@@ -8,11 +8,11 @@
 # holding api & urls of the user module
 #
 from .auth import UserLogin, TokenAuth, TokenRefresh
-from .mgmt import UserList
+from .mgmt import User
 from .. import api
 
 api.add_resource(
-    UserList, '/api/v0.0/user/list', endpoint='user_list_ep')
+    User, '/api/v0.0/user', endpoint='user_ep')
 api.add_resource(
     UserLogin, '/api/v0.0/user/login', endpoint='user_login_ep')
 api.add_resource(

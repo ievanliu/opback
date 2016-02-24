@@ -14,7 +14,7 @@ from .. import utils, ma
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 # exceptions for JWT
 from itsdangerous import SignatureExpired, BadSignature, BadData
-# import datetime
+import datetime
 import time
 
 
@@ -31,6 +31,7 @@ class User(db.Model):
     user_name = db.Column(db.String(128))
     hashed_password = db.Column(db.String(128))
     valid = db.Column(db.SmallInteger)
+    last_login = db.Column(db.DATETIME)
     role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'))
 #    token = db.relationship(
 #        'Token', backref='user', lazy='select')
@@ -129,6 +130,9 @@ class User(db.Model):
 #        except Exception as e:
 #            raise utils.InvalidModuleUsage(e)
         msg = 'user (' + userName + ') logged in.'
+        # write the login time to db
+        user.last_login = datetime.datetime.now()
+        user.updateUser()
         app.logger.debug(msg)
         return [token, refreshToken, user, msg]
 
@@ -387,7 +391,7 @@ class UserSchema(ma.HyperlinkModelSchema):
     """
     class Meta:
         model = User
-        fields = ['user_id', 'user_name']
+        fields = ['user_id', 'user_name', 'last_login']
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)

@@ -166,6 +166,9 @@ class PrivilegeAuth(Resource):
             # args = myreqparse.parse_args()
             # if token is in headers, user below line
             token = request.headers.get('token')
+            if not token:
+                msg = "you need a token to access"
+                raise utils.InvalidAPIUsage(msg)
             [userId, roleId, msg] = User.tokenAuth(token)
             if not userId:
                 msg = msg + " when autherization"
