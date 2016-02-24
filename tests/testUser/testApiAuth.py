@@ -19,7 +19,7 @@ from sqlite3 import dbapi2 as sqlite3
 from promise import app, db, utils
 from promise.user import utils as userUtils
 from promise.user.models import *
-from promise.user import *
+#from promise.user import *
 
 class TestApiUserLogin():
     '''

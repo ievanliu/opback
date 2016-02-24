@@ -19,7 +19,7 @@ from sqlite3 import dbapi2 as sqlite3
 from promise import app, db, utils
 from promise.user import utils as userUtils
 from promise.user.models import *
-from promise.user import *
+#from promise.user import *
 
 class TestApiUserList():
     '''
@@ -104,7 +104,7 @@ class TestApiUserList():
         response = json.loads(rv.data)
         gotToken = response['token']
         rv = self.app.get(
-            '/api/v0.0/user/list', 
+            '/api/v0.0/user', 
             headers = {'token': gotToken},
             follow_redirects = True)
         assert 'usr_infos' in rv.data
@@ -125,7 +125,7 @@ class TestApiUserList():
         response = json.loads(rv.data)
         gotToken = response['token']
         rv = self.app.get(
-            '/api/v0.0/user/list', 
+            '/api/v0.0/user', 
             headers = {'token': gotToken},
             follow_redirects = True)
         assert 'Privilege not Allowed.' in rv.data
@@ -147,9 +147,37 @@ class TestApiUserList():
         # get the token and change it tobe a wrong token
         gotToken = response['token']+'addsth.'
         rv = self.app.get(
-            '/api/v0.0/user/list', 
+            '/api/v0.0/user', 
             headers = {'token': gotToken},
             follow_redirects = True)
         print rv.data
         assert 'token tampered' in rv.data
         eq_(rv.status_code, 400)
+
+    @with_setup(setUp, tearDown)
+    def test_user_api(self):
+        """
+        test user add
+        """
+        rv = self.app.post(
+            '/api/v0.0/user/login', 
+            data = dict(
+                username = app.config['DEFAULT_ROOT_USER_NAME'],
+                password = app.config['DEFAULT_ROOT_PASSWORD']),
+            follow_redirects = True)
+        assert 'logged in' in rv.data
+        assert 'token' in rv.data
+        eq_(rv.status_code, 200)
+        # use the token to add user
+        response = json.loads(rv.data)
+        gotToken = response['token']
+        Operator=Role.getValidRole(roleName='operator')
+        rv = self.app.get(
+            '/api/v0.0/user', 
+            headers = {'token': gotToken},
+            data = dict(
+                username='tom1', password=userUtils.hash_pass("tompass1"),
+                roleid=Operator.role_id),
+            follow_redirects = True)
+        assert 'usr_infos' in rv.data
+        eq_(rv.status_code, 200)
