@@ -9,7 +9,7 @@
 #
 from .. import db, api, app
 from . import utils as userUtils
-from .. import utils
+from .. import utils, ma
 # serializer for JWT
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 # exceptions for JWT
@@ -88,7 +88,6 @@ class User(db.Model):
             salt=app.config['AUTH_SALT'],
             expires_in=expires)
         timestamp = time.time()
-        print self.user_id
         return s.dumps(
             {'user_id': self.user_id,
              'user_role': self.role_id,
@@ -256,7 +255,7 @@ privileges = db.Table(
         'role_id',
         db.Integer,
         db.ForeignKey('role.role_id'))
-    )
+)
 
 
 class Role(db.Model):
@@ -377,3 +376,30 @@ class Privilege(db.Model):
         db.session.commit()
         app.logger.debug(
             utils.logmsg('insert privilege:' + self.privilege_name))
+
+
+#####################################################################
+#    establish a meta data class for data print                     #
+#####################################################################
+class UserSchema(ma.HyperlinkModelSchema):
+    """
+        establish a meta data class for data print
+    """
+    class Meta:
+        model = User
+        fields = ['user_id', 'user_name']
+
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+
+
+class PrivilegeSchema(ma.HyperlinkModelSchema):
+    """
+        establish a meta data class for data print
+    """
+    class Meta:
+        model = Privilege
+        fields = ['privilege_id', 'privilege_name']
+
+privilege_schema = UserSchema()
+privileges_schema = UserSchema(many=True)

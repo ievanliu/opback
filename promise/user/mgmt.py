@@ -9,22 +9,8 @@
 #
 
 from flask_restful import reqparse, Resource
-from .models import User
+from .models import User, users_schema
 from . import auth
-from .. import ma
-
-
-class UserSchema(ma.HyperlinkModelSchema):
-    """
-        establish a meta data class for data print
-    """
-    class Meta:
-        model = User
-        fields = ['user_id', 'user_name']
-
-
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
 
 
 class UserList(Resource):
