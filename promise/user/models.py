@@ -129,7 +129,7 @@ class User(db.Model):
 #            db.session.commit()
 #        except Exception as e:
 #            raise utils.InvalidModuleUsage(e)
-        msg = 'user ('+userName+') logged in.'
+        msg = 'user (' + userName + ') logged in.'
         app.logger.debug(msg)
         return [token, refreshToken, user, msg]
 
@@ -162,7 +162,7 @@ class User(db.Model):
             msg = 'illegal payload inside'
             app.logger.warning(msg)
             return [None, None, msg]
-        msg = 'user('+data['user_id']+') logged in by token.'
+        msg = 'user(' + data['user_id'] + ') logged in by token.'
 #        app.logger.info(msg)
         userId = data['user_id']
         roleId = data['user_role']

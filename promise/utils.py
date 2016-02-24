@@ -46,7 +46,7 @@ def logmsg(msg):
     """
     try:
         logmsg = msg + '[from ' + request.remote_addr + \
-            ' to ' + request.url+']'
+            ' to ' + request.url + ']'
     except:
         logmsg = msg
     return logmsg

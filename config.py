@@ -20,7 +20,7 @@ SQLALCHEMY_DATABASE_URI = 'mysql://dbname:dbpassword@ip:port/dbname'
 # get some folders and dirs:
 # import os
 basedir = os.path.abspath(os.path.dirname('..'))
-DB_FOLDER = os.path.join(basedir,  '.data')
+DB_FOLDER = os.path.join(basedir, '.data')
 DB_FILE = 'app.db'
 DB_SOURCEFILE = 'data.sql'
 DB_FILEPATH = os.path.join(DB_FOLDER, DB_FILE)
@@ -32,7 +32,7 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DB_FOLDER, DB_FILE)
 """
     log file configuration
 """
-LOGGER_FOLDER = os.path.join(basedir,  '.log')
+LOGGER_FOLDER = os.path.join(basedir, '.log')
 LOGGER_FILE = os.path.join(LOGGER_FOLDER, 'debug.log')
 
 """
