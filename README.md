@@ -23,6 +23,8 @@ $ git clone https://github.com/tecstack/opback.git
 $ git branch promise
 $ cd opback
 $ pip install -r requirements.txt
+*(OSX10.10上PIL安装失败，需执行  ln -s /usr/local/include/freetype2 /usr/local/include/freetype；   xcode-select --install)
+*(centos7安装mysql-python失败，执行yum install python-devel mysql-devel)
 $ python scripts/manager.py recreatedb
 $ python runserver.py
 ```
@@ -81,4 +83,9 @@ $ autopep8 -i src/tecstack/xxx.py # 自动根据PEP8规范修正代码，不会�
 * import包或类时，对当前目录采用“.”，上一级目录采用“..”，以此类推
 * 单一配置文件
 
-
+## 接口列表：
+* 用户登录 method:POST URI:/api/v0.0/user/login  Params:[JSON]username,password （密码加密）Return:[JSON]token,refreshtoken,message
+* 令牌登录 method:POST URI:/api/v0.0/user/tokenauth Params:[HEADER]token Return:[JSON]message
+* 令牌更新 method:POST URI:/api/v0.0/user/tokenrefresh Params:[JSON]granttype,refreshtoken Return:[JSON]token,message
+* 用户列表 method:GET URI:/api/v0.0/user Params:[HEADER]token Return:[JSON]usr_infos
+* 单用户信息 method:GET URI:/api/v0.0/user Params:[HEADER]token,[JSON]userid Return:[JSON]usr_infos
