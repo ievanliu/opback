@@ -84,28 +84,38 @@ $ autopep8 -i src/tecstack/xxx.py # 自动根据PEP8规范修正代码，不会�
 * 单一配置文件
 
 ## 接口列表：
-#### 用户登录
-* method:POST 
-* URI:/api/v0.0/user/login
-* Params:[JSON]username,password(密码加密)
-* Return:[JSON]token,refreshtoken,message
-#### 令牌登录
-* method:POST
-* URI:/api/v0.0/user/tokenauth
-* Params:[HEADER]token
-* Return:[JSON]message
-#### 令牌更新
-* method:POST
-* URI:/api/v0.0/user/tokenrefresh
-* Params:[JSON]granttype,refreshtoken
-* Return:[JSON]token,message
-#### 用户列表
-* method:GET
-* URI:/api/v0.0/user
-* Params:[HEADER]token
-* Return:[JSON]usr_infos
-#### 单用户信息
-* method:GET
-* URI:/api/v0.0/user
-* Params:[HEADER]token,[JSON]userid
-* Return:[JSON]usr_infos
+*用户登录
+```
+method:POST 
+URI:/api/v0.0/user/login
+Params:[JSON]username,password(密码加密)
+Return:[JSON]token,refreshtoken,message
+```
+## 令牌登录
+```
+method:POST
+URI:/api/v0.0/user/tokenauth
+Params:[HEADER]token
+Return:[JSON]message
+```
+## 令牌更新
+```
+method:POST
+URI:/api/v0.0/user/tokenrefresh
+Params:[JSON]granttype,refreshtoken
+Return:[JSON]token,message
+```
+## 用户列表
+```
+method:GET
+URI:/api/v0.0/user
+Params:[HEADER]token
+Return:[JSON]usr_infos
+```
+## 单用户信息
+```
+method:GET
+URI:/api/v0.0/user
+Params:[HEADER]token,[JSON]userid
+Return:[JSON]usr_infos
+```
