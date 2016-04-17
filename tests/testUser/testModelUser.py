@@ -133,6 +133,6 @@ class TestModelsUser():
     def test_user_Login4token(self):
         testUser = User.getValidUser(userName='tom')
         [token, refreshToken, user, msg] = User.userLogin4token('tom','tompass')
-        eq_(user, testUser.user_id)
+        eq_(user.user_id, testUser.user_id)
 
 

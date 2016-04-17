@@ -52,6 +52,6 @@ from flask.ext.cors import CORS
 cors = CORS(app)
 
 # what services u privide, import your packages or modules here
-from . import user
+from . import user, cmdb
 # use 'assert' to quiet flake8
-assert user
+assert user, cmdb

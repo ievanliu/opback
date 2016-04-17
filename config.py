@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 # !/usr/bin/env python
 #
-# Author: Shawn.T
-# Email: shawntai.ds@gmail.com
+# Author: Shawn.T, Leann Mak
+# Email: shawntai.ds@gmail.com, leannmak@139.com
 # This is the config file of global package of promise.
 
 import os
@@ -51,3 +51,12 @@ REFRESH_TOKEN_EXPIRATION = 86400  # in second
 # root user default setting
 DEFAULT_ROOT_USER_NAME = 'admin'
 DEFAULT_ROOT_PASSWORD = 'admin'
+
+"""
+    zabbix access configuration
+"""
+# zabbix url
+DEFAULT_ZABBIX_URL = 'http://192.168.182.150/zabbix'
+# zabbix user info
+DEFAULT_ZABBIX_USER_NAME = 'cloudlab'
+DEFAULT_ZABBIX_PASSWORD = 'cloudlab'
