@@ -9,7 +9,7 @@
 # with method GET, POST, PUT, DELETE.
 #
 from flask.ext.restful import reqparse, Resource
-from .models import HostGroup, Host
+from .models import HostGroup, Host, HostInterface
 from ..user import auth
 from .. import app, utils
 
@@ -63,7 +63,15 @@ class HostGroupAPI(Resource):
         data = hg.get(groupid=groupid)[0]
         # 2.2 get host(s) of the hostgroup
         h = Host()
-        data['hosts'] = h.get(groupid=groupid)
+        hs = h.get(groupid=groupid)
+        hosts = []
+        if hs:           
+            hif = HostInterface()
+            for host in hs:
+                host['interfaces'] = hif.get(hostid=host['hostid'])
+                host['interfacecount'] = hif.getCount(hostid=host['hostid'])
+                hosts.append(host)
+        data['hosts'] = hosts
         # 2.3 get count of hosts in the hostgroup
         data['hostcount'] = h.getCount(groupid)
         return {'data': data}, 200
