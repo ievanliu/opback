@@ -65,7 +65,7 @@ class HostGroupAPI(Resource):
         h = Host()
         hs = h.get(groupid=groupid)
         hosts = []
-        if hs:           
+        if hs:
             hif = HostInterface()
             for host in hs:
                 host['interfaces'] = hif.get(hostid=host['hostid'])
