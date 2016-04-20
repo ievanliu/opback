@@ -73,12 +73,34 @@ class TestHostAPI():
             get host(s) existing
         """
         # 1. get host list
+        # 1.1 no paging
         response = self.tester.get(
             '/api/v0.0/host',
             headers={'token': self.token})
         assert 'data' in response.data
         eq_(response.status_code, 200)
         data = json.loads(response.data)['data']
+        # 1.2 paging
+        # 1.2.1 use default per page
+        d = dict(page=1)
+        response = self.tester.get(
+            '/api/v0.0/host',
+            headers={'token': self.token},
+            content_type='application/json',
+            data=json.dumps(d))
+        assert 'data' in response.data
+        assert 'totalpage' in response.data
+        eq_(response.status_code, 200)
+        # 1.2.2 use custom per page
+        d = dict(page=1, pp=1)
+        response = self.tester.get(
+            '/api/v0.0/host',
+            headers={'token': self.token},
+            content_type='application/json',
+            data=json.dumps(d))
+        assert 'data' in response.data
+        assert 'totalpage' in response.data
+        eq_(response.status_code, 200)
 
         # 2. get a host
         # 2.1 host found (if hostlist not null)
@@ -93,11 +115,8 @@ class TestHostAPI():
             eq_(response.status_code, 200)
             data = json.loads(response.data)['data']
             assert 'interfaces' in data
-            assert 'interfacecount' in data
-            eq_(int(data['interfacecount']), len(data['interfaces']))
             assert 'groups' in data
-            assert 'groupcount' in data
-            eq_(int(data['groupcount']), len(data['groups']))
+            assert 'inventory' in data
         # 2.2 host not found
         response = self.tester.get(
             '/api/v0.0/host/iamahost4test',

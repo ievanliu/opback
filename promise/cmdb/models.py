@@ -16,6 +16,7 @@ class HostGroup(object):
     """
     # define a standard zabbix api object name
     default_object_name = "Hostgroup"
+    pages = 0
 
     def __init__(self):
         # call for standard zabbix api
@@ -56,7 +57,7 @@ class HostGroup(object):
     # get hostgroup(s) by groupid or related hostid
     # such as 'templateids', 'triggerids', ... are supported
     # here using 'groupids' and 'hostids' only
-    def get(self, groupid='', hostid=''):
+    def get(self, groupid='', hostid='', page=0, pp=10):
         params = {}
         if hostid:
             params['hostids'] = hostid
@@ -65,6 +66,18 @@ class HostGroup(object):
         params['output'] = 'extend'
         result = self.__zapiobj.proxy_method(
             '%s.get' % self.default_object_name, params)
+        # for paging
+        if page:
+            count = len(result)
+            self.pages = (count + pp - 1) / pp
+            if page < 0:
+                result = [result[i] for i in range(0, pp)]
+            elif page < self.pages:
+                result = [
+                    result[i] for i in range((page - 1) * pp, page * pp)]
+            elif page >= self.pages:
+                result = [
+                    result[i] for i in range((self.pages - 1) * pp, count)]
         return result
 
     # get a hostgroup object by groupid
@@ -103,14 +116,6 @@ class HostGroup(object):
             '%s.update' % self.default_object_name, params)
         return result
 
-    # get count of hostgroups with given host
-    def getCount(self, hostid=''):
-        params = {'hostids': hostid}
-        params['countOutput'] = 'true'
-        result = self.__zapiobj.proxy_method(
-            '%s.get' % self.default_object_name, params)
-        return result
-
 
 class Host(object):
     """
@@ -118,6 +123,7 @@ class Host(object):
     """
     # define a standard zabbix api object name
     default_object_name = "Host"
+    pages = 0
 
     def __init__(self):
         self.__zapi = ZabbixAPI()
@@ -143,16 +149,32 @@ class Host(object):
     # get host(s) with given hostid or groupid(hostgroup)
     # such as 'itemids', 'applicationids', ... are supported
     # here using 'hostids' and 'groupids' only
-    def get(self, hostid='', groupid=''):
+    def get(self, hostid='', groupid='', page=0, pp=10):
         params = {}
         if hostid:
             params['hostids'] = hostid
         if groupid:
             params['groupids'] = groupid
-        output = ["hostid", "host", "name", "status", "available"]
-        params['output'] = output
+        params['output'] = [
+            "hostid", "host", "name", "status", "available"]
+        params['selectInterfaces'] = [
+            "interfaceid", "hostid", "ip", "dns", "port"]
+        params['selectGroups'] = ['groupid', "name"]
+        params['selectInventory'] = 'extend'
         result = self.__zapiobj.proxy_method(
             '%s.get' % self.default_object_name, params)
+        # for paging
+        if page:
+            count = len(result)
+            self.pages = (count + pp - 1) / pp
+            if page < 0:
+                result = [result[i] for i in range(0, pp)]
+            elif page < self.pages:
+                result = [
+                    result[i] for i in range((page - 1) * pp, page * pp)]
+            elif page >= self.pages:
+                result = [
+                    result[i] for i in range((self.pages - 1) * pp, count)]
         return result
 
     # get a host object by hostid
@@ -179,14 +201,6 @@ class Host(object):
 
     def update(self, params):
         pass
-
-    # get count of hosts in given hostgroup
-    def getCount(self, groupid=''):
-        params = {'groupids': groupid}
-        params['countOutput'] = 'true'
-        result = self.__zapiobj.proxy_method(
-            '%s.get' % self.default_object_name, params)
-        return result
 
 
 class HostInterface(object):
@@ -249,11 +263,3 @@ class HostInterface(object):
 
     def update(self, params):
         pass
-
-    # get count of hostinterfces in given host
-    def getCount(self, hostid=''):
-        params = {'hostids': hostid}
-        params['countOutput'] = 'true'
-        result = self.__zapiobj.proxy_method(
-            '%s.get' % self.default_object_name, params)
-        return result

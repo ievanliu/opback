@@ -8,8 +8,8 @@
 # This is the Host api module of cmdb package,
 # with method GET（POST, PUT, DELETE unavailable now）.
 #
-from flask.ext.restful import reqparse, Resource
-from .models import Host, HostGroup, HostInterface
+from flask.ext.restful import reqparse, Resource, inputs
+from .models import Host
 from ..user import auth
 from .. import app, utils
 
@@ -22,12 +22,31 @@ class HostListAPI(Resource):
     def __init__(self):
         super(HostListAPI, self).__init__()
         self.parser = reqparse.RequestParser()
+        # page
+        self.parser.add_argument(
+            'page', type=inputs.positive,
+            help='Page must be a positive integer')
+        # pp: number of items per page
+        self.parser.add_argument(
+            'pp', type=inputs.positive,
+            help='PerPage must be a positive integer', dest='perpage')
 
     # get whole list of hosts existing
     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
     def get(self):
-        data = Host().get()
-        return {'data': data}, 200
+        args = self.parser.parse_args()
+        page = args['page']
+        if not page:
+            data = Host().get()
+            return {'data': data}, 200
+        else:
+            perPage = args['perpage']
+            h = Host()
+            if not perPage:
+                data = h.get(page=page)
+            else:
+                data = h.get(page=page, pp=perPage)
+            return {'totalpage': h.pages, 'data': data}, 200
 
 
 class HostAPI(Resource):
@@ -59,14 +78,4 @@ class HostAPI(Resource):
         # 2. get execution
         # 2.1 get host basic info
         data = h.get(hostid=hostid)[0]
-        # 2.2 get hostgroup(s) of the host
-        hg = HostGroup()
-        data['groups'] = hg.get(hostid=hostid)
-        # 2.3 get count of the hostgroup
-        data['groupcount'] = hg.getCount(hostid=hostid)
-        # 2.3 get interface(s) of the host
-        hif = HostInterface()
-        data['interfaces'] = hif.get(hostid=hostid)
-        # 2.4 get count of interfaces in the host
-        data['interfacecount'] = hif.getCount(hostid=hostid)
         return {'data': data}, 200

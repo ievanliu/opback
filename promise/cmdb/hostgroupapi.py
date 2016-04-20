@@ -8,8 +8,8 @@
 # This is the hostgroup api module of cmdb package,
 # with method GET, POST, PUT, DELETE.
 #
-from flask.ext.restful import reqparse, Resource
-from .models import HostGroup, Host, HostInterface
+from flask.ext.restful import reqparse, Resource, inputs
+from .models import HostGroup, Host
 from ..user import auth
 from .. import app, utils
 
@@ -22,12 +22,31 @@ class HostGroupListAPI(Resource):
     def __init__(self):
         super(HostGroupListAPI, self).__init__()
         self.parser = reqparse.RequestParser()
+        # page
+        self.parser.add_argument(
+            'page', type=inputs.positive,
+            help='page must be a positive integer')
+        # pp: number of items per page
+        self.parser.add_argument(
+            'pp', type=inputs.positive,
+            help='perpage must be a positive integer', dest='perpage')
 
     # get host group list
     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
     def get(self):
-        data = HostGroup().get()
-        return {'data': data}, 200
+        args = self.parser.parse_args()
+        page = args['page']
+        if not page:
+            data = HostGroup().get()
+            return {'data': data}, 200
+        else:
+            perPage = args['perpage']
+            hg = HostGroup()
+            if not perPage:
+                data = hg.get(page=page)
+            else:
+                data = hg.get(page=page, pp=perPage)
+            return {'totalpage': hg.pages, 'data': data}, 200
 
 
 class HostGroupAPI(Resource):
@@ -62,18 +81,7 @@ class HostGroupAPI(Resource):
         # 2.1 get hostgroup basic info
         data = hg.get(groupid=groupid)[0]
         # 2.2 get host(s) of the hostgroup
-        h = Host()
-        hs = h.get(groupid=groupid)
-        hosts = []
-        if hs:
-            hif = HostInterface()
-            for host in hs:
-                host['interfaces'] = hif.get(hostid=host['hostid'])
-                host['interfacecount'] = hif.getCount(hostid=host['hostid'])
-                hosts.append(host)
-        data['hosts'] = hosts
-        # 2.3 get count of hosts in the hostgroup
-        data['hostcount'] = h.getCount(groupid)
+        data['hosts'] = Host().get(groupid=groupid)
         return {'data': data}, 200
 
     # create a new hostgroup

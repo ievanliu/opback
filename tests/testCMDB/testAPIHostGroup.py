@@ -72,11 +72,35 @@ class TestHostGroupAPI():
         """
             get whole list of existing hostgroups
         """
+        # 1. no paging
         response = self.tester.get(
             '/api/v0.0/hostgroup',
             headers={'token': self.token})
         assert 'data' in response.data
         eq_(response.status_code, 200)
+
+        # 2. paging
+        # 2.1 use default per page
+        d = dict(page=1)
+        response = self.tester.get(
+            '/api/v0.0/hostgroup',
+            headers={'token': self.token},
+            content_type='application/json',
+            data=json.dumps(d))
+        assert 'data' in response.data
+        assert 'totalpage' in response.data
+        eq_(response.status_code, 200)
+        # 2.2 use custom per page
+        d = dict(page=1, pp=2)
+        response = self.tester.get(
+            '/api/v0.0/hostgroup',
+            headers={'token': self.token},
+            content_type='application/json',
+            data=json.dumps(d))
+        assert 'data' in response.data
+        assert 'totalpage' in response.data
+        eq_(response.status_code, 200)
+
 
     @with_setup(setUp, tearDown)
     def test_hostgroup_api_all(self):
@@ -132,8 +156,6 @@ class TestHostGroupAPI():
         assert 'name' in data
         eq_(data['name'], default_hostgroup_name)
         assert 'hosts' in data
-        assert 'hostcount' in data
-        eq_(int(data['hostcount']), len(data['hosts']))
 
         # 3. update the created hostgroup
         # 3.1 hostgroup found
