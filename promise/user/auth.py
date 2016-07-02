@@ -76,7 +76,7 @@ class TokenAuth(Resource):
         # check the arguments
         # if token is put in the headers, use this:
         token = request.headers.get('token')
-        # if token is put in body
+        # if token is put in body, use this:
         # args = self.reqparse.parse_args()
         # userName = args['token']
         if not token:
@@ -149,27 +149,36 @@ class PrivilegeAuth(Resource):
         def wrapped(*args, **kwargs):
 
             # check the 'privilegeRequired' argument
+            # try:
+            #     privReqId = Privilege.getFromPrivilegeName(
+            #         self.privilegeRequired).privilege_id
+            # except:
+            #     msg = 'wrong privilege setting: privilege name(' +\
+            #         self.privilegeRequired + ') not found.'
+            #     app.logger.error(utils.logmsg(msg))
+            #     raise utils.InvalidModuleUsage('wrong privilege setting')
+            # should not use the msg here to expose the privilege name
+
             try:
-                privReqId = Privilege.getFromPrivilegeName(
-                    self.privilegeRequired).privilege_id
+                rolesReq = Privilege.getFromPrivilegeName(
+                    self.privilegeRequired).roles
             except:
-                msg = 'wrong privilege setting: privilege name(' +\
-                    self.privilegeRequired + ') not found.'
+                msg = 'wrong privilege setting: privilege (' +\
+                    self.privilegeRequired + ') doesnot set in any roles'
                 app.logger.error(utils.logmsg(msg))
                 raise utils.InvalidModuleUsage('wrong privilege setting')
-                # should not use the msg here to expose the privilege name
 
             # get user's privileges by his token
-            # if token is in body, use below lines
+            # if token is in body
             # myreqparse = reqparse.RequestParser()
             # myreqparse.add_argument('token')
             # args = myreqparse.parse_args()
-            # if token is in headers, user below line
+            # if token is in headers
             token = request.headers.get('token')
             if not token:
                 msg = "you need a token to access"
                 raise utils.InvalidAPIUsage(msg)
-            [userId, roleId, msg] = User.tokenAuth(token)
+            [userId, roleIdList, msg] = User.tokenAuth(token)
             if not userId:
                 msg = msg + " when autherization"
                 raise utils.InvalidAPIUsage(msg)
@@ -180,15 +189,19 @@ class PrivilegeAuth(Resource):
                     raise utils.InvalidAPIUsage(msg)
 
             # user's privilege auth
-            currentPrivileges = currentUser.role.privilege
-            if currentPrivileges:
-                privilegeAllowed = False
-                for item in currentPrivileges:
-                    if privReqId == item.privilege_id:
-                        privilegeAllowed = True
-                        break
-                if privilegeAllowed:
-                    return fn(*args, **kwargs)
+            for role in currentUser.roles:
+                for roleReq in rolesReq:
+                    if role.role_id == roleReq.role_id:
+                        return fn(*args, **kwargs)
+#            currentPrivileges = currentUser.role.privilege
+#            if currentPrivileges:
+#                privilegeAllowed = False
+#                for item in currentPrivileges:
+#                    if privReqId == item.privilege_id:
+#                        privilegeAllowed = True
+#                        break
+#                if privilegeAllowed:
+#                    return fn(*args, **kwargs)
             msg = "Privilege not Allowed."
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)

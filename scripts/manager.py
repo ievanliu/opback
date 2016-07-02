@@ -43,7 +43,11 @@ def importdata():
     roleRoot.addPrivilege(privilegeList=privilegeList)
     roleOperator = Role('operator')
     roleInventoryAdmin = Role('InventoryAdmin')
-    roleInventoryAdmin.addPrivilege(privilege=newPrivilege)
+    roleUserAdmin = Role('userAdmin')
+    userInventoryPrivilege = Privilege.getFromPrivilegeName('InventoryAdmin')
+    userAdminPrivilege = Privilege.getFromPrivilegeName('userAdmin')
+    roleUserAdmin.addPrivilege(privilege=userAdminPrivilege)
+    roleInventoryAdmin.addPrivilege(privilege=userInventoryPrivilege)
     db.session.add(roleRoot)
     db.session.add(roleOperator)
     db.session.add(roleInventoryAdmin)
@@ -53,6 +57,8 @@ def importdata():
     user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
     user2 = User(
         'jerry', userUtils.hash_pass("jerrypass"), roleInventoryAdmin)
+    user3 = User('mike', userUtils.hash_pass("mikepass"), roleUserAdmin)
+    user2.addRole(role=roleInventoryAdmin)
     rootUser = User(
         app.config['DEFAULT_ROOT_USER_NAME'],
         userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']),
@@ -63,6 +69,7 @@ def importdata():
     db.session.add(visitor)
     db.session.add(user1)
     db.session.add(user2)
+    db.session.add(user3)
     db.session.commit()
     print 'Data imported'
 

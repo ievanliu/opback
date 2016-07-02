@@ -18,6 +18,43 @@ import datetime
 import time
 
 
+"""
+This is a HELPER table for the role_table and user_table to set up
+the many-to-many relationship between Role modole and User model.
+As Flask official documentation recommanded, this helper table
+should not be a model but an actual table.
+"""
+roles = db.Table(
+    'rolees',
+    db.Column(
+        'role_id',
+        db.Integer,
+        db.ForeignKey('role.role_id')),
+    db.Column(
+        'user_id',
+        db.Integer,
+        db.ForeignKey('user.user_id'))
+)
+
+"""
+This is a HELPER table for the privilege_table and role_table to set up
+the many-to-many relationship between Role modole and privilege model.
+As Flask official documentation recommanded, this helper table
+should not be a model but an actual table.
+"""
+privileges = db.Table(
+    'privileges',
+    db.Column(
+        'privilege_id',
+        db.Integer,
+        db.ForeignKey('privilege.privilege_id')),
+    db.Column(
+        'role_id',
+        db.Integer,
+        db.ForeignKey('role.role_id'))
+)
+
+
 class User(db.Model):
     """
     User model
@@ -32,16 +69,27 @@ class User(db.Model):
     hashed_password = db.Column(db.String(128))
     valid = db.Column(db.SmallInteger)
     last_login = db.Column(db.DATETIME)
-    role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'))
+#    role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'))
+    roles = db.relationship(
+        'Role',
+        secondary=roles,
+        backref=db.backref('roles', lazy='select'))
+
 #    token = db.relationship(
 #        'Token', backref='user', lazy='select')
 
-    def __init__(self, userName, hashedPassword, role, valid=1):
+    def __init__(
+            self, userName, hashedPassword, role=None, roleList=None, valid=1):
         self.user_id = utils.genUuid(userName)
         self.user_name = userName
         self.hashed_password = hashedPassword
         self.valid = valid
-        self.role_id = role.role_id
+        # self.role_id = role.role_id
+        if roleList:
+            self.role = roleList
+        if role:
+            self.role = [role]
+        db.session.commit()
 
     def __repr__(self):
         return '<User %r>' % self.user_id
@@ -74,6 +122,14 @@ class User(db.Model):
         app.logger.debug(utils.logmsg(
             'user info change user:' + self.user_name))
 
+    def addRole(self, roleList=None, role=None):
+        if roleList:
+            self.roles = roleList
+        if role:
+            self.roles = [role]
+        db.session.commit()
+    # def getUserPrivileges(self):
+        # self.roles.privileges
 #    @staticmethod
 #    def getFromUserId(userId):
 #        user = User.query.filter_by(user_id=userId, valid=1).first()
@@ -89,12 +145,16 @@ class User(db.Model):
             salt=app.config['AUTH_SALT'],
             expires_in=expires)
         timestamp = time.time()
+        roleIdList = []
+        for role in self.roles:
+            roleIdList.append(role.role_id)
         return s.dumps(
             {'user_id': self.user_id,
-             'user_role': self.role_id,
-             'timestamp': timestamp})
+             'user_role': roleIdList,
+             'iat': timestamp})
         # The token contains userid, user role and the token generation time.
         # u can add sth more inside, if needed.
+        # 'iat' means 'issued at'. claimed in JWT.
 
     """
     user auth and return user token
@@ -174,7 +234,7 @@ class User(db.Model):
     @staticmethod
     def tokenRefresh(refreshToken):
         # varify the refreshToken
-        [userId, roleId, msg] = User.tokenAuth(refreshToken)
+        [userId, roleIdList, msg] = User.tokenAuth(refreshToken)
         if userId:
             user = User.getValidUser(userId=userId)
             if not user:
@@ -186,12 +246,13 @@ class User(db.Model):
             app.logger.warning(msg)
             return [None, msg]
 
-        if roleId:
-            role = Role.getValidRole(roleId=roleId)
-            if not role:
-                msg = 'cannot find roleid'
-                app.logger.warning(msg)
-                return [None, msg]
+        if roleIdList:
+            for roleId in roleIdList:
+                role = Role.getValidRole(roleId=roleId)
+                if not role:
+                    msg = 'cannot find roleid'+roleId
+                    app.logger.warning(msg)
+                    return [None, msg]
         else:
             msg = 'lost roleid'
             app.logger.warning(msg)
@@ -243,25 +304,6 @@ class User(db.Model):
 #         return token if token else None
 
 
-"""
-This is a HELPER table for the privilege_table and role_table to set up
-the many-to-many relationship between Role modole and privilege model.
-As Flask official document recommanded, this helper table
-should not be a model but an actual table.
-"""
-privileges = db.Table(
-    'privileges',
-    db.Column(
-        'privilege_id',
-        db.Integer,
-        db.ForeignKey('privilege.privilege_id')),
-    db.Column(
-        'role_id',
-        db.Integer,
-        db.ForeignKey('role.role_id'))
-)
-
-
 class Role(db.Model):
     """
     role model
@@ -269,12 +311,16 @@ class Role(db.Model):
     __tablename__ = 'role'
     role_id = db.Column(db.Integer, primary_key=True)
     role_name = db.Column(db.String(64))
-    user = db.relationship('User', backref='role', lazy='dynamic')
+    # user = db.relationship('User', backref='role', lazy='dynamic')
     valid = db.Column(db.SmallInteger)
     privileges = db.relationship(
         'Privilege',
         secondary=privileges,
         backref=db.backref('privileges', lazy='select'))
+    users = db.relationship(
+        'User',
+        secondary=roles,
+        backref=db.backref('role', lazy='select'))
 
     def __repr__(self):
         return '<Role %r>' % self.role_id
@@ -397,6 +443,18 @@ user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
 
+class RoleSchema(ma.HyperlinkModelSchema):
+    """
+        establish a meta data class for data print
+    """
+    class Meta:
+        model = Role
+        fields = ['role_id']
+
+role_schema = RoleSchema()
+roles_schema = RoleSchema(many=True)
+
+
 class PrivilegeSchema(ma.HyperlinkModelSchema):
     """
         establish a meta data class for data print
@@ -405,5 +463,5 @@ class PrivilegeSchema(ma.HyperlinkModelSchema):
         model = Privilege
         fields = ['privilege_id', 'privilege_name']
 
-privilege_schema = UserSchema()
-privileges_schema = UserSchema(many=True)
+privilege_schema = PrivilegeSchema()
+privileges_schema = PrivilegeSchema(many=True)
