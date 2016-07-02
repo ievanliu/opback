@@ -250,7 +250,7 @@ class User(db.Model):
             for roleId in roleIdList:
                 role = Role.getValidRole(roleId=roleId)
                 if not role:
-                    msg = 'cannot find roleid'+roleId
+                    msg = 'cannot find roleid' + roleId
                     app.logger.warning(msg)
                     return [None, msg]
         else:
