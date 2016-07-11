@@ -221,6 +221,13 @@ class User(db.Model):
                     msg = 'token tampered'
                     app.logger.warning(msg)
                     return [None, None, msg]
+            msg = 'badSignature of token'
+            app.logger.warning(msg)
+            return [None, None, msg]
+        except:
+            msg = 'wrong token with unknown reason'
+            app.logger.warning(msg)
+            return [None, None, msg]
         if ('user_id' not in data) or ('user_role' not in data):
             msg = 'illegal payload inside'
             app.logger.warning(msg)
