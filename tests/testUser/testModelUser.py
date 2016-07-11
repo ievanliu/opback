@@ -126,9 +126,7 @@ class TestModelsUser():
         user = User.getValidUser(userName='tom')
         eqTag = 0
         roles = user.roles
-        print roles
         for role in roles:
-            print role
             if role.role_name == 'operator':
                 eqTag = 1
         eq_(eqTag, 1)
