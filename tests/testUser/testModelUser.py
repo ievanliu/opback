@@ -124,9 +124,14 @@ class TestModelsUser():
         get user & get Relate role
         '''
         user = User.getValidUser(userName='tom')
-        role = user.role
-        roleName = role.role_name
-        eq_(role.role_name, 'operator')
+        eqTag = 0
+        roles = user.roles
+        print roles
+        for role in roles:
+            print role
+            if role.role_name == 'operator':
+                eqTag = 1
+        eq_(eqTag, 1)
 
     # test userLogin4Token
     @with_setup(setUp, tearDown)
