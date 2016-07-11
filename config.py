@@ -12,7 +12,12 @@ basedir = os.path.abspath(os.path.dirname('..'))
     database configuration
 """
 # database access string setting, by default we use mysql
-SQLALCHEMY_DATABASE_URI = 'mysql://dbname:dbpassword@ip:port/dbname'
+# for common using
+SQLALCHEMY_DATABASE_URI = 'mysql://dbuser:dbpassword@ip:port/common'
+# for eater:
+# SQLALCHEMY_BINDS = {
+#     'eater': 'mysql://dbuser:dbpassword@ip:port/eater'
+# }
 # when testing, put your instance setting in instance/config.py to cover it
 # SQLALCHEMY_DATABASE_URI = 'mysql://root:111111@192.168.182.50:3306/dev4test'
 
