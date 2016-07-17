@@ -52,9 +52,8 @@ from flask.ext.cors import CORS
 cors = CORS(app)
 
 # what services u privide, import your packages or modules here
-from . import user, zabber, eater
-# walker
+from . import user, zabber, eater, walker
 # use 'assert' to quiet flake8
 assert user, zabber
 assert eater
-# assert walker
+assert walker
