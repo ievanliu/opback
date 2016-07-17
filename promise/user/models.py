@@ -341,6 +341,7 @@ class Role(db.Model):
             self.privilege = privilegeList
         if privilege:
             self.privilege = [privilege]
+        db.session.add(self)
         db.session.commit()
 
     @staticmethod
