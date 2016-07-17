@@ -7,7 +7,7 @@
 #
 # This is the model module of eater package.
 
-from .. import db
+from .. import db, utils
 from sqlalchemy.ext.declarative import declared_attr
 import re
 
@@ -36,6 +36,10 @@ class MyModel(db.Model):
 
     # uuid
     id = db.Column(db.String(64), primary_key=True)
+
+    # for print
+    def __repr__(self):
+        return '<%s %r>' % (self.__class__.__name__, self.id)
 
 
 """
@@ -155,7 +159,6 @@ class OSUser(MyModel):
         Operating System User Model.
         Set 'enable_typechecks=False' to enable subtype polymorphism.
     """
-    # __tablename__ = 'osuser'
     __bind_key__ = my_default_database
 
     # OS user name
@@ -289,6 +292,12 @@ class ComputerSpecification(MyModel):
     """
     __bind_key__ = my_default_database
 
+    # each specification must be unique
+    # which either insert() or update() is subject to
+    __table_args__ = (
+        db.UniqueConstraint(
+            'cpu_fre', 'cpu_num', 'memory', 'disk', name='_spec_uc'),)
+
     # CPU main frequency
     cpu_fre = db.Column(db.String(64))
     # CPU number
@@ -309,8 +318,74 @@ class ComputerSpecification(MyModel):
         self.memory = memory
         self.disk = disk
 
-    def __repr__(self):
-        return '<ComputerSpecification %r>' % self.id
+    # data formatting
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'cpu_fre': self.cpu_fre,
+            'cpu_num': self.cpu_num,
+            'memory': self.memory,
+            'disk': self.disk
+        }
+
+    # get (a) computer specification(s)
+    # set id not None to return a dict{} of a specific CS
+    # or return a list[] of all CS
+    @staticmethod
+    def get(id=None):
+        if id:
+            cs = ComputerSpecification.query.filter_by(id=id).first()
+            if cs:
+                return cs.to_dict()
+        else:
+            cs = ComputerSpecification.query.all()
+            if cs:
+                return [x.to_dict() for x in cs]
+        return None
+
+    # insert a new kind of computer specification
+    @staticmethod
+    def insert(cpu_fre, cpu_num, memory, disk):
+        if cpu_fre and cpu_num and memory and disk:
+            cs = ComputerSpecification(
+                utils.genUuid('cs'), cpu_fre, cpu_num, memory, disk)
+            db.session.add(cs)
+            try:
+                db.session.commit()
+                return cs.to_dict()
+            except:
+                db.session.rollback()
+        return None
+
+    # update a computer specification
+    @staticmethod
+    def update(id, cpu_fre=None, cpu_num=None, memory=None, disk=None):
+        cs = ComputerSpecification.query.filter_by(id=id).first()
+        if cs:
+            if cpu_fre:
+                cs.cpu_fre = cpu_fre
+            if cpu_num:
+                cs.cpu_num = cpu_num
+            if memory:
+                cs.memory = memory
+            if disk:
+                cs.disk = disk
+            try:
+                db.session.commit()
+                return cs.to_dict()
+            except:
+                db.session.rollback()
+        return None
+
+    # delete a computer specification
+    @staticmethod
+    def delete(id):
+        old_cs = ComputerSpecification.query.filter_by(id=id).first()
+        if old_cs:
+            db.session.delete(old_cs)
+            db.session.commit()
+            return True
+        return False
 
 
 class PhysicalMachine(Computer):

@@ -176,3 +176,46 @@ class TestModels():
         # 2. query an IP
         # 3. update an IP
         # 4. delete an IP
+
+    # computer specification model test
+    @with_setup(setUp, tearDown)
+    def test_computer_specification_insert(self):
+        '''
+        maintain a computer specification
+        '''
+        # 0. print test
+        cs0 = ComputerSpecification('cs-cs', '1330Hz', 8, '64G', '1T')
+        eq_(cs0.__repr__(), "<ComputerSpecification %r>" % cs0.id)
+        db.session.add(cs0)
+        db.session.commit()
+        # 1. insert a ComputerSpecification
+        # 1.1 totally new specification
+        cs1 = ComputerSpecification.insert(cpu_fre='1330Hz', cpu_num=4, memory='64G', disk='300G')
+        eq_(cs1['cpu_num'], 4)
+        # 1.2 existing specification
+        cs2 = ComputerSpecification.insert('1330Hz', 4, '32G', '200G')
+        eq_(cs2, None)
+        # 2. query a ComputerSpecification
+        # 2.1 by id
+        cs3 = ComputerSpecification.get(cs1['id'])
+        eq_(cs3['disk'], '300G')
+        # 2.2 all
+        cs_list = ComputerSpecification.get()
+        eq_(len(cs_list), 5)
+        assert cs0,cs1 in cs_list
+        # 3. update a ComputerSpecification
+        # 3.1 non duplicative: update successfully
+        cs4 = ComputerSpecification.update(id=cs1['id'], cpu_num=8)
+        eq_(cs4['cpu_num'], 8)
+        cs5 = ComputerSpecification.get(cs1['id'])
+        eq_(cs5['cpu_num'], 8)
+        # 3.2 duplicative: update failed
+        cs6 = ComputerSpecification.update(id=cs0.id, disk='300G')
+        eq_(cs6, None)
+        # 4. delete a ComputerSpecification
+        # 4.1 specification exists
+        flag = ComputerSpecification.delete(cs1['id'])
+        eq_(flag, True)
+        # 4.2 no such specification
+        flag = ComputerSpecification.delete('boomshakalaka')
+        eq_(flag, False)
