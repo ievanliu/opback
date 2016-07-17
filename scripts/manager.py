@@ -31,7 +31,7 @@ def importdata():
     "Import data into database tables"
 
     # init privileges
-    privilegeNameList = ['userAdmin', 'inventoryAdmin']
+    privilegeNameList = ['userAdmin', 'inventoryAdmin', 'shellExec']
     privilegeList = []
     for item in privilegeNameList:
         newPrivilege = Privilege(item)
@@ -40,14 +40,19 @@ def importdata():
 
     # init roles
     roleRoot = Role('root')
-    roleRoot.addPrivilege(privilegeList=privilegeList)
     roleOperator = Role('operator')
     roleInventoryAdmin = Role('InventoryAdmin')
     roleUserAdmin = Role('userAdmin')
-    userInventoryPrivilege = Privilege.getFromPrivilegeName('InventoryAdmin')
+
+    inventoryAdminPrivilege = Privilege.getFromPrivilegeName('InventoryAdmin')
     userAdminPrivilege = Privilege.getFromPrivilegeName('userAdmin')
+    shellExecPrivilege = Privilege.getFromPrivilegeName('shellExec')
+
+    roleRoot.addPrivilege(privilegeList=privilegeList)
     roleUserAdmin.addPrivilege(privilege=userAdminPrivilege)
-    roleInventoryAdmin.addPrivilege(privilege=userInventoryPrivilege)
+    roleInventoryAdmin.addPrivilege(privilege=inventoryAdminPrivilege)
+    roleOperator.addPrivilege(privilege=shellExecPrivilege)
+
     db.session.add(roleRoot)
     db.session.add(roleOperator)
     db.session.add(roleInventoryAdmin)

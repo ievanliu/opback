@@ -102,20 +102,20 @@ Return:[JSON]message
 ```
 method:POST
 URI:/api/v0.0/user/tokenrefresh
-Params:[JSON]granttype,refreshtoken
-Return:[JSON]token,message
+Params:[body-JSON]granttype,refreshtoken
+Return:[body-JSON]token,message
 ```
 * 用户列表
 ```
 method:GET
 URI:/api/v0.0/user
 Params:[HEADER]token
-Return:[JSON]usr_infos
+Return:[body-JSON]usr_infos
 ```
 * 单用户信息
 ```
 method:GET
 URI:/api/v0.0/user
-Params:[HEADER]token,[JSON]userid
-Return:[JSON]usr_infos
+Params:[HEADER]token,[url-param]userid
+Return:[body-JSON]usr_infos
 ```

@@ -188,6 +188,8 @@ class PrivilegeAuth(Resource):
                     msg = "cannot find user when autherization"
                     raise utils.InvalidAPIUsage(msg)
 
+            g.currentUser = currentUser
+
             # user's privilege auth
             for role in currentUser.roles:
                 for roleReq in rolesReq:
