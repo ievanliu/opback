@@ -88,15 +88,26 @@ class Walker(db.Model):
         return [msg, 0]
 
     def getTrails(self):
-        return self.trails.all()
+        trails = self.trails.all()
+        jsonTrails = trails_schema.dump(trails).data
+        return [trails, jsonTrails]
 
     @staticmethod
     def getFromUser(user):
-        print user.user_id
         walkers = Walker.query.filter_by(owner_id=user.user_id).all()
-        print walkers
         jsonWalkers = walkers_schema.dump(walkers).data
         return [walkers, jsonWalkers]
+
+    @staticmethod
+    def getFromWalkerId(walkerId):
+        walker = Walker.query.filter_by(walker_id=walkerId).first()
+        return walker
+
+    @staticmethod
+    def getFromWalkerIdWithinUser(walkerId, user):
+        walker = Walker.query.filter_by(
+            walker_id=walkerId, owner_id=user.user_id).first()
+        return walker
 
 
 class ShellMission(db.Model):

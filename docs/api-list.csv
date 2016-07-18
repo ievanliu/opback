@@ -1,0 +1,181 @@
+模块,uri,请求类型,作用,权限要求,header,body,返回值,请求样例,返回样例
+user,/api/v0.0/user/login,post,用户登录,无,Content-Type: application/json,"json格式数据：username(用户名)
+password(密码)","json格式数据：
+message(提示信息)
+token(接入令牌)
+rftoken(更新令牌)","POST /api/v0.0/user/login HTTP/1.1
+Content-Type: application/json
+Host: 127.0.0.1:5000
+Connection: close
+User-Agent: Paw/2.2.9 (Macintosh; OS X/10.11.5) GCDHTTPRequest
+Content-Length: 52
+
+{
+  ""username"": ""jerry"",
+  ""password"": ""jerrypass""
+}","HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 613
+Server: Werkzeug/0.10.4 Python/2.7.10
+Date: Fri, 17 Jun 2016 03:27:33 GMT
+
+{""message"": ""user (jerry) logged in."", ""rftoken"": ""eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2NjIyMDQ1MywiaWF0IjoxNDY2MTM0MDUzfQ.eyJ0aW1lc3RhbXAiOjE0NjYxMzQwNTMuNTkzOTEsInVzZXJfaWQiOiI0NjU1NmFjYTM0M2IxMWU2ODgzNGE0NWU2MGVkNWVkNWVmZTNhMjU2MmZiOTM1ODBhN2I5YjZiZmRjZmZkYTcxIiwidXNlcl9yb2xlIjoyfQ.JgegEc7j4SDeWAa1qlNprH2YylIWefw7Y1dyRN1srHs"", ""token"": ""eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2NjEzNzY1MywiaWF0IjoxNDY2MTM0MDUzfQ.eyJ0aW1lc3RhbXAiOjE0NjYxMzQwNTMuNTkzNzM3LCJ1c2VyX2lkIjoiNDY1NTZhY2EzNDNiMTFlNjg4MzRhNDVlNjBlZDVlZDVlZmUzYTI1NjJmYjkzNTgwYTdiOWI2YmZkY2ZmZGE3MSIsInVzZXJfcm9sZSI6Mn0.lZiIjHbrPHhgqIsoXzYOHX4idFBhzlKFy7KvVd4D2rw""}"
+,/api/v0.0/user/tokenauth,post,"使用token进行登录
+（仅用于token可用性测试，不含内容主体）",无,"POST /api/v0.0/user/tokenauth HTTP/1.1
+token（接入令牌）",无内容,"json格式数据：
+message（提示信息）","POST /api/v0.0/user/tokenauth HTTP/1.1
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2NzIwMTAwMywiaWF0IjoxNDY3MTk3NDAzfQ.eyJ0aW1lc3RhbXAiOjE0NjcxOTc0MDMuNTUxNDg3LCJ1c2VyX2lkIjoiNDY1NTZhY2EzNDNiMTFlNjg4MzRhNDVlNjBlZDVlZDVlZmUzYTI1NjJmYjkzNTgwYTdiOWI2YmZkY2ZmZGE3MSIsInVzZXJfcm9sZSI6Mn0.3eimKs0uw0rxS09ZacDpZnA1qr3bgxK9BUC37T8TQIQ
+Content-Type: application/json
+Host: 127.0.0.1:5000
+Connection: close
+User-Agent: Paw/2.2.9 (Macintosh; OS X/10.11.5) GCDHTTPRequest
+Content-Length: 7
+
+{"""":""""}","HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 29
+Server: Werkzeug/0.10.4 Python/2.7.10
+Date: Wed, 29 Jun 2016 10:50:05 GMT
+
+{""message"": ""user logged in""}"
+,/api/v0.0/user/tokenrefresh,post,使用更新令牌进行接入令牌的更新,无,Content-Type: application/json,"json数据格式：
+granttype(授权形式)
+refreshtoken(更新令牌)","json格式数据：
+message（提示信息）
+token（新的接入令牌）","POST /api/v0.0/user/tokenrefresh HTTP/1.1
+Content-Type: application/json
+Host: 127.0.0.1:5000
+Connection: close
+User-Agent: Paw/2.2.9 (Macintosh; OS X/10.11.5) GCDHTTPRequest
+Content-Length: 320
+
+{""granttype"":""refreshtoken"",""refreshtoken"":""eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2NzI4MzgwMywiaWF0IjoxNDY3MTk3NDAzfQ.eyJ0aW1lc3RhbXAiOjE0NjcxOTc0MDMuNTUxNjI3LCJ1c2VyX2lkIjoiNDY1NTZhY2EzNDNiMTFlNjg4MzRhNDVlNjBlZDVlZDVlZmUzYTI1NjJmYjkzNTgwYTdiOWI2YmZkY2ZmZGE3MSIsInVzZXJfcm9sZSI6Mn0.67U0HTcz1mSgCoIEATtINsCBpfkom0UAGal-N9GcLC8""}","HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 317
+Server: Werkzeug/0.10.4 Python/2.7.10
+Date: Fri, 17 Jun 2016 03:27:47 GMT
+
+{""message"": ""token refreshed"", ""token"": ""eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2NjEzNzY2NywiaWF0IjoxNDY2MTM0MDY3fQ.eyJ0aW1lc3RhbXAiOjE0NjYxMzQwNjcuMjE0NzY2LCJ1c2VyX2lkIjoiNDY1NTZhY2EzNDNiMTFlNjg4MzRhNDVlNjBlZDVlZDVlZmUzYTI1NjJmYjkzNTgwYTdiOWI2YmZkY2ZmZGE3MSIsInVzZXJfcm9sZSI6Mn0.-nnA3gBZzZJnmHxnIQ-mCEVdQj0XCcO9pMlNJ418VBo""}"
+,/api/v0.0/user,get,获取一个用户或全用户列表,userAdmin,,,,,
+zabber,/api/v0.0/host,get,获取主机列表，可指定每页的个数以及哪一页,userAdmin,token（接入令牌）,"url参数列表：
+page(查询页码，可选）
+pp(每页记录数，指定page后可选，默认为10）","json格式数据：
+error（错误信息提示）
+data（查询结果返回）
+totalpage（若未指定page，无此参数）","GET /api/v0.0/host HTTP/1.1
+Host: 192.168.182.3
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2ODU1MTc2MSwiaWF0IjoxNDY4NTQ4MTYxfQ.eyJpYXQiOjE0Njg1NDgxNjEuNzI1MjMyLCJ1c2VyX2lkIjoiZmRkMmYxNDQ0OWI4MTFlNmJhYzkwMDUwNTZiODYyYTQzOTdkN2MyODA2ZDQzODJkODg1NDRhZjNmMTQzZDk0NSIsInVzZXJfcm9sZSI6WzFdfQ.F4tyxFs8wkKcpeOKjViqyRhUt3hIV2PsH9Cnx78HH2M
+Cache-Control: no-cache
+
+
+","HTTP/1.0 200 OK
+Cache-Control → max-age=172800
+Connection → keep-alive
+Content-Length → 7301
+Content-Type → application/json
+Date → Fri, 15 Jul 2016 01:45:54 GMT
+Expires → Sun, 17 Jul 2016 01:45:54 GMT
+Server → nginx/1.7.8
+
+{""data"": [{""available"": ""0"", ""groups"": [{""groupid"": ""4"", ""name"": ""Zabbix servers""}], ""host"": ""Zabbix server"", ""hostid"": ""10084"", ""interfaces"": [{""interfaceid"": ""1"", ""ip"": ""127.0.0.1""}], ""status"": ""1""}, ..., {""available"": ""1"", ""groups"": [{""groupid"": ""8"", ""name"": ""cloudlab""}, {""groupid"": ""5"", ""name"": ""Discovered hosts""}], ""host"": ""192.168.182.2"", ""hostid"": ""10106"", ""interfaces"": [{""interfaceid"": ""11"", ""ip"": ""192.168.182.2""}], ""status"": ""0""}], ""totalpage"": 10}"
+,/api/v0.0/host/<host_id>,get,获取指定id主机信息,userAdmin,token（接入令牌）,无内容,"json格式数据：
+error（错误信息提示）
+data（查询结果返回）","GET /api/v0.0/host/10106 HTTP/1.1
+Host: 192.168.182.3
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2ODU1MTc2MSwiaWF0IjoxNDY4NTQ4MTYxfQ.eyJpYXQiOjE0Njg1NDgxNjEuNzI1MjMyLCJ1c2VyX2lkIjoiZmRkMmYxNDQ0OWI4MTFlNmJhYzkwMDUwNTZiODYyYTQzOTdkN2MyODA2ZDQzODJkODg1NDRhZjNmMTQzZDk0NSIsInVzZXJfcm9sZSI6WzFdfQ.F4tyxFs8wkKcpeOKjViqyRhUt3hIV2PsH9Cnx78HH2M
+Cache-Control: no-cache
+","HTTP/1.0 200 OK
+Cache-Control → max-age=172800
+Connection → keep-alive
+Content-Length → 334
+Content-Type → application/json
+Date → Fri, 15 Jul 2016 01:58:51 GMT
+Expires → Sun, 17 Jul 2016 01:58:51 GMT
+Server → nginx/1.7.8
+
+{""data"": {""available"": ""1"", ""groups"": [{""groupid"": ""5"", ""name"": ""Discovered hosts""}, {""groupid"": ""8"", ""name"": ""cloudlab""}], ""host"": ""192.168.182.2"", ""hostid"": ""10106"", ""interfaces"": [{""dns"": """", ""hostid"": ""10106"", ""interfaceid"": ""11"", ""ip"": ""192.168.182.2"", ""port"": ""10050""}], ""inventory"": [], ""name"": ""192.168.182.2"", ""status"": ""0""}}"
+,/api/v0.0/hostgroup,get,获取主机组列表，可指定每页的个数以及哪一页,userAdmin,token（接入令牌）,"url参数列表：
+page(查询页码，可选）
+pp(每页记录数，指定page后可选，默认为10）","json格式数据：
+error（错误信息提示）
+data（查询结果返回）
+totalpage（若未指定page，无此参数）","GET /api/v0.0/hostgroup?page=1&pp=10 HTTP/1.1
+Host: 192.168.182.3
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2ODU1MTc2MSwiaWF0IjoxNDY4NTQ4MTYxfQ.eyJpYXQiOjE0Njg1NDgxNjEuNzI1MjMyLCJ1c2VyX2lkIjoiZmRkMmYxNDQ0OWI4MTFlNmJhYzkwMDUwNTZiODYyYTQzOTdkN2MyODA2ZDQzODJkODg1NDRhZjNmMTQzZDk0NSIsInVzZXJfcm9sZSI6WzFdfQ.F4tyxFs8wkKcpeOKjViqyRhUt3hIV2PsH9Cnx78HH2M
+Cache-Control: no-cache","HTTP/1.0 200 OK
+Cache-Control → max-age=172800
+Connection → keep-alive
+Content-Length → 683
+Content-Type → application/json
+Date → Fri, 15 Jul 2016 02:04:56 GMT
+Expires → Sun, 17 Jul 2016 02:04:56 GMT
+Server → nginx/1.7.8
+
+{""data"": [{""flags"": ""0"", ""groupid"": ""1"", ""internal"": ""0"", ""name"": ""Templates""}, ..., {""flags"": ""0"", ""groupid"": ""10"", ""internal"": ""0"", ""name"": ""02DB-MySQL""}], ""totalpage"": 1}"
+,/api/v0.1/hostgroup/<hostgroup_id>,get,获取指定id主机组信息,userAdmin,token（接入令牌）,无内容,"json格式数据：
+error（错误信息提示）
+data（查询结果返回）","GET /api/v0.0/hostgroup/9 HTTP/1.1
+Host: 192.168.182.3
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2ODU1MTc2MSwiaWF0IjoxNDY4NTQ4MTYxfQ.eyJpYXQiOjE0Njg1NDgxNjEuNzI1MjMyLCJ1c2VyX2lkIjoiZmRkMmYxNDQ0OWI4MTFlNmJhYzkwMDUwNTZiODYyYTQzOTdkN2MyODA2ZDQzODJkODg1NDRhZjNmMTQzZDk0NSIsInVzZXJfcm9sZSI6WzFdfQ.F4tyxFs8wkKcpeOKjViqyRhUt3hIV2PsH9Cnx78HH2M
+Cache-Control: no-cache","HTTP/1.0 200 OK
+Cache-Control → max-age=172800
+Connection → keep-alive
+Content-Length → 2317
+Content-Type → application/json
+Date → Fri, 15 Jul 2016 02:06:49 GMT
+Expires → Sun, 17 Jul 2016 02:06:49 GMT
+Server → nginx/1.7.8
+
+{""data"": {""flags"": ""0"", ""groupid"": ""9"", ""hosts"": [{""available"": ""1"", ""groups"": [{""groupid"": ""9"", ""name"": ""02DB-BCRDB""}, {""groupid"": ""8"", ""name"": ""cloudlab""}, {""groupid"": ""5"", ""name"": ""Discovered hosts""}], ""host"": ""192.168.182.153"", ""hostid"": ""10173"", ""interfaces"": [{""dns"": """", ""hostid"": ""10173"", ""interfaceid"": ""78"", ""ip"": ""192.168.182.153"", ""port"": ""10050""}], ""inventory"": [], ""name"": ""192.168.182.153"", ""status"": ""0""}, ..., {""available"": ""1"", ""groups"": [{""groupid"": ""9"", ""name"": ""02DB-BCRDB""}], ""host"": ""192.168.165.15"", ""hostid"": ""10194"", ""interfaces"": [{""dns"": """", ""hostid"": ""10194"", ""interfaceid"": ""102"", ""ip"": ""192.168.165.15"", ""port"": ""10050""}, {""dns"": """", ""hostid"": ""10194"", ""interfaceid"": ""103"", ""ip"": ""0.0.0.0"", ""port"": ""22""}], ""inventory"": [], ""name"": ""192.168.165.15"", ""status"": ""0""}], ""internal"": ""0"", ""name"": ""02DB-BCRDB""}}"
+walker,/api/v0.0/shellwalker,post,创建一个用于执行shell命令的walker,shellExec（tom有这个权限）,"Content-Type：application/json
+token（接入令牌）","json格式数据：
+shell（shell命令） iplist（ip列表，数组类型）
+osuser（执行用户名） ","json格式数据：
+message（提示信息）
+walker_id（所创建的walker的id） trails(trails数组)","POST /api/v0.0/shellwalker HTTP/1.1
+Content-Type: application/json
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2ODc1MjM3MywiaWF0IjoxNDY4NzQ4NzczfQ.eyJpYXQiOjE0Njg3NDg3NzMuMTA2MDY3LCJ1c2VyX2lkIjoiM2Y1MmRlM2E0YzAzMTFlNjgyZDNhNDVlNjBlZDVlZDVmOTczYmEwZmNmNzgzYmI4YWRlMzRjN2I0OTJkOWU1NSIsInVzZXJfcm9sZSI6WzRdfQ.0_fHvqBccYu1eSoguL2ej_misPdA0LIB1PGWHRKyhYQ
+Host: 127.0.0.1:5000
+Connection: close
+User-Agent: Paw/2.2.9 (Macintosh; OS X/10.11.5) GCDHTTPRequest
+Content-Length: 69
+
+{""shell"":""ls"",""iplist"":[""123.123.123.123"",""1.1.1.1""],""osuser"":""apps""}","HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 285
+Server: Werkzeug/0.10.4 Python/2.7.10
+Date: Sun, 17 Jul 2016 09:46:13 GMT
+
+{""message"": ""mission start"", ""trails"": [{""trail_id"": ""4c68b71e4c0311e6bbaba45e60ed5ed5b4e5cb3fec6d38ff845e5f98b3e2bcb6""}, {""trail_id"": ""4c69dcae4c0311e68648a45e60ed5ed573505b4608973c1da2a154dce5bb8b85""}], ""walker_id"": ""4c66bb144c0311e68650a45e60ed5ed507d0fea28a333e368527ef7494a0e478""}"
+,,get,获取当前用户的shell任务类型的walker列表,shellExec（tom有这个权限）,"Content-Type：application/json
+token（接入令牌）",无内容要求,"json格式数据：
+message（提示信息）
+walkers（walker数组）","GET /api/v0.0/shellwalker HTTP/1.1
+Content-Type: application/json
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2ODgwOTYxMiwiaWF0IjoxNDY4ODA2MDEyfQ.eyJpYXQiOjE0Njg4MDYwMTIuODExOTA2LCJ1c2VyX2lkIjoiM2Y1MmRlM2E0YzAzMTFlNjgyZDNhNDVlNjBlZDVlZDVmOTczYmEwZmNmNzgzYmI4YWRlMzRjN2I0OTJkOWU1NSIsInVzZXJfcm9sZSI6WzRdfQ.GoDlXNTWp1kRaXRlakC17cbKPRaAmUMJrgREb1mpdHo
+Host: 127.0.0.1:5000
+Connection: close
+User-Agent: Paw/2.2.9 (Macintosh; OS X/10.11.5) GCDHTTPRequest","HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 165
+Server: Werkzeug/0.10.4 Python/2.7.10
+Date: Mon, 18 Jul 2016 01:40:20 GMT
+
+{""message"": ""walker list of tom"", ""walkers"": [{""walker_id"": ""4c66bb144c0311e68650a45e60ed5ed507d0fea28a333e368527ef7494a0e478"", ""walker_name"": ""20160717174613-ls""}]}"
+,,get,获取当前用户的shell任务类型单个walker信息,shellExec（tom有这个权限）,"Content-Type：application/json
+token（接入令牌）","url参数列表：
+walkerid(请求的walker id)","json格式数据：
+message（提示信息）
+walker_name（walker名）
+trails(trails数组)","GET /api/v0.0/shellwalker?walkerid=41727d574c8d11e6a15ea45e60ed5ed5bb1ff5f61afe3591b45363de37c27d54 HTTP/1.1
+Content-Type: application/json
+token: eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ2ODgwOTYxMiwiaWF0IjoxNDY4ODA2MDEyfQ.eyJpYXQiOjE0Njg4MDYwMTIuODExOTA2LCJ1c2VyX2lkIjoiM2Y1MmRlM2E0YzAzMTFlNjgyZDNhNDVlNjBlZDVlZDVmOTczYmEwZmNmNzgzYmI4YWRlMzRjN2I0OTJkOWU1NSIsInVzZXJfcm9sZSI6WzRdfQ.GoDlXNTWp1kRaXRlakC17cbKPRaAmUMJrgREb1mpdHo
+Host: 127.0.0.1:5000
+Connection: close
+User-Agent: Paw/2.2.9 (Macintosh; OS X/10.11.5) GCDHTTPRequest","HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 238
+Server: Werkzeug/0.10.4 Python/2.7.10
+Date: Mon, 18 Jul 2016 02:13:48 GMT
+
+{""message"": ""walker info"", ""trails"": [{""trail_id"": ""4174be6b4c8d11e69be5a45e60ed5ed5b4e5cb3fec6d38ff845e5f98b3e2bcb6""}, {""trail_id"": ""4176480c4c8d11e694baa45e60ed5ed573505b4608973c1da2a154dce5bb8b85""}], ""walker_name"": ""20160718101345-ls""}"
