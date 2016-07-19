@@ -57,9 +57,14 @@ class ShellWalkerAPI(Resource):
         walkerId = self.argCheckForGet()
         if not walkerId:
             [msg, jsonWalkers] = self.getWalkerListOfTokenOwner()
-            return {'msg': msg, 'walkers': jsonWalkers}, 200
+            return {'message': msg, 'walkers': jsonWalkers}, 200
         else:
-            print 'one walker'
+            [msg, walker_name, jsonTrails] = self.getWalkerInfoWithinUser(
+                walkerId)
+            return {
+                'message': msg,
+                'walker_name': walker_name,
+                'trails': jsonTrails}, 200
 
     """
     arguments check methods
@@ -96,12 +101,31 @@ class ShellWalkerAPI(Resource):
             walkerId = None
         return walkerId
 
-    def getWalkerListOfTokenOwner(self):
+    @staticmethod
+    def getWalkerListOfTokenOwner():
         [walkers, jsonWalkers] = Walker.getFromUser(g.currentUser)
-        print jsonWalkers
-        print walkers
         msg = 'walker list of ' + g.currentUser.user_name
         return [msg, jsonWalkers]
+
+    @staticmethod
+    def getWalkerInfo(walkerId):
+        walker = Walker.getFromWalkerId(walkerId)
+        if walker:
+            [trails, jsonTrails] = Walker.getTrails(walker)
+            msg = 'walker info'
+        else:
+            msg = 'wrong walker id'
+        return [msg, walker.walker_name, jsonTrails]
+
+    @staticmethod
+    def getWalkerInfoWithinUser(walkerId):
+        walker = Walker.getFromWalkerIdWithinUser(walkerId, g.currentUser)
+        if walker:
+            [trails, jsonTrails] = Walker.getTrails(walker)
+            msg = 'walker info'
+        else:
+            msg = 'wrong walker id'
+        return [msg, walker.walker_name, jsonTrails]
 
 
 class PbWalkerAPI(Resource):
