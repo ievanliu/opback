@@ -7,7 +7,7 @@
 #
 # This is autotest for cmdb models of eater package.
 
-import sys
+import sys,types
 sys.path.append('.')
 
 from nose.tools import *
@@ -179,43 +179,69 @@ class TestModels():
 
     # computer specification model test
     @with_setup(setUp, tearDown)
-    def test_computer_specification_insert(self):
+    def test_computer_specification(self):
         '''
         maintain a computer specification
         '''
-        # 0. print test
+        # 0. common test
+        # 0.0 print test
         cs0 = ComputerSpecification('cs-cs', '1330Hz', 8, '64G', '1T')
         eq_(cs0.__repr__(), "<ComputerSpecification %r>" % cs0.id)
         db.session.add(cs0)
         db.session.commit()
+        # 0.1 check cols test
+        cols = cs0.checkColumns(id='cs-p', cpu_num=8, __table__='lalal')
+        eq_(cols, {'id': 'cs-p', 'cpu_num': 8})
         # 1. insert a ComputerSpecification
         # 1.1 totally new specification
         cs1 = ComputerSpecification.insert(cpu_fre='1330Hz', cpu_num=4, memory='64G', disk='300G')
         eq_(cs1['cpu_num'], 4)
+        eq_(cs1['computer'], [])
         # 1.2 existing specification
         cs2 = ComputerSpecification.insert('1330Hz', 4, '32G', '200G')
         eq_(cs2, None)
         # 2. query a ComputerSpecification
         # 2.1 by id
-        cs3 = ComputerSpecification.get(cs1['id'])
-        eq_(cs3['disk'], '300G')
+        cs3 = ComputerSpecification().get(id=cs1['id'])
+        eq_(cs3[0]['disk'], '300G')
         # 2.2 all
-        cs_list = ComputerSpecification.get()
+        cs_list = ComputerSpecification().get()
         eq_(len(cs_list), 5)
         assert cs0,cs1 in cs_list
         # 3. update a ComputerSpecification
         # 3.1 non duplicative: update successfully
         cs4 = ComputerSpecification.update(id=cs1['id'], cpu_num=8)
         eq_(cs4['cpu_num'], 8)
-        cs5 = ComputerSpecification.get(cs1['id'])
-        eq_(cs5['cpu_num'], 8)
+        cs5 = ComputerSpecification().get(id=cs1['id'])
+        eq_(cs5[0]['cpu_num'], 8)
         # 3.2 duplicative: update failed
         cs6 = ComputerSpecification.update(id=cs0.id, disk='300G')
         eq_(cs6, None)
         # 4. delete a ComputerSpecification
         # 4.1 specification exists
-        flag = ComputerSpecification.delete(cs1['id'])
+        flag = ComputerSpecification().delete(cs1['id'])
+        eq_(flag, True)
+        flag = ComputerSpecification().delete(cs0.id)
         eq_(flag, True)
         # 4.2 no such specification
-        flag = ComputerSpecification.delete('boomshakalaka')
+        flag = ComputerSpecification().delete('boomshakalaka')
         eq_(flag, False)
+        cs_list = ComputerSpecification().get()
+        eq_(len(cs_list), 3)
+
+    # computer specification model test
+    @with_setup(setUp, tearDown)
+    def test_virtual_machine(self):
+        '''
+        maintain a virtual machine
+        '''
+        # 1. query a virtual machine
+        # 2.1 has conditions
+        vm = VirtualMachine().get(iqn_id='iqn-4')
+        # eq_(vm, None)
+        eq_(vm[0]['id'], 'vm-1')
+        eq_(vm[0]['pm'][0]['id'], 'pm-1')
+        # 2.2 all
+        vm_list = VirtualMachine().get()
+        eq_(len(vm_list), 4)
+        assert vm[0] in vm_list

@@ -3,12 +3,13 @@
 #
 # Author: Leann Mak
 # Email: leannmak@139.com
-# Date: July 12, 2016
+# Date: July 19, 2016
 #
 # This is the model module of eater package.
 
 from .. import db, utils
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 import re
 
 
@@ -35,11 +36,73 @@ class MyModel(db.Model):
         return tname.lower()
 
     # uuid
-    id = db.Column(db.String(64), primary_key=True)
+    @declared_attr
+    def id(cls):
+        return db.Column(
+            db.String(64), primary_key=True,
+            default=utils.genUuid(cls.__name__))
 
     # for print
     def __repr__(self):
         return '<%s %r>' % (self.__class__.__name__, self.id)
+
+    # output columns and relationships to json
+    def to_dict(self, count=0):
+        d = {col.name: getattr(self, col.name)
+             for col in self.__table__.columns}
+        if count == 1:
+            return d
+        count += 1
+        ds = self.__class__.__dict__
+        for k, w in ds.items():
+            relation = getattr(self, k)
+            if isinstance(w, InstrumentedAttribute) and (k not in d.keys()):
+                if relation:
+                    if hasattr(relation, '__iter__'):
+                        d[k] = [x.to_dict(count)
+                                for x in relation if hasattr(x, 'to_dict')]
+                    elif hasattr(relation, 'to_dict'):
+                        d[k] = [relation.to_dict(count)]
+                    else:
+                        d[k] = relation
+                else:
+                    d[k] = []
+        return d
+
+    # find out parameters belongging to the table column
+    def checkColumns(self, **kw):
+        cols = {}
+        for k, w in kw.items():
+            if isinstance(self.__class__.__dict__[k], InstrumentedAttribute):
+                cols[k] = w
+        return cols
+
+    # get (a) record(s)
+    # input dict{}: conditions for search
+    # output json list[]: record(s) s.t. conditions
+    def get(self, **kw):
+        if kw:
+            cols = self.checkColumns(**kw)
+            li = self.__class__.query.filter_by(**cols).all()
+        else:
+            li = self.__class__.query.all()
+        if li:
+            return [x.to_dict() for x in li]
+        return None
+
+    # delete a record
+    # input str: id
+    # output boolean: True if deleted, False if failed to delete
+    def delete(self, id):
+        old_rec = self.__class__.query.filter_by(id=id).first()
+        if old_rec:
+            db.session.delete(old_rec)
+            try:
+                db.session.commit()
+                return True
+            except:
+                db.session.rollback()
+        return False
 
 
 """
@@ -241,7 +304,8 @@ class ITEquipment(MyModel):
         'Rack', enable_typechecks=False, backref='it', lazy='dynamic')
 
     # constructor
-    def __init__(self, id, label, name, setup_time, os_id):
+    def __init__(self, id=None, label=None,
+                 name='name', setup_time=None, os_id=None):
         self.id = id
         self.label = label
         self.name = name
@@ -274,8 +338,8 @@ class Computer(ITEquipment):
         db.String(64), db.ForeignKey('computer_specification.id'))
 
     # constructor
-    def __init__(self, id, iqn_id, group_id, spec_id,
-                 label, name, setup_time, os_id):
+    def __init__(self, id=None, iqn_id=None, group_id=None, spec_id=None,
+                 label=None, name=None, setup_time=None, os_id=None):
         self.id = id
         self.iqn_id = iqn_id
         self.group_id = group_id
@@ -311,37 +375,13 @@ class ComputerSpecification(MyModel):
         'Computer', backref='spec', lazy='dynamic')
 
     # constructor
-    def __init__(self, id, cpu_fre, cpu_num, memory, disk):
+    def __init__(self, id=None, cpu_fre=None,
+                 cpu_num=None, memory=None, disk=None):
         self.id = id
         self.cpu_fre = cpu_fre
         self.cpu_num = cpu_num
         self.memory = memory
         self.disk = disk
-
-    # data formatting
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'cpu_fre': self.cpu_fre,
-            'cpu_num': self.cpu_num,
-            'memory': self.memory,
-            'disk': self.disk
-        }
-
-    # get (a) computer specification(s)
-    # set id not None to return a dict{} of a specific CS
-    # or return a list[] of all CS
-    @staticmethod
-    def get(id=None):
-        if id:
-            cs = ComputerSpecification.query.filter_by(id=id).first()
-            if cs:
-                return cs.to_dict()
-        else:
-            cs = ComputerSpecification.query.all()
-            if cs:
-                return [x.to_dict() for x in cs]
-        return None
 
     # insert a new kind of computer specification
     @staticmethod
@@ -376,16 +416,6 @@ class ComputerSpecification(MyModel):
             except:
                 db.session.rollback()
         return None
-
-    # delete a computer specification
-    @staticmethod
-    def delete(id):
-        old_cs = ComputerSpecification.query.filter_by(id=id).first()
-        if old_cs:
-            db.session.delete(old_cs)
-            db.session.commit()
-            return True
-        return False
 
 
 class PhysicalMachine(Computer):
@@ -437,8 +467,9 @@ class VirtualMachine(Computer):
     vm_pid = db.Column(db.String(64), nullable=False)
 
     # constructor
-    def __init__(self, id, pm_id, vm_pid, iqn_id, group_id,
-                 spec_id, label, name, setup_time, os_id):
+    def __init__(self, id=None, pm_id=None, vm_pid=None,
+                 iqn_id=None, group_id=None, spec_id=None,
+                 label=None, name=None, setup_time=None, os_id=None):
         self.id = id
         self.pm_id = pm_id
         self.vm_pid = vm_pid
