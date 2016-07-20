@@ -7,7 +7,7 @@
 #
 # This is autotest for cmdb models of eater package.
 
-import sys,types
+import sys
 sys.path.append('.')
 
 from nose.tools import *
@@ -23,6 +23,8 @@ class TestModels():
     '''
         Unit test for models in Eater
     '''
+    default_bind_key = None
+
     # establish db
     def setUp(self):
         app.testing = True
@@ -35,9 +37,9 @@ class TestModels():
 
         self.tester = app.test_client(self)
 
-        # database initialization 
-        db.drop_all(bind=None)
-        db.create_all(bind=None)
+        # database initialization
+        # db.drop_all(bind=self.default_bind_key)
+        db.create_all(bind=self.default_bind_key)
 
         # table initialization
         # initialize os
@@ -100,11 +102,10 @@ class TestModels():
         # do committing
         db.session.commit()
 
-
     # drop db
     def tearDown(self):
-        pass
-        # db.drop_all(bind=None)
+        db.session.close()
+        db.drop_all(bind=self.default_bind_key)
 
     # model relationships test
     @with_setup(setUp, tearDown)
@@ -152,8 +153,8 @@ class TestModels():
         # 6. computer_specification and computer
         # 6.1 computer_specification and vm
         cs = ComputerSpecification.query.filter_by(id='cs-2').first()
-        pc1 = Computer.query.filter_by(id=vm.id).first()
         eq_(vm.spec, cs)
+        pc1 = Computer.query.filter_by(id=vm.id).first()
         assert pc1 in cs.computer
         # 6.2 computer_specification and pm
         pc2 = Computer.query.filter_by(id=pm.id).first()
@@ -177,6 +178,8 @@ class TestModels():
         # 3. update an IP
         # 4. delete an IP
 
+        # computer specification model test
+
     # computer specification model test
     @with_setup(setUp, tearDown)
     def test_computer_specification(self):
@@ -190,18 +193,23 @@ class TestModels():
         db.session.add(cs0)
         db.session.commit()
         # 0.1 check cols test
-        cols = cs0.checkColumns(id='cs-p', cpu_num=8, __table__='lalal')
-        eq_(cols, {'id': 'cs-p', 'cpu_num': 8})
+        cols, relations, isColComplete, isRelComplete = \
+            cs0.checkColumnsAndRelations(
+                id='cs-p', cpu_num=8, __table__='lalal', computer=None)
+        eq_(cols,  {'cpu_num': 8, 'id': 'cs-p'})
+        eq_(relations, {'computer': None})
         # 1. insert a ComputerSpecification
         # 1.1 totally new specification
-        cs1 = ComputerSpecification.insert(cpu_fre='1330Hz', cpu_num=4, memory='64G', disk='300G')
+        cs1 = ComputerSpecification().insert(
+            cpu_fre='1330Hz', cpu_num=4, memory='64G', disk='300G')
         eq_(cs1['cpu_num'], 4)
         eq_(cs1['computer'], [])
         # 1.2 existing specification
-        cs2 = ComputerSpecification.insert('1330Hz', 4, '32G', '200G')
+        cs2 = ComputerSpecification().insert(
+            cpu_fre='1330Hz', cpu_num=4, memory='32G', disk='200G')
         eq_(cs2, None)
         # 2. query a ComputerSpecification
-        # 2.1 by id
+        # 2.1 by id or other factor
         cs3 = ComputerSpecification().get(id=cs1['id'])
         eq_(cs3[0]['disk'], '300G')
         # 2.2 all
@@ -210,12 +218,12 @@ class TestModels():
         assert cs0,cs1 in cs_list
         # 3. update a ComputerSpecification
         # 3.1 non duplicative: update successfully
-        cs4 = ComputerSpecification.update(id=cs1['id'], cpu_num=8)
+        cs4 = ComputerSpecification().update(id=cs1['id'], cpu_num=8)
         eq_(cs4['cpu_num'], 8)
         cs5 = ComputerSpecification().get(id=cs1['id'])
         eq_(cs5[0]['cpu_num'], 8)
         # 3.2 duplicative: update failed
-        cs6 = ComputerSpecification.update(id=cs0.id, disk='300G')
+        cs6 = ComputerSpecification().update(id=cs0.id, disk='300G')
         eq_(cs6, None)
         # 4. delete a ComputerSpecification
         # 4.1 specification exists
@@ -228,6 +236,9 @@ class TestModels():
         eq_(flag, False)
         cs_list = ComputerSpecification().get()
         eq_(len(cs_list), 3)
+        eq_(cs_list[0]['id'], 'cs-1')
+        eq_(cs_list[1]['id'], 'cs-2')
+        eq_(cs_list[2]['id'], 'cs-3')
 
     # computer specification model test
     @with_setup(setUp, tearDown)
@@ -236,12 +247,16 @@ class TestModels():
         maintain a virtual machine
         '''
         # 1. query a virtual machine
-        # 2.1 has conditions
+        # 1.1 has conditions
+        vm0 = VirtualMachine.query.filter_by(iqn_id='iqn-4').first()
         vm = VirtualMachine().get(iqn_id='iqn-4')
-        # eq_(vm, None)
+        # eq_(VirtualMachine.__mapper__.relationships.__dict__['_data'], None)
+        # eq_(VirtualMachine.__mapper__.columns.__dict__['_data'], None)
+        # eq_((super(VirtualMachine, vm0)).__dict__, object)
+        # eq_(vm[0], None)
         eq_(vm[0]['id'], 'vm-1')
         eq_(vm[0]['pm'][0]['id'], 'pm-1')
-        # 2.2 all
+        # 1.2 all
         vm_list = VirtualMachine().get()
         eq_(len(vm_list), 4)
         assert vm[0] in vm_list

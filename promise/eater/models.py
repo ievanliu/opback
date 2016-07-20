@@ -9,7 +9,6 @@
 
 from .. import db, utils
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 import re
 
 
@@ -46,43 +45,88 @@ class MyModel(db.Model):
     def __repr__(self):
         return '<%s %r>' % (self.__class__.__name__, self.id)
 
-    # output columns and relationships to json
+    # output columns and relationships to dict
     def to_dict(self, count=0):
-        d = {col.name: getattr(self, col.name)
-             for col in self.__table__.columns}
-        if count == 1:
+        columns = self.__mapper__.columns.__dict__['_data']
+        relationships = self.__mapper__.relationships.__dict__['_data']
+        # get columns
+        d = {k: getattr(self, k) for k in columns.keys()}
+        # recursion ends (better limit count to be <= 3)
+        # or it may risk to be maximum recursion depth exceeded
+        if not relationships or count == 2:
             return d
         count += 1
-        ds = self.__class__.__dict__
-        for k, w in ds.items():
+        # get relationships
+        for k in relationships.keys():
             relation = getattr(self, k)
-            if isinstance(w, InstrumentedAttribute) and (k not in d.keys()):
-                if relation:
-                    if hasattr(relation, '__iter__'):
-                        d[k] = [x.to_dict(count)
-                                for x in relation if hasattr(x, 'to_dict')]
-                    elif hasattr(relation, 'to_dict'):
-                        d[k] = [relation.to_dict(count)]
-                    else:
-                        d[k] = relation
-                else:
-                    d[k] = []
+            if relation:
+                if hasattr(relation, '__iter__'):
+                    d[k] = [x.to_dict(count)
+                            for x in relation if hasattr(x, 'to_dict')]
+                elif hasattr(relation, 'to_dict'):
+                    d[k] = [relation.to_dict(count)]
+            else:
+                d[k] = []
         return d
 
-    # find out parameters belongging to the table column
-    def checkColumns(self, **kw):
-        cols = {}
-        for k, w in kw.items():
-            if isinstance(self.__class__.__dict__[k], InstrumentedAttribute):
-                cols[k] = w
-        return cols
+    # find out params in table columns and relationships
+    def checkColumnsAndRelations(self, **kw):
+        cols, relations = {}, {}
+        columns = self.__mapper__.columns.__dict__['_data']
+        relationships = self.__mapper__.relationships.__dict__['_data']
+        if kw:
+            for k, w in kw.items():
+                if k in columns.keys():
+                    cols[k] = w
+                elif k in relationships.keys():
+                    relations[k] = w
+        isColComplete = (
+            (len(cols) == len(columns) - 1) and
+            ('id' not in cols.keys())) or (len(cols) == len(columns))
+        isRelComplete = len(relations) == len(relationships)
+        return cols, relations, isColComplete, isRelComplete
+
+    # insert a record
+    # input dict{}: whole factors of a new record
+    # output dict{}: the inserted new record
+    def insert(self, **kw):
+        if kw:
+            cols, relations, isColComplete, isRelComplete = \
+                self.checkColumnsAndRelations(**kw)
+            if isColComplete:
+                obj = self.__class__(**cols)
+                db.session.add(obj)
+            try:
+                db.session.commit()
+                return obj.to_dict()
+            except:
+                db.session.rollback()
+        return None
+
+    # update a record
+    # input dict{}: factors to update
+    # output dict{}: the updated record
+    def update(self, id, **kw):
+        obj = self.__class__.query.filter_by(id=id).first()
+        if obj:
+            cols, relations, isColComplete, isRelComplete = \
+                self.checkColumnsAndRelations(**kw)
+            for k, w in cols.items():
+                setattr(obj, k, w)
+            try:
+                db.session.commit()
+                return obj.to_dict()
+            except:
+                db.session.rollback()
+        return None
 
     # get (a) record(s)
     # input dict{}: conditions for search
     # output json list[]: record(s) s.t. conditions
     def get(self, **kw):
         if kw:
-            cols = self.checkColumns(**kw)
+            cols, relations, isColComplete, isRelComplete = \
+                self.checkColumnsAndRelations(**kw)
             li = self.__class__.query.filter_by(**cols).all()
         else:
             li = self.__class__.query.all()
@@ -133,8 +177,9 @@ class IP(MyModel):
     """
     __bind_key__ = my_default_database
     __table_args__ = (
-        db.UniqueConstraint('if_id', 'id', name='_if_ip_uc'),
-        db.UniqueConstraint('it_id', 'id', name='_it_ip_uc'),)
+        db.UniqueConstraint(
+            'ip_addr', 'ip_mask', 'ip_category',
+            'if_id', 'it_id', name='_if_ip_uc'),)
 
     # IP address
     ip_addr = db.Column(db.String(64), unique=True)
@@ -157,9 +202,6 @@ class IP(MyModel):
         self.if_id = if_id
         self.it_id = it_id
 
-    def __repr__(self):
-        return '<IP %r>' % self.id
-
     # get a interface
     def getInterface(self):
         return self.inf
@@ -176,7 +218,7 @@ class Interface(MyModel):
     __bind_key__ = my_default_database
 
     # interface name
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64), unique=True)
     # IP
     ip = db.relationship('IP', backref='inf', lazy='dynamic')
 
@@ -185,20 +227,19 @@ class Interface(MyModel):
         self.id = id
         self.name = name
 
-    def __repr__(self):
-        return '<Interface %r>' % self.id
-
 
 class OperatingSystem(MyModel):
     """
         Operating System Model.
     """
     __bind_key__ = my_default_database
+    __table_args__ = (
+        db.UniqueConstraint('name', 'version', name='_os_uc'),)
 
     # OS name
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64))
     # OS version
-    version = db.Column(db.String(64), nullable=False)
+    version = db.Column(db.String(64))
     # IT equipment
     it = db.relationship(
         'ITEquipment', backref='os', lazy='dynamic')
@@ -213,9 +254,6 @@ class OperatingSystem(MyModel):
         self.name = name
         self.version = version
 
-    def __repr__(self):
-        return '<OperatingSystem %r>' % self.id
-
 
 class OSUser(MyModel):
     """
@@ -223,9 +261,12 @@ class OSUser(MyModel):
         Set 'enable_typechecks=False' to enable subtype polymorphism.
     """
     __bind_key__ = my_default_database
+    __table_args__ = (
+        db.UniqueConstraint(
+            'name', 'password', 'privilege', name='_osuser_uc'),)
 
     # OS user name
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64))
     # OS user password
     password = db.Column(db.String(64))
     # OS user privilege
@@ -242,10 +283,6 @@ class OSUser(MyModel):
         self.password = password
         self.privilege = privilege
 
-    # for print
-    def __repr__(self):
-        return '<OSUser %r>' % self.id
-
     # get a list of related operating systems
     def getOS(self):
         return self.os
@@ -257,10 +294,10 @@ class Rack(MyModel):
     """
     __bind_key__ = my_default_database
     __table_args__ = (
-        db.UniqueConstraint('it_id', 'id', name='_it_rack_uc'),)
+        db.UniqueConstraint('label', 'it_id', name='_rack_uc'),)
 
     # rack label
-    label = db.Column(db.String(64), nullable=False)
+    label = db.Column(db.String(64))
     # IT equipment which is installed in the rack
     it_id = db.Column(db.String(64), db.ForeignKey('itequipment.id'))
 
@@ -269,9 +306,6 @@ class Rack(MyModel):
         self.id = id
         self.label = label
         self.it_id = it_id
-
-    def __repr__(self):
-        return '<Rack %r>' % self.id
 
 
 class ITEquipment(MyModel):
@@ -282,12 +316,13 @@ class ITEquipment(MyModel):
     """
     __bind_key__ = my_default_database
     __table_args__ = (
-        db.UniqueConstraint('os_id', 'name', name='_os_it_uc'),)
+        db.UniqueConstraint(
+            'label', 'name', 'setup_time', 'os_id', name='_it_uc'),)
 
     # IT equipment label
     label = db.Column(db.String(64))
     # IT equipment host name
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64))
     # IT equipment setup time
     setup_time = db.Column(db.String(64))
     # operating system
@@ -305,15 +340,12 @@ class ITEquipment(MyModel):
 
     # constructor
     def __init__(self, id=None, label=None,
-                 name='name', setup_time=None, os_id=None):
+                 name=None, setup_time=None, os_id=None):
         self.id = id
         self.label = label
         self.name = name
         self.setup_time
         self.os_id = os_id
-
-    def __repr__(self):
-        return '<ITEquipment %r>' % self.id
 
 
 class Computer(ITEquipment):
@@ -323,7 +355,7 @@ class Computer(ITEquipment):
     """
     __bind_key__ = my_default_database
     __table_args__ = (
-        db.UniqueConstraint('spec_id', 'id', name='_spec_com_uc'),)
+        db.UniqueConstraint('spec_id', 'iqn_id', 'group_id', name='_com_uc'),)
 
     # use super class ITEquipment uuid as Computer uuid
     id = db.Column(
@@ -345,9 +377,6 @@ class Computer(ITEquipment):
         self.group_id = group_id
         self.spec_id = spec_id
         super(Computer, self).__init__(id, label, name, setup_time, os_id)
-
-    def __repr__(self):
-        return '<Computer %r>' % self.id
 
 
 class ComputerSpecification(MyModel):
@@ -383,40 +412,6 @@ class ComputerSpecification(MyModel):
         self.memory = memory
         self.disk = disk
 
-    # insert a new kind of computer specification
-    @staticmethod
-    def insert(cpu_fre, cpu_num, memory, disk):
-        if cpu_fre and cpu_num and memory and disk:
-            cs = ComputerSpecification(
-                utils.genUuid('cs'), cpu_fre, cpu_num, memory, disk)
-            db.session.add(cs)
-            try:
-                db.session.commit()
-                return cs.to_dict()
-            except:
-                db.session.rollback()
-        return None
-
-    # update a computer specification
-    @staticmethod
-    def update(id, cpu_fre=None, cpu_num=None, memory=None, disk=None):
-        cs = ComputerSpecification.query.filter_by(id=id).first()
-        if cs:
-            if cpu_fre:
-                cs.cpu_fre = cpu_fre
-            if cpu_num:
-                cs.cpu_num = cpu_num
-            if memory:
-                cs.memory = memory
-            if disk:
-                cs.disk = disk
-            try:
-                db.session.commit()
-                return cs.to_dict()
-            except:
-                db.session.rollback()
-        return None
-
 
 class PhysicalMachine(Computer):
     """
@@ -443,9 +438,6 @@ class PhysicalMachine(Computer):
         super(PhysicalMachine, self).__init__(
             id, iqn_id, group_id, spec_id, label, name, setup_time, os_id)
 
-    def __repr__(self):
-        return '<PhysicalMachine %r>' % self.id
-
 
 class VirtualMachine(Computer):
     """
@@ -462,9 +454,9 @@ class VirtualMachine(Computer):
         primary_key=True)
     # related pm
     pm_id = db.Column(
-        db.String(64), db.ForeignKey('physical_machine.id'), nullable=False)
+        db.String(64), db.ForeignKey('physical_machine.id'))
     # vm pid
-    vm_pid = db.Column(db.String(64), nullable=False)
+    vm_pid = db.Column(db.String(64))
 
     # constructor
     def __init__(self, id=None, pm_id=None, vm_pid=None,
@@ -475,9 +467,6 @@ class VirtualMachine(Computer):
         self.vm_pid = vm_pid
         super(VirtualMachine, self).__init__(
             id, iqn_id, group_id, spec_id, label, name, setup_time, os_id)
-
-    def __repr__(self):
-        return '<VirtualMachine %r>' % self.id
 
     # get the related pm
     def getPhysicalMachine(self):
