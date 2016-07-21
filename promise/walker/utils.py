@@ -10,6 +10,7 @@
 from .. import app
 import md5
 import datetime
+import re
 
 
 def hash_pass(password):
@@ -27,3 +28,17 @@ def hash_pass(password):
 
 def serialCurrentTime():
     return datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+
+
+def ipFormatChk(ip_str):
+    pattern_string = r"""
+       \b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.
+       (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.
+       (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.
+       (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b
+       """
+    pattern = re.compile(pattern_string, re.X)
+    if re.match(pattern, ip_str):
+        return True
+    else:
+        return False
