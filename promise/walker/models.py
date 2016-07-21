@@ -294,9 +294,11 @@ class Trail(db.Model):
     trail_id = db.Column(db.String(64), primary_key=True)
     ip = db.Column(db.String(15))
     stdout = db.Column(db.Text)
+    stderr = db.Column(db.Text)
     msg = db.Column(db.Text)
     time_start = db.Column(db.DATETIME)
     time_end = db.Column(db.DATETIME)
+    time_delta_string = db.Column(db.String(64))
 
     # result summerize of one trail：
     # comes from ansible.taskqueuemanage._stats.summarize
@@ -329,6 +331,10 @@ class Trail(db.Model):
             self.msg = result['msg']
         if 'stdout' in result:
             self.stdout = result['stdout']
+        if 'stderr' in result:
+            self.stderr = result['stderr']
+        if 'delta' in result:
+            self.time_delta_string = result['delta']
         if 'start' in result:
             self.time_start = datetime.datetime.strptime(
                 result['start'], "%Y-%m-%d %H:%M:%S.%f")
@@ -366,7 +372,7 @@ class TrailSchema(ma.HyperlinkModelSchema):
         fields = [
             'trail_id', 'ip', 'sum_ok', 'sum_unreachable',
             'sum_skipped', 'sum_changed', 'sum_failures', 'msg', 'stdout',
-            'time_start', 'time_end']
+            'time_start', 'time_end', 'time_delta_string', 'stderr']
 trail_schema = TrailSchema()
 trails_schema = TrailSchema(many=True)
 
