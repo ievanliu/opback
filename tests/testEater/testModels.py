@@ -42,62 +42,62 @@ class TestModels():
         db.create_all(bind=self.default_bind_key)
 
         # table initialization
-        # initialize os
-        os1 = OperatingSystem('os-1', 'Linux', 'CentOS7.1')
-        os2 = OperatingSystem('os-2', 'Windows', 'Win10')
-        db.session.add_all([os1, os2])
         # initialize osuser
-        user1 = OSUser('u-1', 'elk', '111111', '0')
-        user2 = OSUser('u-2', 'zabbix', '111111', '0')
-        user3 = OSUser('u-3', 'joch', '111111', '1')
+        user1 = OSUser(id='u-1', name='elk', password='111111', privilege='0')
+        user2 = OSUser(id='u-2', name='zabbix', password='111111', privilege='0')
+        user3 = OSUser(id='u-3', name='joch', password='111111', privilege='1')
         db.session.add_all([user1, user2, user3])
-        # initialize user2os
-        os1.user = [user1, user3]
-        os2.user.append(user2)
-        os2.user.append(user3)
+        # initialize os
+        os1 = OperatingSystem(user = [user1, user3], id='os-1', name='Linux', version='CentOS7.1')
+        os2 = OperatingSystem(user=[user2, user3], id='os-2', name='Windows', version='Win10')
+        db.session.add_all([os1, os2])
+        # # initialize user2os
+        # os1.user = [user1, user3]
+        # os2.user.append(user2)
+        # os2.user.append(user3)
         # initialize interface
-        if1 = Interface('if-1', 'eth0')
-        if2 = Interface('if-2', 'eth1')
-        if3 = Interface('if-3', 'eth2')
+        if1 = Interface(id='if-1', name='eth0')
+        if2 = Interface(id='if-2', name='eth1')
+        if3 = Interface(id='if-3', name='eth2')
         db.session.add_all([if1, if2, if3])
         # initialize computer specification
-        cs1 = ComputerSpecification('cs-1', '1330Hz', 4, '32G', '200G')
-        cs2 = ComputerSpecification('cs-2', '1670Hz', 8, '32G', '200G')
-        cs3 = ComputerSpecification('cs-3', '3330Hz', 32, '256G', '600G')
+        cs1 = ComputerSpecification(id='cs-1', cpu_fre='1330Hz', cpu_num=4, memory='32G', disk='200G')
+        cs2 = ComputerSpecification(id='cs-2', cpu_fre='1670Hz', cpu_num=8, memory='32G', disk='200G')
+        cs3 = ComputerSpecification(id='cs-3', cpu_fre='3330Hz', cpu_num=32, memory='256G', disk='600G')
         db.session.add_all([cs1, cs2,cs3])
         # initialize pm
-        pm1 = PhysicalMachine('pm-1', 'iqn-1','gp-1', 'cs-2', 'NFJD-PM-1', 'host-pm-1', '20160701', 'os-1')
-        pm2 = PhysicalMachine('pm-2', 'iqn-2','gp-2', 'cs-2', 'NFJD-PM-2', 'host-pm-2', '20160701', 'os-1')
-        pm3 = PhysicalMachine('pm-3', 'iqn-3','gp-3', 'cs-3', 'NFJD-PM-3', 'host-pm-3', '20160701', 'os-2')
+        pm1 = PhysicalMachine(osuser = [user1, user3], id='pm-1', iqn_id='iqn-1', group_id='gp-1', spec_id='cs-2', label='NFJD-PM-1', name='host-pm-1', setup_time='20160701', os_id='os-1')
+        pm2 = PhysicalMachine(osuser = [user2], id='pm-2', iqn_id='iqn-2', group_id='gp-2', spec_id='cs-2', label='NFJD-PM-2', name='host-pm-2', setup_time='20160701', os_id='os-1')
+        pm3 = PhysicalMachine(id='pm-3', iqn_id='iqn-3', group_id='gp-3', spec_id='cs-3', label='NFJD-PM-3', name='host-pm-3', setup_time='20160701', os_id='os-2')
         db.session.add_all([pm1, pm2, pm3])
         # initialize vm
-        vm1 = VirtualMachine('vm-1', 'pm-1', '6189', 'iqn-4', 'gp-1', 'cs-2', 'NFJD-VM-1', 'host-vm-1', '20160701', 'os-1')
-        vm2 = VirtualMachine('vm-2', 'pm-2', '6007', 'iqn-5', 'gp-1', 'cs-2', 'NFJD-VM-2', 'host-vm-2', '20160701', 'os-2')
-        vm3 = VirtualMachine('vm-3', 'pm-2', '6009', 'iqn-6', 'gp-3', 'cs-2', 'NFJD-VM-3', 'host-vm-3', '20160701', 'os-2')
-        vm4 = VirtualMachine('vm-4', 'pm-3', '61899', 'iqn-7','gp-2', 'cs-1', 'NFJD-VM-4', 'host-vm-4', '20160701', 'os-1')
+        vm1 = VirtualMachine(osuser = [user1], id='vm-1', pm_id='pm-1', vm_pid='6189', iqn_id='iqn-4', group_id='gp-1', spec_id='cs-2', label='NFJD-VM-1', name='host-vm-1', setup_time='20160701', os_id='os-1')
+        vm2 = VirtualMachine(id='vm-2', pm_id='pm-2', vm_pid='6007', iqn_id='iqn-5', group_id='gp-1', spec_id='cs-2', label='NFJD-VM-2', name='host-vm-2', setup_time='20160701', os_id='os-2')
+        vm3 = VirtualMachine(osuser = [user1, user2], id='vm-3', pm_id='pm-2', vm_pid='6009', iqn_id='iqn-6', group_id='gp-3', spec_id='cs-2', label='NFJD-VM-3', name='host-vm-3', setup_time='20160701', os_id='os-2')
+        vm4 = VirtualMachine(id='vm-4', pm_id='pm-3', vm_pid='61899', iqn_id='iqn-7', group_id='gp-2', spec_id='cs-1', label='NFJD-VM-4', name='host-vm-4', setup_time='20160701', os_id='os-1')
         db.session.add_all([vm1, vm2, vm3, vm4])
-        # initialize osuser2it
-        pm1.osuser = [user1, user3]
-        pm2.osuser = [user2]
-        vm1.osuser = [user1]
-        vm3.osuser = [user1, user2]
+        # # initialize osuser2it
+        # pm1.osuser = [user1, user3]
+        # pm2.osuser = [user2]
+        # vm1.osuser = [user1]
+        # vm3.osuser = [user1, user2]
         # initialize ip
-        ip1 = IP('ip-1', '192.168.182.1', '255.255.255.0', 'if-1', 'pm-1', 'pm')
-        ip2 = IP('ip-2', '192.168.182.2', '255.255.255.0', 'if-1', 'pm-2', 'pm')
-        ip3 = IP('ip-3', '192.168.182.3', '255.255.255.0', 'if-1', 'pm-3', 'pm')
-        ip4 = IP('ip-4', '10.0.100.3', '255.255.255.0', 'if-2', 'pm-3', 'pm')
-        ip5 = IP('ip-5', '192.168.182.4', '255.255.255.0', 'if-1', 'vm-1', 'vm')
-        ip6 = IP('ip-6', '192.168.182.5', '255.255.255.0', 'if-1', 'vm-2', 'vm')
-        ip7 = IP('ip-7', '192.168.182.6', '255.255.255.0', 'if-1', 'vm-3', 'vm')
-        ip8 = IP('ip-8', '192.168.182.7', '255.255.255.0', 'if-1', 'vm-4', 'vm')
-        ip9 = IP('ip-9', '192.168.182.254', '255.255.255.0', 'if-1', 'vm-1', 'vip')
-        ip10 = IP('ip-10', '192.168.182.253', '255.255.255.0', 'if-1', 'pm-2', 'vip')
+        ip1 = IP(id='ip-1', ip_addr='192.168.182.1', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-1', ip_category='pm')
+        ip2 = IP(id='ip-2', ip_addr='192.168.182.2', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-2', ip_category='pm')
+        ip3 = IP(id='ip-3', ip_addr='192.168.182.3', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-3', ip_category='pm')
+        ip4 = IP(id='ip-4', ip_addr='10.0.100.3', ip_mask='255.255.255.0', if_id='if-2', it_id='pm-3', ip_category='pm')
+        ip5 = IP(id='ip-5', ip_addr='192.168.182.4', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-1', ip_category='vm')
+        ip6 = IP(id='ip-6', ip_addr='192.168.182.5', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-2', ip_category='vm')
+        ip7 = IP(id='ip-7', ip_addr='192.168.182.6', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-3', ip_category='vm')
+        ip8 = IP(id='ip-8', ip_addr='192.168.182.7', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-4', ip_category='vm')
+        ip9 = IP(id='ip-9', ip_addr='192.168.182.254', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-1', ip_category='vip')
+        ip10 = IP(id='ip-10', ip_addr='192.168.182.253', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-2', ip_category='vip')
         db.session.add_all([ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, ip9, ip10])
         # initialize rack
-        rack1 = Rack('rack-1', 'CMCC-RACK-1', 'pm-1')
-        rack2 = Rack('rack-2', 'CMCC-RACK-2', 'pm-2')
-        rack3 = Rack('rack-3', 'CMCC-RACK-3', 'pm-3')
-        rack4 = Rack('rack-4', 'CMCC-RACK-4', 'pm-3')
+        rack1 = Rack(id='rack-1', label='CMCC-RACK-1', it_id='pm-1')
+        rack2 = Rack(id='rack-2', label='CMCC-RACK-2', it_id='pm-2')
+        rack3 = Rack(id='rack-3', label='CMCC-RACK-3', it_id='pm-3')
+        rack4 = Rack(id='rack-4', label='CMCC-RACK-4', it_id='pm-3')
         db.session.add_all([rack1, rack2, rack3, rack4])
         # do committing
         db.session.commit()
@@ -106,6 +106,22 @@ class TestModels():
     def tearDown(self):
         db.session.close()
         db.drop_all(bind=self.default_bind_key)
+
+    # model relationships test
+    @with_setup(setUp, tearDown)
+    def test_model_init(self):
+        '''
+        test model initialization
+        '''
+        vm = VirtualMachine.query.filter_by(id='vm-1').first()
+        it1 = ITEquipment.query.filter_by(id=vm.id).first()
+        eq_(vm.label, it1.label)
+        # eq_(vm.columns()['id'].nullable, it1.columns()['label'].nullable)
+        # eq_(vm.relationships(), None)
+        # eq_(vm.relationships()['osuser'].secondary, None)
+        eq_(vm.relationships()['ip'].secondary, None)
+        eq_(VirtualMachine.__mapper__.columns.__dict__['_data']['id'].nullable, False)
+
 
     # model relationships test
     @with_setup(setUp, tearDown)
@@ -188,7 +204,7 @@ class TestModels():
         '''
         # 0. common test
         # 0.0 print test
-        cs0 = ComputerSpecification('cs-cs', '1330Hz', 8, '64G', '1T')
+        cs0 = ComputerSpecification(id='cs-cs', cpu_fre='1330Hz', cpu_num=8, memory='64G', disk='1T')
         eq_(cs0.__repr__(), "<ComputerSpecification %r>" % cs0.id)
         db.session.add(cs0)
         db.session.commit()
@@ -197,7 +213,7 @@ class TestModels():
             cs0.checkColumnsAndRelations(
                 id='cs-p', cpu_num=8, __table__='lalal', computer=None)
         eq_(cols,  {'cpu_num': 8, 'id': 'cs-p'})
-        eq_(relations, {'computer': None})
+        eq_(relations, {})
         # 1. insert a ComputerSpecification
         # 1.1 totally new specification
         cs1 = ComputerSpecification().insert(
@@ -250,6 +266,10 @@ class TestModels():
         # 1.1 has conditions
         vm0 = VirtualMachine.query.filter_by(iqn_id='iqn-4').first()
         vm = VirtualMachine().get(iqn_id='iqn-4')
+        eq_(hasattr(VirtualMachine, '__table__'), True)
+        eq_(hasattr(Doraemon, '__table__'), False)
+        # eq_(MyModel.__bases__, True)
+        eq_(VirtualMachine.__bases__[0].__name__, 'Computer')
         # eq_(VirtualMachine.__mapper__.relationships.__dict__['_data'], None)
         # eq_(VirtualMachine.__mapper__.columns.__dict__['_data'], None)
         # eq_((super(VirtualMachine, vm0)).__dict__, object)

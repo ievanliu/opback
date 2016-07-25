@@ -3,7 +3,7 @@
 #
 # Author: Leann Mak
 # Email: leannmak@139.com
-# Date: July 19, 2016
+# Date: July 25, 2016
 #
 # This is the model module of eater package.
 
@@ -16,7 +16,7 @@ import re
 my_default_database = None
 
 
-class MyModel(db.Model):
+class Doraemon(db.Model):
     """
         Eater Super Model.
     """
@@ -41,14 +41,39 @@ class MyModel(db.Model):
             db.String(64), primary_key=True,
             default=utils.genUuid(cls.__name__))
 
+    # name list of base classes
+    def bases(self):
+        names = []
+        for x in self.__class__.__bases__:
+            names.append(x.__name__)
+        return names
+
+    # list of model columns
+    def columns(self):
+        return self.__class__.__mapper__.columns.__dict__['_data']
+
+    # list of model relationships
+    def relationships(self):
+        return self.__class__.__mapper__.relationships.__dict__['_data']
+
+    # constructor
+    def __init__(self, **kw):
+        if kw:
+            cols, relations, isColComplete, isRelComplete = \
+                self.checkColumnsAndRelations(**kw)
+            if isColComplete:
+                d = dict(cols, **relations)
+                for k, w in d.items():
+                    setattr(self, k, w)
+
     # for print
     def __repr__(self):
         return '<%s %r>' % (self.__class__.__name__, self.id)
 
     # output columns and relationships to dict
     def to_dict(self, count=0):
-        columns = self.__mapper__.columns.__dict__['_data']
-        relationships = self.__mapper__.relationships.__dict__['_data']
+        columns = self.columns()
+        relationships = self.relationships()
         # get columns
         d = {k: getattr(self, k) for k in columns.keys()}
         # recursion ends (better limit count to be <= 3)
@@ -72,30 +97,38 @@ class MyModel(db.Model):
     # find out params in table columns and relationships
     def checkColumnsAndRelations(self, **kw):
         cols, relations = {}, {}
-        columns = self.__mapper__.columns.__dict__['_data']
-        relationships = self.__mapper__.relationships.__dict__['_data']
+        isColComplete, isRelComplete = True, True
+        columns = self.columns()
+        relationships = self.relationships()
         if kw:
-            for k, w in kw.items():
-                if k in columns.keys():
-                    cols[k] = w
-                elif k in relationships.keys():
-                    relations[k] = w
-        isColComplete = (
-            (len(cols) == len(columns) - 1) and
-            ('id' not in cols.keys())) or (len(cols) == len(columns))
-        isRelComplete = len(relations) == len(relationships)
+            # check columns
+            for k, w in columns.items():
+                if k in kw.keys():
+                    cols[k] = kw[k]
+                elif not w.nullable and not w.default:
+                    # non-nullable column which has no default value
+                    # should not be left
+                    isColComplete = False
+            # check relationships
+            for k, w in relationships.items():
+                if (k in kw.keys()) and (w.secondary is not None):
+                    # only many-to-many relationship
+                    # can be initialized in this way
+                    relations[k] = kw[k]
+                elif w.secondary is not None:
+                    # only many-to-many relationship
+                    # should be initialized in this way
+                    isRelComplete = False
         return cols, relations, isColComplete, isRelComplete
 
     # insert a record
-    # input dict{}: whole factors of a new record
+    # input dict{}:
+    # whole factors (except id, which is optional) of a new record
     # output dict{}: the inserted new record
     def insert(self, **kw):
         if kw:
-            cols, relations, isColComplete, isRelComplete = \
-                self.checkColumnsAndRelations(**kw)
-            if isColComplete:
-                obj = self.__class__(**cols)
-                db.session.add(obj)
+            obj = self.__class__(**kw)
+            db.session.add(obj)
             try:
                 db.session.commit()
                 return obj.to_dict()
@@ -104,14 +137,15 @@ class MyModel(db.Model):
         return None
 
     # update a record
-    # input dict{}: factors to update
+    # input: str: id, dict{}: factors to update
     # output dict{}: the updated record
     def update(self, id, **kw):
         obj = self.__class__.query.filter_by(id=id).first()
         if obj:
             cols, relations, isColComplete, isRelComplete = \
                 self.checkColumnsAndRelations(**kw)
-            for k, w in cols.items():
+            d = dict(cols, **relations)
+            for k, w in d.items():
                 setattr(obj, k, w)
             try:
                 db.session.commit()
@@ -171,7 +205,7 @@ osuser2it = db.Table(
 )
 
 
-class IP(MyModel):
+class IP(Doraemon):
     """
         IP Model.
     """
@@ -179,7 +213,7 @@ class IP(MyModel):
     __table_args__ = (
         db.UniqueConstraint(
             'ip_addr', 'ip_mask', 'ip_category',
-            'if_id', 'it_id', name='_if_ip_uc'),)
+            'if_id', 'it_id', name='_ip_uc'),)
 
     # IP address
     ip_addr = db.Column(db.String(64), unique=True)
@@ -192,26 +226,8 @@ class IP(MyModel):
     # IT equipment which IP belongs to
     it_id = db.Column(db.String(64), db.ForeignKey('itequipment.id'))
 
-    # constructor
-    def __init__(self, id, ip_addr, ip_mask,
-                 if_id, it_id, ip_category='unused'):
-        self.id = id
-        self.ip_addr = ip_addr
-        self.ip_mask = ip_mask
-        self.ip_category = ip_category
-        self.if_id = if_id
-        self.it_id = it_id
 
-    # get a interface
-    def getInterface(self):
-        return self.inf
-
-    # get a list of related IT equipments
-    def getITEquipment(self):
-        return self.it
-
-
-class Interface(MyModel):
+class Interface(Doraemon):
     """
         Interface Model.
     """
@@ -222,13 +238,8 @@ class Interface(MyModel):
     # IP
     ip = db.relationship('IP', backref='inf', lazy='dynamic')
 
-    # constructor
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
 
-
-class OperatingSystem(MyModel):
+class OperatingSystem(Doraemon):
     """
         Operating System Model.
     """
@@ -247,15 +258,8 @@ class OperatingSystem(MyModel):
     user = db.relationship(
         'OSUser', secondary='user2os', backref='os', lazy='dynamic')
 
-    # constructor
-    def __init__(self, id, name, version):
-        print 'i\'m here.'
-        self.id = id
-        self.name = name
-        self.version = version
 
-
-class OSUser(MyModel):
+class OSUser(Doraemon):
     """
         Operating System User Model.
         Set 'enable_typechecks=False' to enable subtype polymorphism.
@@ -276,19 +280,8 @@ class OSUser(MyModel):
         'ITEquipment', secondary='osuser2it',
         enable_typechecks=False, lazy='dynamic')
 
-    # constructor
-    def __init__(self, id, name, password, privilege):
-        self.id = id
-        self.name = name
-        self.password = password
-        self.privilege = privilege
 
-    # get a list of related operating systems
-    def getOS(self):
-        return self.os
-
-
-class Rack(MyModel):
+class Rack(Doraemon):
     """
         Rack Model.
     """
@@ -297,18 +290,12 @@ class Rack(MyModel):
         db.UniqueConstraint('label', 'it_id', name='_rack_uc'),)
 
     # rack label
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(64), unique=True)
     # IT equipment which is installed in the rack
     it_id = db.Column(db.String(64), db.ForeignKey('itequipment.id'))
 
-    # constructor
-    def __init__(self, id, label, it_id):
-        self.id = id
-        self.label = label
-        self.it_id = it_id
 
-
-class ITEquipment(MyModel):
+class ITEquipment(Doraemon):
     """
         IT Equipment Model.
         Superclass of Computer, Network, Storage and Security.
@@ -320,9 +307,9 @@ class ITEquipment(MyModel):
             'label', 'name', 'setup_time', 'os_id', name='_it_uc'),)
 
     # IT equipment label
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(64), unique=True)
     # IT equipment host name
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(64), unique=True)
     # IT equipment setup time
     setup_time = db.Column(db.String(64))
     # operating system
@@ -337,15 +324,6 @@ class ITEquipment(MyModel):
     # IT equipment location
     rack = db.relationship(
         'Rack', enable_typechecks=False, backref='it', lazy='dynamic')
-
-    # constructor
-    def __init__(self, id=None, label=None,
-                 name=None, setup_time=None, os_id=None):
-        self.id = id
-        self.label = label
-        self.name = name
-        self.setup_time
-        self.os_id = os_id
 
 
 class Computer(ITEquipment):
@@ -362,24 +340,15 @@ class Computer(ITEquipment):
         db.String(64), db.ForeignKey('itequipment.id'),
         primary_key=True)
     # iscsi name
-    iqn_id = db.Column(db.String(256))
+    iqn_id = db.Column(db.String(256), unique=True)
     # business group id
     group_id = db.Column(db.String(64))
     # computer specification
     spec_id = db.Column(
         db.String(64), db.ForeignKey('computer_specification.id'))
 
-    # constructor
-    def __init__(self, id=None, iqn_id=None, group_id=None, spec_id=None,
-                 label=None, name=None, setup_time=None, os_id=None):
-        self.id = id
-        self.iqn_id = iqn_id
-        self.group_id = group_id
-        self.spec_id = spec_id
-        super(Computer, self).__init__(id, label, name, setup_time, os_id)
 
-
-class ComputerSpecification(MyModel):
+class ComputerSpecification(Doraemon):
     """
         Computer Specification Model.
     """
@@ -403,15 +372,6 @@ class ComputerSpecification(MyModel):
     computer = db.relationship(
         'Computer', backref='spec', lazy='dynamic')
 
-    # constructor
-    def __init__(self, id=None, cpu_fre=None,
-                 cpu_num=None, memory=None, disk=None):
-        self.id = id
-        self.cpu_fre = cpu_fre
-        self.cpu_num = cpu_num
-        self.memory = memory
-        self.disk = disk
-
 
 class PhysicalMachine(Computer):
     """
@@ -430,13 +390,6 @@ class PhysicalMachine(Computer):
         backref='pm',
         foreign_keys='VirtualMachine.pm_id',
         lazy='dynamic')
-
-    # constructor
-    def __init__(self, id, iqn_id, group_id, spec_id, label,
-                 name, setup_time, os_id):
-        self.id = id
-        super(PhysicalMachine, self).__init__(
-            id, iqn_id, group_id, spec_id, label, name, setup_time, os_id)
 
 
 class VirtualMachine(Computer):
@@ -457,17 +410,3 @@ class VirtualMachine(Computer):
         db.String(64), db.ForeignKey('physical_machine.id'))
     # vm pid
     vm_pid = db.Column(db.String(64))
-
-    # constructor
-    def __init__(self, id=None, pm_id=None, vm_pid=None,
-                 iqn_id=None, group_id=None, spec_id=None,
-                 label=None, name=None, setup_time=None, os_id=None):
-        self.id = id
-        self.pm_id = pm_id
-        self.vm_pid = vm_pid
-        super(VirtualMachine, self).__init__(
-            id, iqn_id, group_id, spec_id, label, name, setup_time, os_id)
-
-    # get the related pm
-    def getPhysicalMachine(self):
-        return self.pm
