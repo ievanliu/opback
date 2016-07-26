@@ -274,7 +274,7 @@ class ScriptAPI(Resource):
     @staticmethod
     def getScriptListOfTokenOwner():
         [scripts, json_scripts] = Script.getWithinUser(g.currentUser)
-        if scripts:
+        if json_scripts:
             msg = 'scripts info'
             return [msg, json_scripts]
         else:
