@@ -72,7 +72,7 @@ class TestModels():
         db.session.add_all([pm1, pm2, pm3])
         # initialize vm
         vm1 = VirtualMachine(osuser = [user1], id='vm-1', pm_id='pm-1', vm_pid='6189', iqn_id='iqn-4', group_id='gp-1', spec_id='cs-2', label='NFJD-VM-1', name='host-vm-1', setup_time='20160701', os_id='os-1')
-        vm2 = VirtualMachine(id='vm-2', pm_id='pm-2', vm_pid='6007', iqn_id='iqn-5', group_id='gp-1', spec_id='cs-2', label='NFJD-VM-2', name='host-vm-2', setup_time='20160701', os_id='os-2')
+        vm2 = VirtualMachine(id='vm-2', pm_id='pm-2', vm_pid='6005', iqn_id='iqn-5', group_id='gp-1', spec_id='cs-2', label='NFJD-VM-2', name='host-vm-2', setup_time='20160701', os_id='os-2')
         vm3 = VirtualMachine(osuser = [user1, user2], id='vm-3', pm_id='pm-2', vm_pid='6009', iqn_id='iqn-6', group_id='gp-3', spec_id='cs-2', label='NFJD-VM-3', name='host-vm-3', setup_time='20160701', os_id='os-2')
         vm4 = VirtualMachine(id='vm-4', pm_id='pm-3', vm_pid='61899', iqn_id='iqn-7', group_id='gp-2', spec_id='cs-1', label='NFJD-VM-4', name='host-vm-4', setup_time='20160701', os_id='os-1')
         db.session.add_all([vm1, vm2, vm3, vm4])
@@ -107,21 +107,47 @@ class TestModels():
         db.session.close()
         db.drop_all(bind=self.default_bind_key)
 
-    # model relationships test
+    # super model test
     @with_setup(setUp, tearDown)
-    def test_model_init(self):
+    def test_super_model(self):
         '''
-        test model initialization
+        test super model in eater
         '''
+        # vm0 = VirtualMachine.query.filter_by(iqn_id='iqn-4').first()
+        # vm = VirtualMachine().get(iqn_id='iqn-4')
+        # eq_(hasattr(VirtualMachine, '__table__'), True)
+        # eq_(hasattr(Doraemon, '__table__'), False)
+        # # eq_(MyModel.__bases__, True)
+        # eq_(VirtualMachine.__bases__[0].__name__, 'Computer')
+        # eq_(vm0.bases()[0], 'Computer')
+        # # eq_(VirtualMachine.__mapper__.relationships.__dict__['_data'], None)
+        # # eq_(VirtualMachine.__mapper__.columns.__dict__['_data'], None)
+        # # eq_((super(VirtualMachine, vm0)).__dict__, object)
+        # # eq_(vm[0], None)
+        # eq_(vm[0]['id'], 'vm-1')
+        # eq_(vm[0]['pm'][0]['id'], 'pm-1')
+        # vm_list = VirtualMachine().get()
+        # eq_(len(vm_list), 4)
+        # assert vm[0] in vm_list
         vm = VirtualMachine.query.filter_by(id='vm-1').first()
-        it1 = ITEquipment.query.filter_by(id=vm.id).first()
-        eq_(vm.label, it1.label)
+        it = ITEquipment.query.filter_by(id=vm.id).first()
+        eq_(vm.label, it.label)
+        # eq_(it, None)
         # eq_(vm.columns()['id'].nullable, it1.columns()['label'].nullable)
         # eq_(vm.relationships(), None)
         # eq_(vm.relationships()['osuser'].secondary, None)
         eq_(vm.relationships()['ip'].secondary, None)
         eq_(VirtualMachine.__mapper__.columns.__dict__['_data']['id'].nullable, False)
-
+        # eq_(vm.columns()['id'].table, None)
+        # eq_(VirtualMachine.__mapper__.columns.__dict__['_data']['id'].default, None)
+        # eq_(ITEquipment.__mapper__.columns.__dict__['_data']['id'].default, False)
+        eq_(vm.columns()['group_id'].nullable, True)
+        new_pm = PhysicalMachine()
+        pm_init = new_pm.insert(
+            id='pm-init', iqn_id='iqn-init', group_id='gp-2', spec_id='cs-3',
+            label='NFJD-PM-INIT', name='host-pm-init', setup_time='20160725', os_id='os-2')
+        it_init = ITEquipment().get(id='pm-init')
+        eq_(pm_init['label'], it_init[0]['label'])
 
     # model relationships test
     @with_setup(setUp, tearDown)
@@ -194,8 +220,6 @@ class TestModels():
         # 3. update an IP
         # 4. delete an IP
 
-        # computer specification model test
-
     # computer specification model test
     @with_setup(setUp, tearDown)
     def test_computer_specification(self):
@@ -256,27 +280,72 @@ class TestModels():
         eq_(cs_list[1]['id'], 'cs-2')
         eq_(cs_list[2]['id'], 'cs-3')
 
-    # computer specification model test
+    # virtual machine model test
     @with_setup(setUp, tearDown)
     def test_virtual_machine(self):
         '''
         maintain a virtual machine
         '''
-        # 1. query a virtual machine
-        # 1.1 has conditions
-        vm0 = VirtualMachine.query.filter_by(iqn_id='iqn-4').first()
-        vm = VirtualMachine().get(iqn_id='iqn-4')
-        eq_(hasattr(VirtualMachine, '__table__'), True)
-        eq_(hasattr(Doraemon, '__table__'), False)
-        # eq_(MyModel.__bases__, True)
-        eq_(VirtualMachine.__bases__[0].__name__, 'Computer')
-        # eq_(VirtualMachine.__mapper__.relationships.__dict__['_data'], None)
-        # eq_(VirtualMachine.__mapper__.columns.__dict__['_data'], None)
-        # eq_((super(VirtualMachine, vm0)).__dict__, object)
-        # eq_(vm[0], None)
-        eq_(vm[0]['id'], 'vm-1')
-        eq_(vm[0]['pm'][0]['id'], 'pm-1')
-        # 1.2 all
-        vm_list = VirtualMachine().get()
+        # 0. common test
+        # 0.0 print test
+        vm0 = VirtualMachine(
+            pm_id='pm-3', vm_pid='6007', iqn_id='iqn-10', spec_id='cs-2',
+            label='NFJD-VM-5', name='host-vm-5', setup_time='20160725', os_id='os-2')
+        eq_(vm0.__repr__(), "<VirtualMachine %r>" % vm0.id)
+        db.session.add(vm0)
+        db.session.commit()
+        eq_(vm0.spec_id, 'cs-2')
+        # 0.1 check cols test
+        cols, relations, isColComplete, isRelComplete = \
+            vm0.checkColumnsAndRelations(
+                id='vm-vm', pm_id='pm-pm', __table__='hello', osuser=None, ip=None)
+        eq_(cols,  {'id': 'vm-vm', 'pm_id': 'pm-pm'})
+        eq_(relations, {'osuser': None})
+        # 1. insert a VirtualMachine
+        new_vm = VirtualMachine()
+        # 1.1 a totally new VirtualMachine
+        vm1 = new_vm.insert(
+            pm_id='pm-2', vm_pid='77877', iqn_id='iqn-vm', spec_id='cs-3',
+            label='NFJD-VM-VM', name='host-vm-vm', setup_time='20160725', os_id='os-2')
+        eq_(vm1['pm_id'], 'pm-2')
+        eq_(vm1['ip'], [])
+        # 1.2 existing VirtualMachine       
+        vm2 = new_vm.insert(
+            pm_id='pm-3', vm_pid='6007', iqn_id='iqn-10', spec_id='cs-2',
+            label='NFJD-VM-5', name='host-vm-5', setup_time='20160725', os_id='os-2')
+        eq_(vm2, None)
+        # 2. query a VirtualMachine
+        # 2.1 by id or other factor
+        vm3 = new_vm.get(id=vm1['id'])
+        eq_(vm3[0]['vm_pid'], '77877')
+        # 2.2 all
+        vm_list = new_vm.get()
+        eq_(len(vm_list), 6)
+        assert vm0,vm1 in vm_list
+        # 3. update a ComputerSpecification
+        # 3.1 non duplicative: update successfully
+        user1 = OSUser.query.filter_by(id='u-1').first()
+        user2 = OSUser.query.filter_by(id='u-3').first()
+        vm4 = new_vm.update(id=vm0.id, spec_id='cs-3', osuser=[user1, user2])
+        eq_(vm4['spec_id'], 'cs-3')
+        eq_(vm4['osuser'][0]['name'], 'elk')
+        vm5 = new_vm.get(id=vm0.id)
+        eq_(vm5[0]['spec_id'], 'cs-3')
+        # 3.2 duplicative: update failed
+        vm6 = new_vm.update(id=vm1['id'], vm_pid='6007', iqn_id='iqn-5')
+        eq_(vm6, None)
+        # 4. delete a VirtualMachine
+        # 4.1 specification exists
+        flag = new_vm.delete(vm0.id)
+        eq_(flag, True)
+        flag = new_vm.delete(vm1['id'])
+        eq_(flag, True)
+        # 4.2 no such specification
+        flag = new_vm.delete('shalalala')
+        eq_(flag, False)
+        vm_list = new_vm.get()
         eq_(len(vm_list), 4)
-        assert vm[0] in vm_list
+        eq_(vm_list[0]['id'], 'vm-1')
+        eq_(vm_list[1]['id'], 'vm-2')
+        eq_(vm_list[2]['id'], 'vm-3')
+        eq_(vm_list[3]['id'], 'vm-4')

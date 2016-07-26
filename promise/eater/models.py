@@ -38,8 +38,7 @@ class Doraemon(db.Model):
     @declared_attr
     def id(cls):
         return db.Column(
-            db.String(64), primary_key=True,
-            default=utils.genUuid(cls.__name__))
+            db.String(64), primary_key=True)
 
     # name list of base classes
     def bases(self):
@@ -65,6 +64,8 @@ class Doraemon(db.Model):
                 d = dict(cols, **relations)
                 for k, w in d.items():
                     setattr(self, k, w)
+                if 'id' not in d.keys():
+                    setattr(self, 'id', utils.genUuid(self.__class__.__name__))
 
     # for print
     def __repr__(self):
@@ -105,7 +106,7 @@ class Doraemon(db.Model):
             for k, w in columns.items():
                 if k in kw.keys():
                     cols[k] = kw[k]
-                elif not w.nullable and not w.default:
+                elif (not w.nullable) and (not w.default) and (k is not 'id'):
                     # non-nullable column which has no default value
                     # should not be left
                     isColComplete = False
@@ -220,7 +221,7 @@ class IP(Doraemon):
     # IP mask
     ip_mask = db.Column(db.String(64))
     # IP category (vm/pm/network/security/storage/vip/unused)
-    ip_category = db.Column(db.String(64), nullable=False)
+    ip_category = db.Column(db.String(64), default='unused')
     # interface which IP belongs to
     if_id = db.Column(db.String(32), db.ForeignKey('interface.id'))
     # IT equipment which IP belongs to
@@ -248,9 +249,9 @@ class OperatingSystem(Doraemon):
         db.UniqueConstraint('name', 'version', name='_os_uc'),)
 
     # OS name
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(64), nullable=False)
     # OS version
-    version = db.Column(db.String(64))
+    version = db.Column(db.String(64), nullable=False)
     # IT equipment
     it = db.relationship(
         'ITEquipment', backref='os', lazy='dynamic')
@@ -270,7 +271,7 @@ class OSUser(Doraemon):
             'name', 'password', 'privilege', name='_osuser_uc'),)
 
     # OS user name
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(64), nullable=False)
     # OS user password
     password = db.Column(db.String(64))
     # OS user privilege
@@ -340,7 +341,7 @@ class Computer(ITEquipment):
         db.String(64), db.ForeignKey('itequipment.id'),
         primary_key=True)
     # iscsi name
-    iqn_id = db.Column(db.String(256), unique=True)
+    iqn_id = db.Column(db.String(256), nullable=True, unique=True)
     # business group id
     group_id = db.Column(db.String(64))
     # computer specification
@@ -361,13 +362,13 @@ class ComputerSpecification(Doraemon):
             'cpu_fre', 'cpu_num', 'memory', 'disk', name='_spec_uc'),)
 
     # CPU main frequency
-    cpu_fre = db.Column(db.String(64))
+    cpu_fre = db.Column(db.String(64), nullable=False)
     # CPU number
-    cpu_num = db.Column(db.Integer)
+    cpu_num = db.Column(db.Integer, nullable=False)
     # memory
-    memory = db.Column(db.String(64))
+    memory = db.Column(db.String(64), nullable=False)
     # hard disk size
-    disk = db.Column(db.String(64))
+    disk = db.Column(db.String(64), nullable=False)
     # IT equipment IP
     computer = db.relationship(
         'Computer', backref='spec', lazy='dynamic')
@@ -409,4 +410,4 @@ class VirtualMachine(Computer):
     pm_id = db.Column(
         db.String(64), db.ForeignKey('physical_machine.id'))
     # vm pid
-    vm_pid = db.Column(db.String(64))
+    vm_pid = db.Column(db.String(64), nullable=False)
