@@ -15,13 +15,20 @@ run_data = {
 
 hostnames = ['192.168.182.1', '192.168.182.12']
 private_key_file = '~/.ssh/id_rsa'
-# args = "date>run_result;sleep 3;date>>run_result;cat run_result;"
-script = "date>run_result;\nsleep 3;\ndate>>run_result;\ncat run_result;"
+script = """
+    date>run_result;
+    sleep 3;
+    date>>run_result;
+    echo $1;cat run_result;
+    echo $2;
+    """
 become_pass = None
 remote_user = 'root'
+params = 'params1 params2'
 
 scriptExecAdapter = ScriptExecAdapter(
-    hostnames, remote_user, private_key_file, run_data, become_pass, script)
+    hostnames, remote_user, private_key_file, run_data, become_pass, script,
+    params)
 [result, stats_sum, hostvars] = scriptExecAdapter.run()
 print result
 print stats_sum

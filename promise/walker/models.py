@@ -27,6 +27,8 @@ class Walker(db.Model):
     trails = db.relationship('Trail', backref='walker', lazy='dynamic')
     shellmissions = db.relationship(
         'ShellMission', backref='walker', lazy='dynamic')
+    scriptmissions = db.relationship(
+        'ScriptMission', backref='walker', lazy='dynamic')
     # owner of this walker
     owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     # state code:
@@ -177,6 +179,7 @@ class ScriptMission(db.Model):
     __tablename__ = 'scriptmission'
     scriptmission_id = db.Column(db.String(64), primary_key=True)
     script_id = db.Column(db.String(64), db.ForeignKey('script.script_id'))
+    params = db.Column(db.String(512))
     # run the script as this user on the target hosts
     osuser = db.Column(db.String(64))
     walker_id = db.Column(db.String(64), db.ForeignKey('walker.walker_id'))
@@ -185,10 +188,11 @@ class ScriptMission(db.Model):
     def __repr__(self):
         return '<shellmission %r>' % self.shellmission_id
 
-    def __init__(self, script, osuser, walker):
+    def __init__(self, script, osuser, params, walker):
         self.scriptmission_id = utils.genUuid(str(script.script_name))
         self.script_id = script.script_id
         self.osuser = osuser
+        self.params = params
         self.walker_id = walker.walker_id
 
     def save(self):
@@ -231,7 +235,7 @@ class Script(db.Model):
     __tablename__ = 'script'
     script_id = db.Column(db.String(64), primary_key=True)
     script_name = db.Column(db.String(64))
-    script = db.Column(db.Text)
+    script_text = db.Column(db.Text)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     time_create = db.Column(db.DATETIME)
     time_last_edit = db.Column(db.DATETIME)
@@ -244,11 +248,11 @@ class Script(db.Model):
     def __repr__(self):
         return '<script %r>' % self.script_id
 
-    def __init__(self, script_name, script, owner,
-                 script_lang, is_public=0, valid=1):
+    def __init__(self, script_name, script_text, owner,
+                 script_lang, is_public, valid=1):
         self.script_id = utils.genUuid(script_name)
         self.script_name = script_name
-        self.script = script
+        self.script_text = script_text
         self.owner_id = owner.user_id
         self.script_lang = script_lang
         self.time_create = datetime.datetime.now()
@@ -284,6 +288,15 @@ class Script(db.Model):
             return [scripts, json_scripts]
         else:
             return [None, None]
+
+    def update(self, script_name, script_text, script_lang, edit_user,
+               is_public):
+        self.script_name = script_name
+        self.script_text = script_text
+        self.script_lang = script_lang
+        self.time_last_edit = datetime.datetime.now()
+        self.last_edit_owner_id = edit_user.user_id
+        self.is_public = is_public
 
 
 class Trail(db.Model):
@@ -383,6 +396,6 @@ class ScriptSchema(ma.HyperlinkModelSchema):
     """
     class Meta:
         model = Script
-        fields = ['script_id', 'script_name', 'time_last_edit', 'script']
+        fields = ['script_id', 'script_name', 'time_last_edit', 'script_text']
 script_schema = ScriptSchema()
 scripts_schema = ScriptSchema(many=True)

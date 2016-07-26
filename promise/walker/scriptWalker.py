@@ -34,13 +34,13 @@ class ScriptWalkerAPI(Resource):
     @auth.PrivilegeAuth(privilegeRequired="scriptExec")
     def post(self):
         # check the arguments
-        [iplist, script, os_user, walker_name] = self.argCheckForPost()
+        [iplist, script, os_user, params, walker_name] = self.argCheckForPost()
         # setup a walker
         walker = Walker(walker_name)
 
         [msg, trails] = walker.establish(iplist, g.currentUser)
         # setup a scriptmission and link to the walker
-        script_mission = ScriptMission(script, os_user, walker)
+        script_mission = ScriptMission(script, os_user, params, walker)
         script_mission.save()
         walker.save()
 
@@ -87,6 +87,9 @@ class ScriptWalkerAPI(Resource):
             'scriptid', type=str, location='json',
             required=True, help='script_id must be a string')
         self.reqparse.add_argument(
+            'params', type=list, location='json',
+            help='params must be a string')
+        self.reqparse.add_argument(
             'osuser', type=str, location='json',
             required=True, help='osuser must be a string')
         self.reqparse.add_argument(
@@ -99,6 +102,7 @@ class ScriptWalkerAPI(Resource):
                 msg = 'wrong ip address'
                 raise utils.InvalidAPIUsage(msg)
         script_id = args['scriptid']
+        params = args['params']
         os_user = args['osuser']
         walker_name = args['name']
         [script, json_script] = Script.getFromIdWithinUser(
@@ -107,7 +111,11 @@ class ScriptWalkerAPI(Resource):
             if not walker_name:
                 walker_name = str(walkerUtils.serialCurrentTime()) + \
                     '-' + str(script.script_name)
-            return [iplist, script, os_user, walker_name]
+            if params:
+                params = " ".join(params)
+            else:
+                params = None
+            return [iplist, script, os_user, params, walker_name]
         else:
             msg = 'wrong script id.'
             raise utils.InvalidAPIUsage(msg)
@@ -165,13 +173,33 @@ class ScriptAPI(Resource):
     @auth.PrivilegeAuth(privilegeRequired="scriptExec")
     def post(self):
         # check the arguments
-        [script_name, script, script_lang] = self.argCheckForPost()
+        [script_name, script_text, script_lang, is_public] = \
+            self.argCheckForPost()
 
         # create a script object
-        script = Script(script_name, script, g.currentUser, script_lang)
+        script = Script(
+            script_name, script_text, g.currentUser, script_lang, is_public)
         script.save()
         msg = 'script created.'
         return {'message': msg, 'script_id': script.script_id}, 200
+
+    @auth.PrivilegeAuth(privilegeRequired='scriptExec')
+    def put(self):
+        # check the arguments
+        [script_id, script_name, script_text, script_lang, is_public] = \
+            self.argCheckForPut()
+        # modify target script object
+        [script, jsonScript] = Script.getFromIdWithinUser(
+            script_id, g.currentUser)
+        if script:
+            script.update(script_name, script_text, script_lang, g.currentUser,
+                          is_public)
+            script.save()
+            msg = 'script<id:' + script.script_id + '>uptaded'
+            return {'message': msg}, 200
+        else:
+            msg = 'wrong script id or its not your script'
+            raise utils.InvalidAPIUsage(msg)
 
     @auth.PrivilegeAuth(privilegeRequired="scriptExec")
     def get(self):
@@ -186,6 +214,9 @@ class ScriptAPI(Resource):
             else:
                 raise utils.InvalidAPIUsage(msg)
 
+    """
+    arguments check methods
+    """
     def argCheckForGet(self):
         self.reqparse.add_argument(
             'scriptid', type=str,
@@ -196,24 +227,49 @@ class ScriptAPI(Resource):
             script_id = None
         return script_id
 
-    """
-    arguments check methods
-    """
     def argCheckForPost(self):
         self.reqparse.add_argument(
             'script_name', type=str, location='json',
             required=True, help='iplist ip must be a list')
         self.reqparse.add_argument(
-            'script', type=str, location='json',
+            'script_text', type=str, location='json',
+            required=True, help='script_text must be a string')
+        self.reqparse.add_argument(
+            'script_lang', type=str, location='json',
+            required=True, help='osuser must be a string')
+        self.reqparse.add_argument(
+            'is_public', type=int, location='json',
+            required=True, help='is_public must be 0 or 1')
+        args = self.reqparse.parse_args()
+        script_name = args['script_name']
+        script_text = args['script_text']
+        script_lang = args['script_lang']
+        is_public = args['is_public']
+        return [script_name, script_text, script_lang, is_public]
+
+    def argCheckForPut(self):
+        self.reqparse.add_argument(
+            'script_id', type=str, location='args',
+            required=True, help='script id must be a string')
+        self.reqparse.add_argument(
+            'script_name', type=str, location='json',
+            required=True, help='iplist ip must be a list')
+        self.reqparse.add_argument(
+            'script_text', type=str, location='json',
             required=True, help='script_id must be a string')
         self.reqparse.add_argument(
             'script_lang', type=str, location='json',
             required=True, help='osuser must be a string')
+        self.reqparse.add_argument(
+            'is_public', type=int, location='json',
+            required=True, help='is_public must be 0 or 1')
         args = self.reqparse.parse_args()
+        script_id = args['script_id']
         script_name = args['script_name']
-        script = args['script']
+        script_text = args['script_text']
         script_lang = args['script_lang']
-        return [script_name, script, script_lang]
+        is_public = args['is_public']
+        return [script_id, script_name, script_text, script_lang, is_public]
 
     @staticmethod
     def getScriptListOfTokenOwner():
@@ -258,7 +314,8 @@ class ScriptWalkerExecutor(object):
             private_key_file,
             run_data,
             become_pass,
-            self.script.script)
+            self.script.script_text,
+            script_mission.params)
 
     def run(self):
         [state, stats_sum, results] = self.script_exec_adpater.run()

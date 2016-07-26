@@ -184,7 +184,7 @@ class ShellExecAdapter(object):
 class ScriptExecAdapter(object):
 
     def __init__(self, hostnames, remote_user, private_key_file,
-                 run_data, become_pass, script, verbosity=0):
+                 run_data, become_pass, script_text, params, verbosity=0):
 
         self.run_data = run_data
 
@@ -219,7 +219,7 @@ class ScriptExecAdapter(object):
         self.hosts_file.write("""[run_hosts]\n%s""" % hostsString)
         self.hosts_file.close()
         self.script_file = NamedTemporaryFile(delete=False)
-        self.script_file.write("""%s""" % script)
+        self.script_file.write("""%s""" % script_text)
         self.script_file.close()
 
         # This was my attempt to pass in hosts directly.
@@ -242,7 +242,7 @@ class ScriptExecAdapter(object):
             hosts='all',
             gather_facts='no',
             tasks=[
-                dict(script=self.script_file.name,
+                dict(script=self.script_file.name + ' ' + str(params),
                      register='script_out'),
                 dict(action=dict(module='debug',
                      args=dict(msg='{{script_out.stdout}}')))])
