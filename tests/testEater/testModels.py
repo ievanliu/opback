@@ -29,16 +29,23 @@ class TestModels():
     def setUp(self):
         app.testing = True
 
-        # database for test
+        # sqlite3 database for test
         app.config['DB_FILE'] = 'test.db'
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
                         os.path.join(app.config['DB_FOLDER'],
                         app.config['DB_FILE'])
 
+        # mysql database for test
+        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://dbuser:dbpassword@ip:port/common'
+        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/eater'
+        # app.config['SQLALCHEMY_BINDS'] = {
+        #     'eater': 'mysql://root:11111111@localhost:3306/eater'
+        # }
+
         self.tester = app.test_client(self)
 
         # database initialization
-        # db.drop_all(bind=self.default_bind_key)
+        db.drop_all(bind=self.default_bind_key)
         db.create_all(bind=self.default_bind_key)
 
         # table initialization
@@ -65,39 +72,49 @@ class TestModels():
         cs2 = ComputerSpecification(id='cs-2', cpu_fre='1670Hz', cpu_num=8, memory='32G', disk='200G')
         cs3 = ComputerSpecification(id='cs-3', cpu_fre='3330Hz', cpu_num=32, memory='256G', disk='600G')
         db.session.add_all([cs1, cs2,cs3])
+        # initialize group
+        gp1 = Group(id='gp-1', name='ansible')
+        gp2 = Group(id='gp-2', name='zabbix')
+        gp3 = Group(id='gp-3', name='elk')
+        db.session.add_all([gp1, gp2, gp3])
         # initialize pm
-        pm1 = PhysicalMachine(osuser = [user1, user3], id='pm-1', iqn_id='iqn-1', group_id='gp-1', spec_id='cs-2', label='NFJD-PM-1', name='host-pm-1', setup_time='20160701', os_id='os-1')
-        pm2 = PhysicalMachine(osuser = [user2], id='pm-2', iqn_id='iqn-2', group_id='gp-2', spec_id='cs-2', label='NFJD-PM-2', name='host-pm-2', setup_time='20160701', os_id='os-1')
-        pm3 = PhysicalMachine(id='pm-3', iqn_id='iqn-3', group_id='gp-3', spec_id='cs-3', label='NFJD-PM-3', name='host-pm-3', setup_time='20160701', os_id='os-2')
+        pm1 = PhysicalMachine(inf=[if1, if2, if3], osuser = [user1, user3], id='pm-1', iqn_id='iqn-1', group=[gp1], spec_id='cs-2', label='NFJD-PM-1', name='host-pm-1', setup_time='20160701', os_id='os-1')
+        pm2 = PhysicalMachine(inf=[if1, if2, if3], osuser = [user2], id='pm-2', iqn_id='iqn-2', group=[gp2, gp3], spec_id='cs-2', label='NFJD-PM-2', name='host-pm-2', setup_time='20160701', os_id='os-1')
+        pm3 = PhysicalMachine(inf=[if1, if2, if3], id='pm-3', iqn_id='iqn-3', group=[gp3], spec_id='cs-3', label='NFJD-PM-3', name='host-pm-3', setup_time='20160701', os_id='os-2')
         db.session.add_all([pm1, pm2, pm3])
         # initialize vm
-        vm1 = VirtualMachine(osuser = [user1], id='vm-1', pm_id='pm-1', vm_pid='6189', iqn_id='iqn-4', group_id='gp-1', spec_id='cs-2', label='NFJD-VM-1', name='host-vm-1', setup_time='20160701', os_id='os-1')
-        vm2 = VirtualMachine(id='vm-2', pm_id='pm-2', vm_pid='6005', iqn_id='iqn-5', group_id='gp-1', spec_id='cs-2', label='NFJD-VM-2', name='host-vm-2', setup_time='20160701', os_id='os-2')
-        vm3 = VirtualMachine(osuser = [user1, user2], id='vm-3', pm_id='pm-2', vm_pid='6009', iqn_id='iqn-6', group_id='gp-3', spec_id='cs-2', label='NFJD-VM-3', name='host-vm-3', setup_time='20160701', os_id='os-2')
-        vm4 = VirtualMachine(id='vm-4', pm_id='pm-3', vm_pid='61899', iqn_id='iqn-7', group_id='gp-2', spec_id='cs-1', label='NFJD-VM-4', name='host-vm-4', setup_time='20160701', os_id='os-1')
+        vm1 = VirtualMachine(inf=[if1, if2], osuser = [user1], id='vm-1', pm_id='pm-1', vm_pid='6189', iqn_id='iqn-4', group=[gp1], spec_id='cs-2', label='NFJD-VM-1', name='host-vm-1', setup_time='20160701', os_id='os-1')
+        vm2 = VirtualMachine(inf=[if1, if2], id='vm-2', pm_id='pm-2', vm_pid='6005', iqn_id='iqn-5', group=[gp1], spec_id='cs-2', label='NFJD-VM-2', name='host-vm-2', setup_time='20160701', os_id='os-2')
+        vm3 = VirtualMachine(inf=[if1, if2], osuser = [user1, user2], id='vm-3', pm_id='pm-2', vm_pid='6009', iqn_id='iqn-6', group=[gp2, gp3], spec_id='cs-2', label='NFJD-VM-3', name='host-vm-3', setup_time='20160701', os_id='os-2')
+        vm4 = VirtualMachine(inf=[if1, if2], id='vm-4', pm_id='pm-3', vm_pid='61899', iqn_id='iqn-7', spec_id='cs-1', label='NFJD-VM-4', name='host-vm-4', setup_time='20160701', os_id='os-1')
         db.session.add_all([vm1, vm2, vm3, vm4])
         # # initialize osuser2it
         # pm1.osuser = [user1, user3]
         # pm2.osuser = [user2]
         # vm1.osuser = [user1]
         # vm3.osuser = [user1, user2]
+        # initialize vlan
+        vlan1 = Vlan(id='vlan-1', beginning_ip='172.16.220.0', ending_ip='172.16.220.255')
+        vlan2 = Vlan(id='vlan-2', beginning_ip='172.16.221.0', ending_ip='172.16.221.255', domain='prd', vlan_category='business')
+        vlan3 = Vlan(id='vlan-3', beginning_ip='172.16.222.0', ending_ip='172.16.222.255', domain='dmz')
+        db.session.add_all([vlan1, vlan2, vlan3])
         # initialize ip
-        ip1 = IP(id='ip-1', ip_addr='192.168.182.1', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-1', ip_category='pm')
-        ip2 = IP(id='ip-2', ip_addr='192.168.182.2', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-2', ip_category='pm')
-        ip3 = IP(id='ip-3', ip_addr='192.168.182.3', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-3', ip_category='pm')
-        ip4 = IP(id='ip-4', ip_addr='10.0.100.3', ip_mask='255.255.255.0', if_id='if-2', it_id='pm-3', ip_category='pm')
-        ip5 = IP(id='ip-5', ip_addr='192.168.182.4', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-1', ip_category='vm')
-        ip6 = IP(id='ip-6', ip_addr='192.168.182.5', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-2', ip_category='vm')
-        ip7 = IP(id='ip-7', ip_addr='192.168.182.6', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-3', ip_category='vm')
-        ip8 = IP(id='ip-8', ip_addr='192.168.182.7', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-4', ip_category='vm')
-        ip9 = IP(id='ip-9', ip_addr='192.168.182.254', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-1', ip_category='vip')
-        ip10 = IP(id='ip-10', ip_addr='192.168.182.253', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-2', ip_category='vip')
+        ip1 = IP(id='ip-1', ip_addr='172.16.220.1', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-1', ip_category='pm', vlan_id='vlan-1')
+        ip2 = IP(id='ip-2', ip_addr='172.16.220.2', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-2', ip_category='pm', vlan_id='vlan-1')
+        ip3 = IP(id='ip-3', ip_addr='172.16.220.3', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-3', ip_category='pm', vlan_id='vlan-1')
+        ip4 = IP(id='ip-4', ip_addr='172.16.221.7', ip_mask='255.255.255.0', if_id='if-2', it_id='pm-3', ip_category='pm', vlan_id='vlan-2')
+        ip5 = IP(id='ip-5', ip_addr='172.16.222.4', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-1', ip_category='vm', vlan_id='vlan-3')
+        ip6 = IP(id='ip-6', ip_addr='172.16.222.5', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-2', ip_category='vm', vlan_id='vlan-3')
+        ip7 = IP(id='ip-7', ip_addr='172.16.222.6', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-3', ip_category='vm', vlan_id='vlan-3')
+        ip8 = IP(id='ip-8', ip_addr='172.16.222.7', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-4', ip_category='vm', vlan_id='vlan-3')
+        ip9 = IP(id='ip-9', ip_addr='172.16.222.254', ip_mask='255.255.255.0', if_id='if-1', it_id='vm-1', ip_category='vip', vlan_id='vlan-3')
+        ip10 = IP(id='ip-10', ip_addr='172.16.222.253', ip_mask='255.255.255.0', if_id='if-1', it_id='pm-2', ip_category='vip', vlan_id='vlan-3')
         db.session.add_all([ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, ip9, ip10])
         # initialize rack
-        rack1 = Rack(id='rack-1', label='CMCC-RACK-1', it_id='pm-1')
-        rack2 = Rack(id='rack-2', label='CMCC-RACK-2', it_id='pm-2')
-        rack3 = Rack(id='rack-3', label='CMCC-RACK-3', it_id='pm-3')
-        rack4 = Rack(id='rack-4', label='CMCC-RACK-4', it_id='pm-3')
+        rack1 = Rack(id='rack-1', label='CMCC-RACK-1', it_id='pm-1', room_id='305')
+        rack2 = Rack(id='rack-2', label='CMCC-RACK-2', it_id='pm-2', room_id='305')
+        rack3 = Rack(id='rack-3', label='CMCC-RACK-3', it_id='pm-3', room_id='304')
+        rack4 = Rack(id='rack-4', label='CMCC-RACK-4', it_id='pm-3', room_id='304')
         db.session.add_all([rack1, rack2, rack3, rack4])
         # do committing
         db.session.commit()
@@ -105,7 +122,7 @@ class TestModels():
     # drop db
     def tearDown(self):
         db.session.close()
-        db.drop_all(bind=self.default_bind_key)
+        # db.drop_all(bind=self.default_bind_key)
 
     # super model test
     @with_setup(setUp, tearDown)
@@ -141,13 +158,18 @@ class TestModels():
         # eq_(vm.columns()['id'].table, None)
         # eq_(VirtualMachine.__mapper__.columns.__dict__['_data']['id'].default, None)
         # eq_(ITEquipment.__mapper__.columns.__dict__['_data']['id'].default, False)
-        eq_(vm.columns()['group_id'].nullable, True)
+        eq_(vm.columns()['setup_time'].nullable, True)
         new_pm = PhysicalMachine()
+        gp = Group.query.filter_by(id='gp-2').first()
+        inf = Interface.query.filter_by(id='if-1').first()
         pm_init = new_pm.insert(
-            id='pm-init', iqn_id='iqn-init', group_id='gp-2', spec_id='cs-3',
+            inf=[inf], iqn_id='iqn-init', group=[gp], spec_id='cs-3',
             label='NFJD-PM-INIT', name='host-pm-init', setup_time='20160725', os_id='os-2')
-        it_init = ITEquipment().get(id='pm-init')
+        it_init = ITEquipment().get(id=pm_init['id'])
         eq_(pm_init['label'], it_init[0]['label'])
+        # eq_(pm_init, None)
+        # gp_test = Group().get(id='gp-2')
+        # eq_(gp_test, None)
 
     # model relationships test
     @with_setup(setUp, tearDown)
@@ -207,6 +229,17 @@ class TestModels():
         rack = Rack.query.filter_by(id='rack-1').first()
         assert rack in pm.rack
         eq_(it2, rack.it)
+        # 8. it_equipment and interface
+        # 8.1 pm and interface
+        assert inf in pm.inf
+        assert it2 in inf.it
+        # 8.2 vm and interface
+        assert inf in vm.inf
+        assert it1 in inf.it
+        # 9. ip and vlan
+        vlan = Vlan.query.filter_by(id='vlan-1').first()
+        assert ip2 in vlan.ip
+        eq_(ip2.vlan_id, vlan.id)
 
     # IP model test
     @with_setup(setUp, tearDown)

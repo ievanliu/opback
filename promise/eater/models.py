@@ -206,6 +206,28 @@ osuser2it = db.Table(
 )
 
 
+"""
+many-to-many relationships between ITEquipment and Interface
+"""
+if2it = db.Table(
+    'if2it',
+    db.Column('if_id', db.String(64), db.ForeignKey('interface.id')),
+    db.Column('it_id', db.String(64), db.ForeignKey('itequipment.id')),
+    info={'bind_key': my_default_database}
+)
+
+
+"""
+many-to-many relationships between Group and ITEquipment
+"""
+it2group = db.Table(
+    'it2group',
+    db.Column('it_id', db.String(64), db.ForeignKey('itequipment.id')),
+    db.Column('group_id', db.String(64), db.ForeignKey('group.id')),
+    info={'bind_key': my_default_database}
+)
+
+
 class IP(Doraemon):
     """
         IP Model.
@@ -220,12 +242,36 @@ class IP(Doraemon):
     ip_addr = db.Column(db.String(64), unique=True)
     # IP mask
     ip_mask = db.Column(db.String(64))
-    # IP category (vm/pm/network/security/storage/vip/unused)
+    # IP category (vm/pm/network/security/storage/ipmi/vip/unused)
     ip_category = db.Column(db.String(64), default='unused')
     # interface which IP belongs to
     if_id = db.Column(db.String(32), db.ForeignKey('interface.id'))
     # IT equipment which IP belongs to
     it_id = db.Column(db.String(64), db.ForeignKey('itequipment.id'))
+    # vlan which IP belongs to
+    vlan_id = db.Column(db.String(64), db.ForeignKey('vlan.id'))
+
+
+class Vlan(Doraemon):
+    """
+        Vlan Model.
+    """
+    __bind_key__ = my_default_database
+    __table_args__ = (
+        db.UniqueConstraint(
+            'beginning_ip', 'ending_ip', 'domain',
+            'vlan_category', name='_vlan_uc'),)
+
+    # ip range start from
+    beginning_ip = db.Column(db.String(64), nullable=False)
+    # ip range end to
+    ending_ip = db.Column(db.String(64), nullable=False)
+    # domain: dmz/core/prd/mgmt
+    domain = db.Column(db.String(64), default='mgmt')
+    # vlan category: management/business/storage
+    vlan_category = db.Column(db.String(64), default='management')
+    # vlan used IP
+    ip = db.relationship('IP', backref='vlan', lazy='dynamic')
 
 
 class Interface(Doraemon):
@@ -238,6 +284,10 @@ class Interface(Doraemon):
     name = db.Column(db.String(64), unique=True)
     # IP
     ip = db.relationship('IP', backref='inf', lazy='dynamic')
+    # IT equipment
+    it = db.relationship(
+        'ITEquipment', secondary='if2it',
+        enable_typechecks=False, lazy='dynamic')
 
 
 class OperatingSystem(Doraemon):
@@ -292,6 +342,8 @@ class Rack(Doraemon):
 
     # rack label
     label = db.Column(db.String(64), unique=True)
+    # room which rack belongs to
+    room_id = db.Column(db.String(64), nullable=False)
     # IT equipment which is installed in the rack
     it_id = db.Column(db.String(64), db.ForeignKey('itequipment.id'))
 
@@ -319,6 +371,14 @@ class ITEquipment(Doraemon):
     osuser = db.relationship(
         'OSUser', secondary='osuser2it',
         enable_typechecks=False, lazy='dynamic')
+    # business group
+    group = db.relationship(
+        'Group', secondary='it2group',
+        enable_typechecks=False, lazy='dynamic')
+    # interface
+    inf = db.relationship(
+        'Interface', secondary='if2it',
+        enable_typechecks=False, lazy='dynamic')
     # IT equipment IP
     ip = db.relationship(
         'IP', enable_typechecks=False, backref='it', lazy='dynamic')
@@ -334,7 +394,7 @@ class Computer(ITEquipment):
     """
     __bind_key__ = my_default_database
     __table_args__ = (
-        db.UniqueConstraint('spec_id', 'iqn_id', 'group_id', name='_com_uc'),)
+        db.UniqueConstraint('spec_id', 'iqn_id', name='_com_uc'),)
 
     # use super class ITEquipment uuid as Computer uuid
     id = db.Column(
@@ -342,8 +402,6 @@ class Computer(ITEquipment):
         primary_key=True)
     # iscsi name
     iqn_id = db.Column(db.String(256), nullable=True, unique=True)
-    # business group id
-    group_id = db.Column(db.String(64))
     # computer specification
     spec_id = db.Column(
         db.String(64), db.ForeignKey('computer_specification.id'))
@@ -411,3 +469,17 @@ class VirtualMachine(Computer):
         db.String(64), db.ForeignKey('physical_machine.id'))
     # vm pid
     vm_pid = db.Column(db.String(64), nullable=False)
+
+
+class Group(Doraemon):
+    """
+        Host Group Model.
+    """
+    __bind_key__ = my_default_database
+
+    # group name
+    name = db.Column(db.String(64), unique=True)
+    # IT equipment
+    it = db.relationship(
+        'ITEquipment', secondary='it2group',
+        enable_typechecks=False, lazy='dynamic')
