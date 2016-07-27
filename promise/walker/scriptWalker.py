@@ -219,10 +219,10 @@ class ScriptAPI(Resource):
     """
     def argCheckForGet(self):
         self.reqparse.add_argument(
-            'scriptid', type=str,
+            'script_id', type=str,
             location='args', help='script id must be a string')
         args = self.reqparse.parse_args()
-        script_id = args['scriptid']
+        script_id = args['script_id']
         if not script_id:
             script_id = None
         return script_id
