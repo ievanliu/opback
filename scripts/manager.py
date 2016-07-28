@@ -32,7 +32,7 @@ def importdata():
 
     # init privileges
     privilegeNameList = [
-        'userAdmin', 'inventoryAdmin', 'shellExec', 'scriptExec']
+        'userAdmin', 'inventoryAdmin', 'shellExec', 'scriptExec', 'walkerInfo']
     privilegeList = []
     for item in privilegeNameList:
         newPrivilege = Privilege(item)
@@ -49,12 +49,14 @@ def importdata():
     userAdminPrivilege = Privilege.getFromPrivilegeName('userAdmin')
     shellExecPrivilege = Privilege.getFromPrivilegeName('shellExec')
     scriptExecPrivilege = Privilege.getFromPrivilegeName('scriptExec')
+    walkerInfoPrivilege = Privilege.getFromPrivilegeName('walkerInfo')
 
     roleRoot.addPrivilege(privilegeList=privilegeList)
     roleUserAdmin.addPrivilege(privilege=userAdminPrivilege)
     roleInventoryAdmin.addPrivilege(privilege=inventoryAdminPrivilege)
     roleOperator.addPrivilege(
-        privilegeList=[shellExecPrivilege, scriptExecPrivilege])
+        privilegeList=[
+            shellExecPrivilege, scriptExecPrivilege, walkerInfoPrivilege])
 
     db.session.add(roleRoot)
     db.session.add(roleOperator)
