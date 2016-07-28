@@ -12,6 +12,7 @@ from .. import db, app
 from .. import utils, ma
 # from ..ansiAdapter import ShellExecAdapter
 from ..user.models import User
+from sqlalchemy import and_
 import datetime
 
 
@@ -25,9 +26,9 @@ class Walker(db.Model):
     valid = db.Column(db.SmallInteger)
     # all the trails of this wallker
     trails = db.relationship('Trail', backref='walker', lazy='dynamic')
-    shellmissions = db.relationship(
-        'ShellMission', backref='walker', lazy='dynamic')
-    scriptmissions = db.relationship(
+    shellmission = db.relationship(
+        'ShellMission', backref='walker', lazy='select')
+    scriptmission = db.relationship(
         'ScriptMission', backref='walker', lazy='dynamic')
     # owner of this walker
     owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
@@ -112,15 +113,45 @@ class Walker(db.Model):
             return [None, None]
 
     @staticmethod
-    def getFromWalkerId(walker_id):
-        walker = Walker.query.filter_by(walker_id=walker_id).first()
-        return walker
-
-    @staticmethod
     def getFromWalkerIdWithinUser(walker_id, user, valid=1):
         walker = Walker.query.filter_by(
             walker_id=walker_id, owner_id=user.user_id, valid=valid).first()
-        return walker
+        json_walker = walker_schema.dump(walker).data
+        return [walker, json_walker]
+
+    @staticmethod
+    def getShellMissionWalker(user=None, valid=1):
+        if user:
+            walkers = db.session.query(Walker).filter(and_(
+                Walker.owner_id == user.user_id,
+                Walker.valid == valid,
+                Walker.shellmission.any())).all()
+        else:
+            walkers = db.session.query(Walker).filter(and_(
+                Walker.valid == valid,
+                Walker.shellmission.any())).all()
+        if walkers:
+            json_walkers = walkers_schema.dump(walkers).data
+            return [walkers, json_walkers]
+        else:
+            return [None, None]
+
+    @staticmethod
+    def getScriptMissionWalker(user, valid=1):
+        if user:
+            walkers = db.session.query(Walker).filter(and_(
+                Walker.owner_id == user.user_id,
+                Walker.valid == valid,
+                Walker.scriptmission.any())).all()
+        else:
+            walkers = db.session.query(Walker).filter(and_(
+                Walker.valid == valid,
+                Walker.scriptmission.any())).all()
+        if walkers:
+            json_walkers = walkers_schema.dump(walkers).data
+            return [walkers, json_walkers]
+        else:
+            return [None, None]
 
 
 class ShellMission(db.Model):
@@ -186,7 +217,7 @@ class ScriptMission(db.Model):
     # walker = db.relationship()
 
     def __repr__(self):
-        return '<shellmission %r>' % self.shellmission_id
+        return '<scriptmission %r>' % self.scriptmission_id
 
     def __init__(self, script, osuser, params, walker):
         self.scriptmission_id = utils.genUuid(str(script.script_name))
@@ -297,6 +328,17 @@ class Script(db.Model):
         self.time_last_edit = datetime.datetime.now()
         self.last_edit_owner_id = edit_user.user_id
         self.is_public = is_public
+
+    def setInvalid(self):
+        self.valid = 0
+        try:
+            self.save()
+            msg = 'script<id:' + self.script_id + '> deleted.'
+            state = True
+        except:
+            msg = 'script<id:' + self.script_id + '> faild to delete.'
+            state = False
+        return [state, msg]
 
 
 class Trail(db.Model):

@@ -97,6 +97,7 @@ class ScriptWalkerAPI(Resource):
             help='default walker-name: time-scriptname')
         args = self.reqparse.parse_args()
         iplist = args['iplist']
+        # cheak all IPs of the iplist
         for ip in iplist:
             if not walkerUtils.ipFormatChk(ip):
                 msg = 'wrong ip address'
@@ -105,6 +106,7 @@ class ScriptWalkerAPI(Resource):
         params = args['params']
         os_user = args['osuser']
         walker_name = args['name']
+        # check if the script belongs to the current user
         [script, json_script] = Script.getFromIdWithinUser(
             script_id, g.currentUser)
         if script:
@@ -132,7 +134,7 @@ class ScriptWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-        [walkers, json_walkers] = Walker.getFromUser(g.currentUser)
+        [walkers, json_walkers] = Walker.getScriptMissionWalker(g.currentUser)
         msg = 'walker list of ' + g.currentUser.user_name
         return [msg, json_walkers]
 
@@ -214,6 +216,20 @@ class ScriptAPI(Resource):
             else:
                 raise utils.InvalidAPIUsage(msg)
 
+    @auth.PrivilegeAuth(privilegeRequired='scriptExec')
+    def delete(self):
+        script_id = self.argCheckForDelete()
+        [script, jsonScript] = Script.getFromIdWithinUser(
+            script_id, g.currentUser)
+        if not script:
+            msg = 'wrong script_id.'
+            raise utils.InvalidAPIUsage(msg)
+        [state, msg] = script.setInvalid()
+        if state:
+            return {'message': msg}, 200
+        else:
+            raise utils.InvalidAPIUsage(msg)
+
     """
     arguments check methods
     """
@@ -270,6 +286,14 @@ class ScriptAPI(Resource):
         script_lang = args['script_lang']
         is_public = args['is_public']
         return [script_id, script_name, script_text, script_lang, is_public]
+
+    def argCheckForDelete(self):
+        self.reqparse.add_argument(
+            'script_id', type=str, required=True,
+            location='args', help='script id must be a string')
+        args = self.reqparse.parse_args()
+        script_id = args['script_id']
+        return script_id
 
     @staticmethod
     def getScriptListOfTokenOwner():
