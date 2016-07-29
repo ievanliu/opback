@@ -10,6 +10,7 @@
 from .shellWalker import ShellWalkerAPI
 from .scriptWalker import ScriptAPI, ScriptWalkerAPI
 # , PbWalkerAPI, ScriptWalkerAPI
+from .walker import WalkerAPI
 from .. import api
 
 api.add_resource(
@@ -20,3 +21,5 @@ api.add_resource(
 #     PbWalkerAPI, '/api/v0.0/pbwalker', endpoint='pbwalker_ep')
 api.add_resource(
     ScriptWalkerAPI, '/api/v0.0/scriptwalker', endpoint='scriptwalker')
+api.add_resource(
+    WalkerAPI, '/api/v0.0/walker', endpoint='walker')

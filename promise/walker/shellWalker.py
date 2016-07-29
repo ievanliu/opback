@@ -70,7 +70,7 @@ class ShellWalkerAPI(Resource):
             [msg, json_walkers] = self.getWalkerListOfTokenOwner()
             return {'message': msg, 'walkers': json_walkers}, 200
         else:
-            [msg, walker_name, json_trails] = self.getWalkerInfoWithinUser(
+            [msg, walker_name, json_trails] = self.getWalkerInfoOfTokenOwner(
                 walker_id)
             return {
                 'message': msg,
@@ -118,22 +118,12 @@ class ShellWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-        [walkers, json_walkers] = Walker.getFromUser(g.currentUser)
+        [walkers, json_walkers] = Walker.getShellMissionWalker(g.currentUser)
         msg = 'walker list of ' + g.currentUser.user_name
         return [msg, json_walkers]
 
     @staticmethod
-    def getWalkerInfo(walker_id):
-        walker = Walker.getFromWalkerId(walker_id)
-        if walker:
-            [trails, json_trails] = Walker.getTrails(walker)
-            msg = 'walker info'
-        else:
-            msg = 'wrong walker id'
-        return [msg, walker.walker_name, json_trails]
-
-    @staticmethod
-    def getWalkerInfoWithinUser(walker_id):
+    def getWalkerInfoOfTokenOwner(walker_id):
         walker = Walker.getFromWalkerIdWithinUser(walker_id, g.currentUser)
         if walker:
             [trails, json_trails] = Walker.getTrails(walker)
