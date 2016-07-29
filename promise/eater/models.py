@@ -7,7 +7,7 @@
 #
 # This is the model module of eater package.
 
-from .. import db, utils
+from .. import db, ma, utils
 from sqlalchemy.ext.declarative import declared_attr
 import re
 
@@ -72,28 +72,20 @@ class Doraemon(db.Model):
         return '<%s %r>' % (self.__class__.__name__, self.id)
 
     # output columns and relationships to dict
-    def to_dict(self, count=0):
-        columns = self.columns()
-        relationships = self.relationships()
-        # get columns
-        d = {k: getattr(self, k) for k in columns.keys()}
-        # recursion ends (better limit count to be <= 3)
-        # or it may risk to be maximum recursion depth exceeded
-        if not relationships or count == 2:
-            return d
-        count += 1
-        # get relationships
-        for k in relationships.keys():
-            relation = getattr(self, k)
-            if relation:
-                if hasattr(relation, '__iter__'):
-                    d[k] = [x.to_dict(count)
-                            for x in relation if hasattr(x, 'to_dict')]
-                elif hasattr(relation, 'to_dict'):
-                    d[k] = [relation.to_dict(count)]
-            else:
-                d[k] = []
-        return d
+    def to_dict(self):
+
+        class DoraemonSchema(ma.ModelSchema):
+            """
+                Model Schema.
+            """
+            class Meta:
+                model = self.__class__
+
+        dorae = DoraemonSchema().dump(self).data
+        # ModelSchema ignore foreign_keys as default
+        if 'id' not in dorae.keys():
+            dorae['id'] = self.id
+        return dorae
 
     # find out params in table columns and relationships
     def checkColumnsAndRelations(self, **kw):
@@ -121,6 +113,18 @@ class Doraemon(db.Model):
                     # should be initialized in this way
                     isRelComplete = False
         return cols, relations, isColComplete, isRelComplete
+
+    # see if relative records exist
+    # input dict{}: conditions for search
+    # ouput boolean: True if exists, False if not
+    def _exist(self, **kw):
+        if kw:
+            cols, relations, isColComplete, isRelComplete = \
+                self.checkColumnsAndRelations(**kw)
+            li = self.__class__.query.filter_by(**cols).all()
+            if li:
+                return li
+        return None
 
     # insert a record
     # input dict{}:
@@ -159,14 +163,21 @@ class Doraemon(db.Model):
     # input dict{}: conditions for search
     # output json list[]: record(s) s.t. conditions
     def get(self, **kw):
-        if kw:
-            cols, relations, isColComplete, isRelComplete = \
-                self.checkColumnsAndRelations(**kw)
-            li = self.__class__.query.filter_by(**cols).all()
-        else:
+        if not kw:
             li = self.__class__.query.all()
+        else:
+            li = self._exist(**kw)
         if li:
             return [x.to_dict() for x in li]
+        return None
+
+    # get an object by id
+    # input str: object id for search
+    # output db.Model (only used for many-to-many relationships)
+    def getObject(self, id):
+        li = self._exist(id=id)
+        if li:
+            return li[0]
         return None
 
     # delete a record

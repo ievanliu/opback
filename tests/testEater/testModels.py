@@ -137,7 +137,7 @@ class TestModels():
         # # eq_(MyModel.__bases__, True)
         # eq_(VirtualMachine.__bases__[0].__name__, 'Computer')
         # eq_(vm0.bases()[0], 'Computer')
-        # # eq_(VirtualMachine.__mapper__.relationships.__dict__['_data'], None)
+        # eq_(VirtualMachine.__mapper__.relationships.__dict__['_data']['osuser'].strategy_class, None)
         # # eq_(VirtualMachine.__mapper__.columns.__dict__['_data'], None)
         # # eq_((super(VirtualMachine, vm0)).__dict__, object)
         # # eq_(vm[0], None)
@@ -147,6 +147,7 @@ class TestModels():
         # eq_(len(vm_list), 4)
         # assert vm[0] in vm_list
         vm = VirtualMachine.query.filter_by(id='vm-1').first()
+        # eq_(vm.to_dict(), None)
         it = ITEquipment.query.filter_by(id=vm.id).first()
         eq_(vm.label, it.label)
         # eq_(it, None)
@@ -161,10 +162,12 @@ class TestModels():
         eq_(vm.columns()['setup_time'].nullable, True)
         new_pm = PhysicalMachine()
         gp = Group.query.filter_by(id='gp-2').first()
+        # eq_(gp.to_dict(), None)
         inf = Interface.query.filter_by(id='if-1').first()
         pm_init = new_pm.insert(
             inf=[inf], iqn_id='iqn-init', group=[gp], spec_id='cs-3',
             label='NFJD-PM-INIT', name='host-pm-init', setup_time='20160725', os_id='os-2')
+        # eq_(pm_init, None)
         it_init = ITEquipment().get(id=pm_init['id'])
         eq_(pm_init['label'], it_init[0]['label'])
         # eq_(pm_init, None)
@@ -340,7 +343,7 @@ class TestModels():
         vm1 = new_vm.insert(
             pm_id='pm-2', vm_pid='77877', iqn_id='iqn-vm', spec_id='cs-3',
             label='NFJD-VM-VM', name='host-vm-vm', setup_time='20160725', os_id='os-2')
-        eq_(vm1['pm_id'], 'pm-2')
+        eq_(vm1['pm'], 'pm-2')
         eq_(vm1['ip'], [])
         # 1.2 existing VirtualMachine       
         vm2 = new_vm.insert(
@@ -359,11 +362,13 @@ class TestModels():
         # 3.1 non duplicative: update successfully
         user1 = OSUser.query.filter_by(id='u-1').first()
         user2 = OSUser.query.filter_by(id='u-3').first()
+        user3 = OSUser().getObject(id='u-3')
+        eq_(user3, user2)
         vm4 = new_vm.update(id=vm0.id, spec_id='cs-3', osuser=[user1, user2])
-        eq_(vm4['spec_id'], 'cs-3')
-        eq_(vm4['osuser'][0]['name'], 'elk')
+        eq_(vm4['spec'], 'cs-3')
+        eq_(vm4['osuser'][0], 'u-1')
         vm5 = new_vm.get(id=vm0.id)
-        eq_(vm5[0]['spec_id'], 'cs-3')
+        eq_(vm5[0]['spec'], 'cs-3')
         # 3.2 duplicative: update failed
         vm6 = new_vm.update(id=vm1['id'], vm_pid='6007', iqn_id='iqn-5')
         eq_(vm6, None)

@@ -65,3 +65,11 @@ DEFAULT_ZABBIX_URL = 'http://192.168.182.150/zabbix'
 # zabbix user info
 DEFAULT_ZABBIX_USER_NAME = 'cloudlab'
 DEFAULT_ZABBIX_PASSWORD = 'cloudlab'
+
+"""
+    celery broker configuration
+"""
+# use sqlalchemy as broker and resultset
+SQLA = os.path.join(DB_FOLDER, 'celerydb.sqlite')
+CELERY_BROKER_URL = 'sqla+sqlite:///%s' % SQLA
+CELERY_RESULT_BACKEND = 'db+sqlite:///%s' % SQLA
