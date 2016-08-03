@@ -150,6 +150,13 @@ class TestModels():
         # eq_(vm.to_dict(), None)
         it = ITEquipment.query.filter_by(id=vm.id).first()
         eq_(vm.label, it.label)
+        # eq_(VirtualMachine.__mapper__.columns.__dict__['_data'], None)
+        # eq_(it.to_dict(), None)
+        # eq_(it.category, None)
+        # eq_(vm.category, None)
+        # eq_(vm.bases(), None)
+        # eq_(VirtualMachine.__subclasses__(), [])
+        # eq_(ITEquipment.__subclasses__(), None)
         # eq_(it, None)
         # eq_(vm.columns()['id'].nullable, it1.columns()['label'].nullable)
         # eq_(vm.relationships(), None)
@@ -170,6 +177,10 @@ class TestModels():
         # eq_(pm_init, None)
         it_init = ITEquipment().get(id=pm_init['id'])
         eq_(pm_init['label'], it_init[0]['label'])
+        it_test = ITEquipment().insert(id='it-test', label='NFJD-IT-TEST', name='host-it-test', group=[gp], os_id='os-1')
+        # eq_(it_test, None)
+        it_list = ITEquipment().get()
+        # eq_(it_list, None)
         # eq_(pm_init, None)
         # gp_test = Group().get(id='gp-2')
         # eq_(gp_test, None)
@@ -343,7 +354,7 @@ class TestModels():
         vm1 = new_vm.insert(
             pm_id='pm-2', vm_pid='77877', iqn_id='iqn-vm', spec_id='cs-3',
             label='NFJD-VM-VM', name='host-vm-vm', setup_time='20160725', os_id='os-2')
-        eq_(vm1['pm'], 'pm-2')
+        eq_(vm1['pm'][0]['id'], 'pm-2')
         eq_(vm1['ip'], [])
         # 1.2 existing VirtualMachine       
         vm2 = new_vm.insert(
@@ -356,6 +367,7 @@ class TestModels():
         eq_(vm3[0]['vm_pid'], '77877')
         # 2.2 all
         vm_list = new_vm.get()
+        # eq_(vm_list, None)
         eq_(len(vm_list), 6)
         assert vm0,vm1 in vm_list
         # 3. update a ComputerSpecification
@@ -365,10 +377,10 @@ class TestModels():
         user3 = OSUser().getObject(id='u-3')
         eq_(user3, user2)
         vm4 = new_vm.update(id=vm0.id, spec_id='cs-3', osuser=[user1, user2])
-        eq_(vm4['spec'], 'cs-3')
-        eq_(vm4['osuser'][0], 'u-1')
+        eq_(vm4['spec'][0]['id'], 'cs-3')
+        eq_(vm4['osuser'][0]['id'], 'u-1')
         vm5 = new_vm.get(id=vm0.id)
-        eq_(vm5[0]['spec'], 'cs-3')
+        eq_(vm5[0]['spec_id'], 'cs-3')
         # 3.2 duplicative: update failed
         vm6 = new_vm.update(id=vm1['id'], vm_pid='6007', iqn_id='iqn-5')
         eq_(vm6, None)
