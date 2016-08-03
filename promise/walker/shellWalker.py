@@ -124,9 +124,11 @@ class ShellWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
-        walker = Walker.getFromWalkerIdWithinUser(walker_id, g.currentUser)
+        [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
+            walker_id, g.currentUser)
         if walker:
-            [trails, json_trails] = Walker.getTrails(walker)
+            print walker
+            [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
         else:
             msg = 'wrong walker id'

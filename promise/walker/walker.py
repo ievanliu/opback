@@ -13,10 +13,11 @@
 
 from flask import g
 from flask_restful import reqparse, Resource
-from .models import Walker
+from .models import Walker, Script
 from . import utils as walkerUtils
 from .. import utils
 from ..user import auth
+import thread
 
 
 class WalkerAPI(Resource):
@@ -25,16 +26,23 @@ class WalkerAPI(Resource):
         super(WalkerAPI, self).__init__()
 
     """
-    find out all the walkers or one of them
+    Establish a script mission walker, it will return the walker id.
+    A walker may have several trails(target hosts).
     """
-    @auth.PrivilegeAuth(privilegeRequired="walkerInfo")
+    @auth.PrivilegeAuth(privilegeRequired="scriptExec")
+    def post(self):
+        pass
+    """
+    find out all the script-mission walkers or one of them
+    """
+    @auth.PrivilegeAuth(privilegeRequired="scriptExec")
     def get(self):
         walker_id = self.argCheckForGet()
         if not walker_id:
             [msg, json_walkers] = self.getWalkerListOfTokenOwner()
             return {'message': msg, 'walkers': json_walkers}, 200
         else:
-            [msg, walker_name, json_trails] = self.getWalkerInfoWithinUser(
+            [msg, walker_name, json_trails] = self.getWalkerInfoOfTokenOwner(
                 walker_id)
             return {
                 'message': msg,
@@ -49,26 +57,41 @@ class WalkerAPI(Resource):
             'iplist', type=list, location='json',
             required=True, help='iplist ip must be a list')
         self.reqparse.add_argument(
-            'shell', type=str, location='json',
-            required=True, help='shell must be a string')
+            'scriptid', type=str, location='json',
+            required=True, help='script_id must be a string')
+        self.reqparse.add_argument(
+            'params', type=list, location='json',
+            help='params must be a string')
         self.reqparse.add_argument(
             'osuser', type=str, location='json',
             required=True, help='osuser must be a string')
         self.reqparse.add_argument(
             'name', type=str, location='json',
-            help='default walker-name: time-shell')
+            help='default walker-name: time-scriptname')
         args = self.reqparse.parse_args()
         iplist = args['iplist']
         for ip in iplist:
             if not walkerUtils.ipFormatChk(ip):
                 msg = 'wrong ip address'
                 raise utils.InvalidAPIUsage(msg)
-        shell = args['shell']
+        script_id = args['scriptid']
+        params = args['params']
         os_user = args['osuser']
         walker_name = args['name']
-        if not walker_name:
-            walker_name = str(walkerUtils.serialCurrentTime()) + '-' + shell
-        return [iplist, shell, os_user, walker_name]
+        [script, json_script] = Script.getFromIdWithinUser(
+            script_id, g.currentUser)
+        if script:
+            if not walker_name:
+                walker_name = str(walkerUtils.serialCurrentTime()) + \
+                    '-' + str(script.script_name)
+            if params:
+                params = " ".join(params)
+            else:
+                params = None
+            return [iplist, script, os_user, params, walker_name]
+        else:
+            msg = 'wrong script id.'
+            raise utils.InvalidAPIUsage(msg)
 
     def argCheckForGet(self):
         self.reqparse.add_argument(
@@ -87,12 +110,27 @@ class WalkerAPI(Resource):
         return [msg, json_walkers]
 
     @staticmethod
-    def getWalkerInfoWithinUser(walker_id):
-        [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
-            walker_id, g.currentUser)
+    def getWalkerInfo(walker_id):
+        walker = Walker.getFromWalkerId(walker_id)
         if walker:
             [trails, json_trails] = Walker.getTrails(walker)
             msg = 'walker info'
         else:
             msg = 'wrong walker id'
         return [msg, walker.walker_name, json_trails]
+
+    @staticmethod
+    def getWalkerInfoOfTokenOwner(walker_id):
+        [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
+            walker_id, g.currentUser)
+        if walker:
+            [trails, json_trails] = walker.getTrails()
+            msg = 'walker info'
+        else:
+            msg = 'wrong walker id'
+        return [msg, walker.walker_name, json_trails]
+
+    @staticmethod
+    def run(shell_walker_executor):
+        shell_walker_executor.run()
+        thread.exit()

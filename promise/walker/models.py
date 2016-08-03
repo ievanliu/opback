@@ -12,7 +12,7 @@ from .. import db, app
 from .. import utils, ma
 # from ..ansiAdapter import ShellExecAdapter
 from ..user.models import User
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 import datetime
 
 
@@ -340,6 +340,24 @@ class Script(db.Model):
             state = False
         return [state, msg]
 
+    @staticmethod
+    def getCallableScripts(user, script_id=None, valid=1):
+        if not script_id:
+            scriptUserList = db.session.query(User, Script).filter(
+                and_(
+                    or_(Script.owner_id == user.user_id,
+                        Script.is_public == 1),
+                    Script.valid == valid)).all()
+            return scriptUserList
+        else:
+            scriptUserInfo = db.session.query(User, Script).filter(
+                and_(
+                    or_(Script.owner_id == user.user_id,
+                        Script.is_public == 1),
+                    script_id == script_id,
+                    Script.valid == valid)).first()
+            return scriptUserInfo
+
 
 class Trail(db.Model):
     '''
@@ -418,7 +436,7 @@ walker_schema = WalkerSchema()
 walkers_schema = WalkerSchema(many=True)
 
 
-class TrailSchema(ma.HyperlinkModelSchema):
+class TrailSchema(ma.ModelSchema):
     """
         establish a meta data class for data print
     """
@@ -432,12 +450,14 @@ trail_schema = TrailSchema()
 trails_schema = TrailSchema(many=True)
 
 
-class ScriptSchema(ma.HyperlinkModelSchema):
+class ScriptSchema(ma.ModelSchema):
     """
         establish a meta data class for data print
     """
     class Meta:
         model = Script
-        fields = ['script_id', 'script_name', 'time_last_edit', 'script_text']
+        fields = [
+            'script_id', 'script_name', 'time_last_edit', 'script_text']
+
 script_schema = ScriptSchema()
 scripts_schema = ScriptSchema(many=True)

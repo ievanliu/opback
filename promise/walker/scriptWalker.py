@@ -150,9 +150,10 @@ class ScriptWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
-        walker = Walker.getFromWalkerIdWithinUser(walker_id, g.currentUser)
+        [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
+            walker_id, g.currentUser)
         if walker:
-            [trails, json_trails] = Walker.getTrails(walker)
+            [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
         else:
             msg = 'wrong walker id'
@@ -207,12 +208,34 @@ class ScriptAPI(Resource):
     def get(self):
         script_id = self.argCheckForGet()
         if not script_id:
-            [msg, json_scripts] = self.getScriptListOfTokenOwner()
-            return {'message': msg, 'scripts': json_scripts}, 200
+            callableScripts = Script.getCallableScripts(g.currentUser)
+            json_callableScripts = list()
+            for callableScript in callableScripts:
+                result = dict()
+                result['script_id'] = callableScript.Script.script_id
+                result['script_name'] = callableScript.Script.script_name
+                result['script_text'] = callableScript.Script.script_text
+                result['owner_name'] = callableScript.User.user_name
+                result['owner_id'] = callableScript.Script.owner_id
+                result['time_create'] = callableScript.Script.time_create
+                result['time_last_edit'] = callableScript.Script.time_last_edit
+                json_callableScripts.append(result)
+            msg = 'got script list.'
+            return {'message': msg, 'scripts': json_callableScripts}, 200
         else:
-            [msg, json_script] = self.getScriptInfo(script_id)
-            if json_script:
-                return {'message': msg, 'script': json_script}, 200
+            callableScript = Script.getCallableScripts(
+                g.currentUser, script_id)
+            if callableScript:
+                result = dict()
+                result['script_id'] = callableScript.Script.script_id
+                result['script_name'] = callableScript.Script.script_name
+                result['script_text'] = callableScript.Script.script_text
+                result['owner_name'] = callableScript.User.user_name
+                result['owner_id'] = callableScript.Script.owner_id
+                result['time_create'] = callableScript.Script.time_create
+                result['time_last_edit'] = callableScript.Script.time_last_edit
+                msg = 'got target script.'
+                return {'message': msg, 'script': result}, 200
             else:
                 raise utils.InvalidAPIUsage(msg)
 
@@ -266,16 +289,16 @@ class ScriptAPI(Resource):
     def argCheckForPut(self):
         self.reqparse.add_argument(
             'script_id', type=str, location='args',
-            required=True, help='script id must be a string')
-        self.reqparse.add_argument(
-            'script_name', type=str, location='json',
-            required=True, help='iplist ip must be a list')
-        self.reqparse.add_argument(
-            'script_text', type=str, location='json',
             required=True, help='script_id must be a string')
         self.reqparse.add_argument(
+            'script_name', type=str, location='json',
+            required=True, help='iplist_name must be a list')
+        self.reqparse.add_argument(
+            'script_text', type=str, location='json',
+            required=True, help='script_text must be a string')
+        self.reqparse.add_argument(
             'script_lang', type=str, location='json',
-            required=True, help='osuser must be a string')
+            required=True, help='script_lang must be a string')
         self.reqparse.add_argument(
             'is_public', type=int, location='json',
             required=True, help='is_public must be 0 or 1')
@@ -304,6 +327,10 @@ class ScriptAPI(Resource):
         else:
             msg = 'no scripts exist.'
             return [msg, None]
+
+    @staticmethod
+    def getExcutableScriptsInfo():
+        pass
 
     @staticmethod
     def getScriptInfo(script_id):
