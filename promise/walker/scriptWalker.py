@@ -219,6 +219,8 @@ class ScriptAPI(Resource):
                 result['owner_id'] = callableScript.Script.owner_id
                 result['time_create'] = callableScript.Script.time_create
                 result['time_last_edit'] = callableScript.Script.time_last_edit
+                result['is_public'] = callableScript.Script.is_public
+                result['script_lang'] = callableScript.Script.script_lang
                 json_callableScripts.append(result)
             msg = 'got script list.'
             return {'message': msg, 'scripts': json_callableScripts}, 200
@@ -234,6 +236,8 @@ class ScriptAPI(Resource):
                 result['owner_id'] = callableScript.Script.owner_id
                 result['time_create'] = callableScript.Script.time_create
                 result['time_last_edit'] = callableScript.Script.time_last_edit
+                result['is_public'] = callableScript.Script.is_public
+                result['script_lang'] = callableScript.Script.script_lang
                 msg = 'got target script.'
                 return {'message': msg, 'script': result}, 200
             else:

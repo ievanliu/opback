@@ -270,7 +270,6 @@ class Script(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     time_create = db.Column(db.DATETIME)
     time_last_edit = db.Column(db.DATETIME)
-    last_edit_owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     # languages of scripts may be : 1.shell  2.python
     script_lang = db.Column(db.String(32))
     is_public = db.Column(db.SmallInteger)
@@ -326,7 +325,6 @@ class Script(db.Model):
         self.script_text = script_text
         self.script_lang = script_lang
         self.time_last_edit = datetime.datetime.now()
-        self.last_edit_owner_id = edit_user.user_id
         self.is_public = is_public
 
     def setInvalid(self):
@@ -343,14 +341,14 @@ class Script(db.Model):
     @staticmethod
     def getCallableScripts(user, script_id=None, valid=1):
         if not script_id:
-            scriptUserList = db.session.query(User, Script).filter(
+            scriptUserList = db.session.query(Script, User).join(User).filter(
                 and_(
                     or_(Script.owner_id == user.user_id,
                         Script.is_public == 1),
                     Script.valid == valid)).all()
             return scriptUserList
         else:
-            scriptUserInfo = db.session.query(User, Script).filter(
+            scriptUserInfo = db.session.query(Script, User).join(User).filter(
                 and_(
                     or_(Script.owner_id == user.user_id,
                         Script.is_public == 1),
