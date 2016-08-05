@@ -20,6 +20,7 @@ from ..ansiAdapter.ansiAdapter import ScriptExecAdapter
 from .. import utils
 from ..user import auth
 import thread
+from .. import dont_cache
 
 
 class ScriptWalkerAPI(Resource):
@@ -63,6 +64,7 @@ class ScriptWalkerAPI(Resource):
     find out all the script-mission walkers or one of them
     """
     @auth.PrivilegeAuth(privilegeRequired="scriptExec")
+    @dont_cache()
     def get(self):
         walker_id = self.argCheckForGet()
         if not walker_id:
@@ -205,6 +207,7 @@ class ScriptAPI(Resource):
             raise utils.InvalidAPIUsage(msg)
 
     @auth.PrivilegeAuth(privilegeRequired="scriptExec")
+    @dont_cache()
     def get(self):
         script_id = self.argCheckForGet()
         if not script_id:
