@@ -13,6 +13,10 @@ from .models import ITEquipment
 from ..user import auth
 from .. import app, utils
 
+"""
+    Data Services
+"""
+
 
 class HostListAPI(Resource):
     """
@@ -20,6 +24,8 @@ class HostListAPI(Resource):
         Supported By Eater.
         Methods: GET (Readonly)
     """
+    params = ['category', 'label', 'name', 'os_id', 'setup_time']
+
     def __init__(self):
         super(HostListAPI, self).__init__()
         self.parser = reqparse.RequestParser()
@@ -31,22 +37,28 @@ class HostListAPI(Resource):
         self.parser.add_argument(
             'pp', type=inputs.positive,
             help='PerPage must be a positive integer', dest='per_page')
+        # search parameters
+        for x in self.params:
+            self.parser.add_argument(x, type=str)
 
     # get whole list of hosts existing
     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
     def get(self):
-        pages, data = False, []
+        pages, data, kw = False, [], {}
         args = self.parser.parse_args()
+        for x in self.params:
+            if args[x]:
+                kw[x] = args[x]
         page = args['page']
-        if not page:
-            data = ITEquipment().get()
+        if kw or not page:
+            data = ITEquipment().get(**kw)
         else:
             query = []
             per_page = args['per_page']
             if per_page:
-                query = ITEquipment().get(page, per_page)
+                query = ITEquipment().get(page, per_page, **kw)
             else:
-                query = ITEquipment().get(page)
+                query = ITEquipment().get(page, **kw)
             if query:
                 data, pages = query[0], query[1]
         return {'totalpage': pages, 'data': data}, 200
@@ -81,3 +93,52 @@ class HostAPI(Resource):
             msg = self.__HostNotFound % {'id': hostid}
             app.logger.info(utils.logmsg(msg))
             return {'error': msg}, 404
+
+"""
+    Task Services
+"""
+from .tasks import host_sync
+
+
+class HostSyncAPI(Resource):
+    """
+        Host Synchronization Restful API.
+        Supported By Eater.
+        for GET (Readonly)
+    """
+    # define custom error msg
+    __ExeFailed = 'Execute Failed: %s.'
+    __CheckFailed = 'Check Failed: %s.'
+
+    # add decorators for all
+    decorators = [auth.PrivilegeAuth(
+        privilegeRequired="inventoryAdmin")]
+
+    def __init__(self):
+        super(HostSyncAPI, self).__init__()
+        self.parser = reqparse.RequestParser()
+
+    # execute a host synchronization task
+    def post(self):
+        try:
+            t = host_sync.apply_async()
+            return {'id': t.task_id}, 201
+        except Exception as e:
+            msg = self.__ExeFailed % e
+            app.logger.info(utils.logmsg(msg))
+            return {'error': msg}, 500
+
+    # get a host synchronization task status
+    def get(self, taskid):
+        try:
+            task = host_sync.AsyncResult(taskid)
+            result = {
+                'id': task.id,
+                'state': task.state,
+                'info': task.info
+            }
+            return {'result': result}, 200
+        except Exception as e:
+            msg = self.__CheckFailed % e
+            app.logger.info(utils.logmsg(msg))
+            return {'error': msg}, 500

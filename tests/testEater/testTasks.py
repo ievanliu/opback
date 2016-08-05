@@ -47,18 +47,18 @@ class TestModels():
         self.tester = app.test_client(self)
 
         # database initialization
-        db.drop_all(bind=self.default_bind_key)
+        # db.drop_all(bind=self.default_bind_key)
         db.create_all(bind=self.default_bind_key)
 
     # drop db
     def tearDown(self):
         db.session.close()
-        # db.drop_all(bind=self.default_bind_key)
+        db.drop_all(bind=self.default_bind_key)
 
     @with_setup(setUp, tearDown)
     def test_host_refresh(self):
         """
             host info synchronization for eater
         """
-        host_sync()
-        host_sync()
+        eq_(host_sync()['message'], 'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')
+        eq_(host_sync()['message'], 'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')

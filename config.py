@@ -67,11 +67,18 @@ DEFAULT_ZABBIX_USER_NAME = 'cloudlab'
 DEFAULT_ZABBIX_PASSWORD = 'cloudlab'
 
 """
-    celery broker configuration
+    celery configuration
 """
 # use sqlalchemy as broker and resultset
 SQLA = os.path.join(DB_FOLDER, 'celerydb.sqlite')
 CELERY_BROKER_URL = 'sqla+sqlite:///%s' % SQLA
 CELERY_RESULT_BACKEND = 'db+sqlite:///%s' % SQLA
 CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERY_ENABLE_UTC = True
 CELERYBEAT_SCHEDULE_FILENAME = os.path.join(DB_FOLDER, 'celerybeat-schedule')
+# CELERY_IGNORE_RESULT = True
+# CELERY_TRACK_STARTED = True
+# CELERY_REDIRECT_STDOUTS_LEVEL = 'DEBUG'
+
+from celery import platforms
+platforms.C_FORCE_ROOT = True

@@ -8,8 +8,8 @@ celery.conf.update(
         'host-synchronization-daily': {
             'task': 'host_sync',
             # 'schedule': timedelta(seconds=5),
-            'schedule': crontab(minute='*/2'),
-            # 'schedule': crontab(hour=0, minute=0),
+            # 'schedule': crontab(minute='*/2'),
+            'schedule': crontab(hour=0, minute=0),
         },
     }
 )

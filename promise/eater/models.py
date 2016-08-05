@@ -7,7 +7,7 @@
 #
 # This is the model module of eater package.
 
-from .. import db, utils  # , ma
+from .. import db, app, utils  # , ma
 from sqlalchemy.ext.declarative import declared_attr
 import re
 from datetime import datetime
@@ -22,6 +22,8 @@ class Doraemon(db.Model):
         Eater Super Model.
     """
     __abstract__ = True
+
+    __DoraemonContraintException = 'Doraemon Contraint Exception: %s.'
 
     # tablename
     @declared_attr
@@ -180,8 +182,10 @@ class Doraemon(db.Model):
             try:
                 db.session.commit()
                 return obj.to_dict()
-            except:
+            except Exception, e:
                 db.session.rollback()
+                msg = self.__DoraemonContraintException % e
+                app.logger.info(utils.logmsg(msg))
         return None
 
     # update a record
@@ -200,8 +204,10 @@ class Doraemon(db.Model):
             try:
                 db.session.commit()
                 return obj.to_dict()
-            except:
+            except Exception, e:
                 db.session.rollback()
+                msg = self.__DoraemonContraintException % e
+                app.logger.info(utils.logmsg(msg))
         return None
 
     # get (a) record(s)
@@ -216,7 +222,7 @@ class Doraemon(db.Model):
         else:
             li = self._exist(**kw)
         if li:
-            if page:
+            if not kw and page:
                 return [x.to_dict(depth=depth) for x in li.items], li.pages
             return [x.to_dict(depth=depth) for x in li]
         return []
@@ -240,8 +246,10 @@ class Doraemon(db.Model):
             try:
                 db.session.commit()
                 return True
-            except:
+            except Exception, e:
                 db.session.rollback()
+                msg = self.__DoraemonContraintException % e
+                app.logger.info(utils.logmsg(msg))
         return False
 
 
