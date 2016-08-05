@@ -3,13 +3,14 @@
 #
 # Author: Leann Mak
 # Email: leannmak@139.com
-# Date: July 25, 2016
+# Date: Aug 3, 2016
 #
 # This is the model module of eater package.
 
-from .. import db, ma, utils
+from .. import db, utils  # , ma
 from sqlalchemy.ext.declarative import declared_attr
 import re
+from datetime import datetime
 
 
 # default database bound
@@ -40,6 +41,16 @@ class Doraemon(db.Model):
         return db.Column(
             db.String(64), primary_key=True)
 
+    # category
+    @declared_attr
+    def category(cls):
+        return db.Column(db.String(64))
+
+    # last update time
+    @declared_attr
+    def last_update_time(cls):
+        return db.Column(db.DateTime)
+
     # name list of base classes
     def bases(self):
         names = []
@@ -66,26 +77,57 @@ class Doraemon(db.Model):
                     setattr(self, k, w)
                 if 'id' not in d.keys():
                     setattr(self, 'id', utils.genUuid(self.__class__.__name__))
+                # set category by default
+                setattr(self, 'category', self.__class__.__name__)
+                # set last update time by default
+                setattr(self, 'last_update_time', datetime.now())
 
     # for print
     def __repr__(self):
         return '<%s %r>' % (self.__class__.__name__, self.id)
 
-    # output columns and relationships to dict
-    def to_dict(self):
+    # output columns and relationships to dict using recursive method
+    def to_dict(self, count=0, depth=1):
+        columns = self.columns()
+        relationships = self.relationships()
+        # get columns
+        d = {k: getattr(self, k) for k in columns.keys()}
+        # recursion ends (better limit depth to be <= 3)
+        # or it may risk to be maximum recursion depth exceeded
+        depth = 3 if depth > 3 else depth
+        if not relationships or count == depth:
+            return d
+        count += 1
+        # get relationships
+        for k in relationships.keys():
+            relation = getattr(self, k)
+            if relation:
+                if hasattr(relation, '__iter__'):
+                    d[k] = [x.to_dict(count=count, depth=depth)
+                            for x in relation if hasattr(x, 'to_dict')]
+                elif hasattr(relation, 'to_dict'):
+                    d[k] = [relation.to_dict(count=count, depth=depth)]
+            else:
+                d[k] = []
+        return d
 
-        class DoraemonSchema(ma.ModelSchema):
-            """
-                Model Schema.
-            """
-            class Meta:
-                model = self.__class__
+    # # output columns and relationships to dict using schema
+    # # ---- schema has been deprecated cuz proved to be a waste of time ----
+    # # also when using the schema, foreign_keys are forbidden to be left NULL
+    # def to_dict(self):
 
-        dorae = DoraemonSchema().dump(self).data
-        # ModelSchema ignore foreign_keys as default
-        if 'id' not in dorae.keys():
-            dorae['id'] = self.id
-        return dorae
+    #     class DoraemonSchema(ma.ModelSchema):
+    #         """
+    #             Model Schema.
+    #         """
+    #         class Meta:
+    #             model = self.__class__
+
+    #     dorae = DoraemonSchema().dump(self).data
+    #     # ModelSchema ignore foreign_keys as default
+    #     if 'id' not in dorae.keys():
+    #         dorae['id'] = self.id
+    #     return dorae
 
     # find out params in table columns and relationships
     def checkColumnsAndRelations(self, **kw):
@@ -121,7 +163,8 @@ class Doraemon(db.Model):
         if kw:
             cols, relations, isColComplete, isRelComplete = \
                 self.checkColumnsAndRelations(**kw)
-            li = self.__class__.query.filter_by(**cols).all()
+            li = self.__class__.query.filter_by(
+                **cols).order_by(self.__class__.id).all()
             if li:
                 return li
         return None
@@ -152,6 +195,8 @@ class Doraemon(db.Model):
             d = dict(cols, **relations)
             for k, w in d.items():
                 setattr(obj, k, w)
+            # set last update time by default
+            setattr(obj, 'last_update_time', datetime.now())
             try:
                 db.session.commit()
                 return obj.to_dict()
@@ -162,14 +207,19 @@ class Doraemon(db.Model):
     # get (a) record(s)
     # input dict{}: conditions for search
     # output json list[]: record(s) s.t. conditions
-    def get(self, **kw):
+    def get(self, page=None, per_page=20, depth=1, **kw):
         if not kw:
-            li = self.__class__.query.all()
+            if page:
+                li = self.__class__.query.paginate(page, per_page, False)
+            else:
+                li = self.__class__.query.order_by(self.__class__.id).all()
         else:
             li = self._exist(**kw)
         if li:
-            return [x.to_dict() for x in li]
-        return None
+            if page:
+                return [x.to_dict(depth=depth) for x in li.items], li.pages
+            return [x.to_dict(depth=depth) for x in li]
+        return []
 
     # get an object by id
     # input str: object id for search
@@ -247,14 +297,14 @@ class IP(Doraemon):
     __table_args__ = (
         db.UniqueConstraint(
             'ip_addr', 'ip_mask', 'ip_category',
-            'if_id', 'it_id', name='_ip_uc'),)
+            'if_id', 'vlan_id', 'it_id', name='_ip_uc'),)
 
     # IP address
     ip_addr = db.Column(db.String(64), unique=True)
     # IP mask
     ip_mask = db.Column(db.String(64))
     # IP category (vm/pm/network/security/storage/ipmi/vip/unused)
-    ip_category = db.Column(db.String(64), default='unused')
+    ip_category = db.Column(db.String(64))
     # interface which IP belongs to
     if_id = db.Column(db.String(32), db.ForeignKey('interface.id'))
     # IT equipment which IP belongs to

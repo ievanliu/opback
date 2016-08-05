@@ -73,3 +73,5 @@ DEFAULT_ZABBIX_PASSWORD = 'cloudlab'
 SQLA = os.path.join(DB_FOLDER, 'celerydb.sqlite')
 CELERY_BROKER_URL = 'sqla+sqlite:///%s' % SQLA
 CELERY_RESULT_BACKEND = 'db+sqlite:///%s' % SQLA
+CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERYBEAT_SCHEDULE_FILENAME = os.path.join(DB_FOLDER, 'celerybeat-schedule')
