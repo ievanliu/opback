@@ -51,6 +51,14 @@ app.logger.addHandler(utils.handler)
 from flask.ext.cors import CORS
 cors = CORS(app)
 
+from flask.ext.cachecontrol import (
+    FlaskCacheControl,
+    cache,
+    cache_for,
+    dont_cache)
+flask_cache_control = FlaskCacheControl()
+flask_cache_control.init_app(app)
+
 # Init The Celery Obj
 from celery import Celery
 
@@ -80,3 +88,6 @@ assert zabber
 assert eater
 assert walker
 assert ansiAdapter
+assert cache
+assert cache_for
+assert dont_cache

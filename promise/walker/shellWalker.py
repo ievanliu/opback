@@ -20,6 +20,7 @@ from ..ansiAdapter.ansiAdapter import ShellExecAdapter
 from .. import utils
 from ..user import auth
 import thread
+from .. import dont_cache
 
 
 class ShellWalkerAPI(Resource):
@@ -64,6 +65,7 @@ class ShellWalkerAPI(Resource):
     find out all the shell-mission walkers or one of them
     """
     @auth.PrivilegeAuth(privilegeRequired="shellExec")
+    @dont_cache()
     def get(self):
         walker_id = self.argCheckForGet()
         if not walker_id:
