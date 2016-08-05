@@ -146,6 +146,10 @@ class TestModels():
         # vm_list = VirtualMachine().get()
         # eq_(len(vm_list), 4)
         # assert vm[0] in vm_list
+        # g = Group().get(id='gp-1')
+        # eq_(g, None)
+        # g = Group.query.filter_by(id='gp-1').first()
+        # eq_(g.to_dict(), None)
         vm = VirtualMachine.query.filter_by(id='vm-1').first()
         # eq_(vm.to_dict(), None)
         it = ITEquipment.query.filter_by(id=vm.id).first()

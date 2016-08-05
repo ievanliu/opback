@@ -9,9 +9,9 @@
 
 
 from flask.ext.restful import reqparse, Resource, inputs
-from .models import ITEquipment
+from .models import ITEquipment, Group
 from ..user import auth
-from .. import app, utils, dont_cache
+from .. import app, utils
 
 
 """
@@ -44,7 +44,6 @@ class HostListAPI(Resource):
 
     # get whole list of hosts existing
     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
-    @dont_cache()
     def get(self):
         pages, data, kw = False, [], {}
         args = self.parser.parse_args()
@@ -79,7 +78,7 @@ class HostAPI(Resource):
 
     # add decorators for all
     decorators = [auth.PrivilegeAuth(
-        privilegeRequired="inventoryAdmin"), dont_cache()]
+        privilegeRequired="inventoryAdmin")]
 
     def __init__(self):
         super(HostAPI, self).__init__()
@@ -95,6 +94,84 @@ class HostAPI(Resource):
             msg = self.__HostNotFound % {'id': hostid}
             app.logger.info(utils.logmsg(msg))
             return {'error': msg}, 404
+
+
+class HostGroupListAPI(Resource):
+    """
+        HostGroupList Restful API.
+        Supported By Eater.
+        for GET (Readonly)
+    """
+    params = ['name']
+
+    def __init__(self):
+        super(HostGroupListAPI, self).__init__()
+        self.parser = reqparse.RequestParser()
+        # page
+        self.parser.add_argument(
+            'page', type=inputs.positive,
+            help='page must be a positive integer')
+        # pp: number of items per page
+        self.parser.add_argument(
+            'pp', type=inputs.positive,
+            help='perpage must be a positive integer', dest='perpage')
+        # search parameters
+        for x in self.params:
+            self.parser.add_argument(x, type=str)
+
+    # get host group list
+    @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
+    def get(self):
+        pages, data, kw = False, [], {}
+        args = self.parser.parse_args()
+        for x in self.params:
+            if args[x]:
+                kw[x] = args[x]
+        page = args['page']
+        if kw or not page:
+            data = Group().get(**kw)
+        else:
+            query = []
+            per_page = args['per_page']
+            if per_page:
+                query = Group().get(page, per_page, **kw)
+            else:
+                query = Group().get(page, **kw)
+            if query:
+                data, pages = query[0], query[1]
+        return {'totalpage': pages, 'data': data}, 200
+
+
+class HostGroupAPI(Resource):
+    """
+        HostGroup Restful API.
+        Supported By Eater.
+        for GET (Readonly)
+    """
+    # define custom error msg
+    __ParamsIllegal = 'Parameter Illegal: %s.'
+    __GroupNotFound = 'Group Not Found: %s.'
+    __GroupExisting = 'Group Already Existing: %s.'
+
+    # add decorators for all
+    decorators = [auth.PrivilegeAuth(
+        privilegeRequired="inventoryAdmin")]
+
+    def __init__(self):
+        super(HostGroupAPI, self).__init__()
+        self.parser = reqparse.RequestParser()
+
+    # get info of a hostgroup by groupid
+    def get(self, groupid):
+        group = Group().get(id=groupid, depth=2)
+        if group:
+            data = group[0]
+            return {'data': data}, 200
+        else:
+            msg = self.__GroupNotFound % {'id': groupid}
+            app.logger.info(utils.logmsg(msg))
+            return {'error': msg}, 404
+
 
 """
     Task Services
@@ -114,7 +191,7 @@ class HostSyncAPI(Resource):
 
     # add decorators for all
     decorators = [auth.PrivilegeAuth(
-        privilegeRequired="inventoryAdmin"), dont_cache()]
+        privilegeRequired="inventoryAdmin")]
 
     def __init__(self):
         super(HostSyncAPI, self).__init__()

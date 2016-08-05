@@ -35,6 +35,16 @@ $ python runserver.py
  * Restarting with stat
 ```
 
+```bash
+$ celery -A promise.eater.tasks.celery worker -B -l DEBUG
+```
+出现如下提示表示后台任务启动正常：
+```
+ * [2016-08-05 20:04:47,554: INFO/Beat] beat: Starting...
+ * [2016-08-05 20:04:47,585: INFO/MainProcess] Connected to sqla+sqlite:////home/leannmak/special/codes/opback/.data/celerydb.sqlite
+ * [2016-08-05 20:04:47,644: WARNING/MainProcess] celery@cloudlab130 ready.
+```
+
 * 打开浏览器，访问："http://localhost:5000"
 * 访问："http://localhost:5000/_add_numbers?a=1&b=1"
 
