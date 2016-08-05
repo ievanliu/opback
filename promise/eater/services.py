@@ -11,7 +11,8 @@
 from flask.ext.restful import reqparse, Resource, inputs
 from .models import ITEquipment
 from ..user import auth
-from .. import app, utils
+from .. import app, utils, dont_cache
+
 
 """
     Data Services
@@ -43,6 +44,7 @@ class HostListAPI(Resource):
 
     # get whole list of hosts existing
     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
+    @dont_cache()
     def get(self):
         pages, data, kw = False, [], {}
         args = self.parser.parse_args()
@@ -77,7 +79,7 @@ class HostAPI(Resource):
 
     # add decorators for all
     decorators = [auth.PrivilegeAuth(
-        privilegeRequired="inventoryAdmin")]
+        privilegeRequired="inventoryAdmin"), dont_cache()]
 
     def __init__(self):
         super(HostAPI, self).__init__()
@@ -112,7 +114,7 @@ class HostSyncAPI(Resource):
 
     # add decorators for all
     decorators = [auth.PrivilegeAuth(
-        privilegeRequired="inventoryAdmin")]
+        privilegeRequired="inventoryAdmin"), dont_cache()]
 
     def __init__(self):
         super(HostSyncAPI, self).__init__()
