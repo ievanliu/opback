@@ -1,3 +1,12 @@
+# -*- coding:utf-8 -*-
+# !/usr/bin/env python
+#
+# Author: Leann Mak
+# Email: leannmak@139.com
+# Date: Aug 6, 2016
+#
+# This is the schedule module of eater package.
+
 from .. import celery
 from celery.schedules import crontab
 # from datetime import timedelta

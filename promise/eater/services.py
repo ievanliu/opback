@@ -3,10 +3,9 @@
 #
 # Author: Leann Mak
 # Email: leannmak@139.com
-# Date: July 25, 2016
+# Date: Aug 6, 2016
 #
-# This is the api module of eater package.
-
+# This is the service module of eater package.
 
 from flask.ext.restful import reqparse, Resource, inputs
 from ..user import auth

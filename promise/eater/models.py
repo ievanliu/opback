@@ -3,7 +3,7 @@
 #
 # Author: Leann Mak
 # Email: leannmak@139.com
-# Date: Aug 3, 2016
+# Date: Aug 6, 2016
 #
 # This is the model module of eater package.
 
