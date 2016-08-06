@@ -9,7 +9,6 @@
 
 
 from flask.ext.restful import reqparse, Resource, inputs
-from .models import ITEquipment, Group
 from ..user import auth
 from .. import app, utils
 
@@ -17,6 +16,7 @@ from .. import app, utils
 """
     Data Services
 """
+from .models import ITEquipment, Group
 
 
 class DoraemonListAPI(Resource):
