@@ -36,13 +36,13 @@ $ python runserver.py
 ```
 
 ```bash
-$ celery -A promise.eater.tasks.celery worker -B -l DEBUG
+$ celery -A promise.eater.tasks.celery worker -B -l INFO
 ```
 出现如下提示表示后台任务启动正常：
 ```
  * [2016-08-05 20:04:47,554: INFO/Beat] beat: Starting...
- * [2016-08-05 20:04:47,585: INFO/MainProcess] Connected to sqla+sqlite:////home/leannmak/special/codes/opback/.data/celerydb.sqlite
- * [2016-08-05 20:04:47,644: WARNING/MainProcess] celery@cloudlab130 ready.
+ * [2016-08-05 20:04:47,585: INFO/MainProcess] Connected to sqla+sqlite:///.../celerydb.sqlite
+ * [2016-08-05 20:04:47,644: WARNING/MainProcess] celery@localhost ready.
 ```
 
 * 打开浏览器，访问："http://localhost:5000"

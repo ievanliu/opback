@@ -19,16 +19,22 @@ from .. import app, utils
 """
 
 
-class HostListAPI(Resource):
+class DoraemonListAPI(Resource):
     """
-        HostList Restful API.
+        Super DataList Restful API.
         Supported By Eater.
         Methods: GET (Readonly)
-    """
-    params = ['category', 'label', 'name', 'os_id', 'setup_time']
 
-    def __init__(self):
-        super(HostListAPI, self).__init__()
+        Pay attention pls:
+        Attributes 'parms' and 'obj' are asked during implementation.
+        'params': a list of retrievable arguments of 'obj', can be [] or ().
+        'obj': an instance of one of the models belonging to Eater.
+    """
+    __abstract__ = True
+
+    # constructor
+    def __init__(self, params, obj):
+        super(DoraemonListAPI, self).__init__()
         self.parser = reqparse.RequestParser()
         # page
         self.parser.add_argument(
@@ -38,11 +44,12 @@ class HostListAPI(Resource):
         self.parser.add_argument(
             'pp', type=inputs.positive,
             help='PerPage must be a positive integer', dest='per_page')
-        # search parameters
+        setattr(self, 'params', params)
         for x in self.params:
             self.parser.add_argument(x, type=str)
+        setattr(self, 'obj', obj)
 
-    # get whole list of hosts existing
+    # get whole list of the object
     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
     def get(self):
         pages, data, kw = False, [], {}
@@ -52,125 +59,106 @@ class HostListAPI(Resource):
                 kw[x] = args[x]
         page = args['page']
         if kw or not page:
-            data = ITEquipment().get(**kw)
+            data = self.obj.get(**kw)
         else:
             query = []
             per_page = args['per_page']
             if per_page:
-                query = ITEquipment().get(page, per_page, **kw)
+                query = self.obj.get(page, per_page, **kw)
             else:
-                query = ITEquipment().get(page, **kw)
+                query = self.obj.get(page, **kw)
             if query:
                 data, pages = query[0], query[1]
         return {'totalpage': pages, 'data': data}, 200
 
 
-class HostAPI(Resource):
+class DoraemonAPI(Resource):
+    """
+        Super Data Restful API.
+        Supported By Eater.
+        for GET (Readonly)
+
+        Pay attention pls:
+        Attributes 'parms' and 'obj' are asked during implementation.
+        'params': a list of attributes of 'obj', can be [] or ().
+        'obj': an instance of one of the models belonging to Eater.
+    """
+    __abstract__ = True
+
+    # define custom error msg
+    __ParamsIllegal = 'Parameter Illegal: %s.'
+    __ObjNotFound = 'Object Not Found: %s.'
+    __ObjExisting = 'Object Already Existing: %s.'
+
+    # add decorators for all
+    decorators = [auth.PrivilegeAuth(
+        privilegeRequired="inventoryAdmin")]
+
+    # constructor
+    def __init__(self, params, obj):
+        super(DoraemonAPI, self).__init__()
+        self.parser = reqparse.RequestParser()
+        setattr(self, 'params', params)
+        for x in self.params:
+            self.parser.add_argument(x, type=str)
+        setattr(self, 'obj', obj)
+
+    # get a specific object
+    def get(self, id):
+        query = self.obj.get(id=id, depth=2)
+        if query:
+            data = query[0]
+            return {'data': data}, 200
+        else:
+            msg = self.__ObjNotFound % {'id': id}
+            app.logger.info(utils.logmsg(msg))
+            return {'error': msg}, 404
+
+
+class HostListAPI(DoraemonListAPI):
+    """
+        HostList Restful API.
+        Inherits from Super DataList API.
+    """
+    def __init__(self):
+        params = ('category', 'label', 'name', 'os_id', 'setup_time')
+        obj = ITEquipment()
+        super(HostListAPI, self).__init__(params=params, obj=obj)
+
+
+class HostAPI(DoraemonAPI):
     """
         Host Restful API.
-        Supported By Eater.
-        for GET (Readonly)
+        Inherits from Super Data API.
     """
-    # define custom error msg
-    __ParamsIllegal = 'Parameter Illegal: %s.'
-    __HostNotFound = 'Host Not Found: %s.'
-    __HostExisting = 'Host Already Existing: %s.'
-
-    # add decorators for all
-    decorators = [auth.PrivilegeAuth(
-        privilegeRequired="inventoryAdmin")]
-
     def __init__(self):
-        super(HostAPI, self).__init__()
-        self.parser = reqparse.RequestParser()
-
-    # get info of a host by hostid
-    def get(self, hostid):
-        it = ITEquipment().get(id=hostid, depth=2)
-        if it:
-            data = it[0]
-            return {'data': data}, 200
-        else:
-            msg = self.__HostNotFound % {'id': hostid}
-            app.logger.info(utils.logmsg(msg))
-            return {'error': msg}, 404
+        params = []
+        obj = ITEquipment()
+        super(HostAPI, self).__init__(params=params, obj=obj)
 
 
-class HostGroupListAPI(Resource):
+class HostGroupListAPI(DoraemonListAPI):
     """
         HostGroupList Restful API.
-        Supported By Eater.
-        for GET (Readonly)
+        Inherits from Super DataList API.
     """
-    params = ['name']
-
     def __init__(self):
-        super(HostGroupListAPI, self).__init__()
-        self.parser = reqparse.RequestParser()
-        # page
-        self.parser.add_argument(
-            'page', type=inputs.positive,
-            help='page must be a positive integer')
-        # pp: number of items per page
-        self.parser.add_argument(
-            'pp', type=inputs.positive,
-            help='perpage must be a positive integer', dest='perpage')
-        # search parameters
-        for x in self.params:
-            self.parser.add_argument(x, type=str)
-
-    # get host group list
-    @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
-    def get(self):
-        pages, data, kw = False, [], {}
-        args = self.parser.parse_args()
-        for x in self.params:
-            if args[x]:
-                kw[x] = args[x]
-        page = args['page']
-        if kw or not page:
-            data = Group().get(**kw)
-        else:
-            query = []
-            per_page = args['per_page']
-            if per_page:
-                query = Group().get(page, per_page, **kw)
-            else:
-                query = Group().get(page, **kw)
-            if query:
-                data, pages = query[0], query[1]
-        return {'totalpage': pages, 'data': data}, 200
+        params = ['name']
+        obj = Group()
+        super(HostGroupListAPI, self).__init__(
+            params=params, obj=obj)
 
 
-class HostGroupAPI(Resource):
+class HostGroupAPI(DoraemonAPI):
     """
         HostGroup Restful API.
-        Supported By Eater.
-        for GET (Readonly)
+        Inherits from Super Data API.
     """
-    # define custom error msg
-    __ParamsIllegal = 'Parameter Illegal: %s.'
-    __GroupNotFound = 'Group Not Found: %s.'
-    __GroupExisting = 'Group Already Existing: %s.'
-
-    # add decorators for all
-    decorators = [auth.PrivilegeAuth(
-        privilegeRequired="inventoryAdmin")]
-
     def __init__(self):
-        super(HostGroupAPI, self).__init__()
-        self.parser = reqparse.RequestParser()
-
-    # get info of a hostgroup by groupid
-    def get(self, groupid):
-        group = Group().get(id=groupid, depth=2)
-        if group:
-            data = group[0]
-            return {'data': data}, 200
-        else:
-            msg = self.__GroupNotFound % {'id': groupid}
-            app.logger.info(utils.logmsg(msg))
-            return {'error': msg}, 404
+        params = []
+        obj = Group()
+        super(HostGroupAPI, self).__init__(
+            params=params, obj=obj)
 
 
 """
@@ -179,11 +167,16 @@ class HostGroupAPI(Resource):
 from .tasks import host_sync
 
 
-class HostSyncAPI(Resource):
+class DoraemonTaskAPI(Resource):
     """
-        Host Synchronization Restful API.
+        Super Task Restful API.
         Supported By Eater.
-        for GET (Readonly)
+        for POST(Execute) / GET(Check).
+
+        Pay attention pls:
+        'task_name' is asked during implementation.
+        'task_name': name of the task to be executed,
+                     should be a string.
     """
     # define custom error msg
     __ExeFailed = 'Execute Failed: %s.'
@@ -193,24 +186,26 @@ class HostSyncAPI(Resource):
     decorators = [auth.PrivilegeAuth(
         privilegeRequired="inventoryAdmin")]
 
-    def __init__(self):
-        super(HostSyncAPI, self).__init__()
+    # constructor
+    def __init__(self, task_name):
+        super(DoraemonTaskAPI, self).__init__()
         self.parser = reqparse.RequestParser()
+        setattr(self, 'task_name', task_name)
 
-    # execute a host synchronization task
+    # execute a task
     def post(self):
         try:
-            t = host_sync.apply_async()
+            t = eval(self.task_name).apply_async()
             return {'id': t.task_id}, 201
         except Exception as e:
             msg = self.__ExeFailed % e
             app.logger.info(utils.logmsg(msg))
             return {'error': msg}, 500
 
-    # get a host synchronization task status
-    def get(self, taskid):
+    # check a specific task status
+    def get(self, id):
         try:
-            task = host_sync.AsyncResult(taskid)
+            task = eval(self.task_name).AsyncResult(id)
             result = {
                 'id': task.id,
                 'state': task.state,
@@ -221,3 +216,13 @@ class HostSyncAPI(Resource):
             msg = self.__CheckFailed % e
             app.logger.info(utils.logmsg(msg))
             return {'error': msg}, 500
+
+
+class HostSyncAPI(DoraemonTaskAPI):
+    """
+        Host Synchronization Restful API.
+        Inherits from Super Task API.
+    """
+    def __init__(self):
+        super(HostSyncAPI, self).__init__(
+            task_name='host_sync')

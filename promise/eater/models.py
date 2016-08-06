@@ -85,8 +85,9 @@ class Doraemon(db.Model):
                 setattr(self, 'last_update_time', datetime.now())
 
     # for print
-    def __repr__(self):
+    def __str__(self):
         return '<%s %r>' % (self.__class__.__name__, self.id)
+    __repr__ = __str__
 
     # output columns and relationships to dict using recursive method
     def to_dict(self, count=0, depth=1):

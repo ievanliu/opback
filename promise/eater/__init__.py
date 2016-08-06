@@ -17,12 +17,12 @@ from .. import api
 api.add_resource(
     HostListAPI, '/api/v0.0/eater/host', endpoint='et_host_list_ep')
 api.add_resource(
-    HostAPI, '/api/v0.0/eater/host/<hostid>', endpoint='et_host_id_ep')
+    HostAPI, '/api/v0.0/eater/host/<id>', endpoint='et_host_id_ep')
 api.add_resource(
     HostGroupListAPI, '/api/v0.0/eater/hostgroup',
     endpoint='et_hostgroup_list_ep')
 api.add_resource(
-    HostGroupAPI, '/api/v0.0/eater/hostgroup/<groupid>',
+    HostGroupAPI, '/api/v0.0/eater/hostgroup/<id>',
     endpoint='et_hostgroup_id_ep')
 
 """
@@ -31,5 +31,5 @@ api.add_resource(
 api.add_resource(
     HostSyncAPI, '/api/v0.0/eater/hostsync', endpoint='et_host_sync_ep')
 api.add_resource(
-    HostSyncAPI, '/api/v0.0/eater/hostsync/<taskid>',
+    HostSyncAPI, '/api/v0.0/eater/hostsync/<id>',
     endpoint='et_host_sync_id_ep')
