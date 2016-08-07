@@ -15,12 +15,10 @@ run_data = {
 
 hostnames = ['192.168.182.1', '192.168.182.12']
 private_key_file = '~/.ssh/id_rsa'
-script = """
-    date>run_result;
-    sleep 3;
-    date>>run_result;
-    echo $1;cat run_result;
-    echo $2;
+script = """#!/usr/bin/python
+#-*- coding:utf-8 -*-
+import os
+print os.path.dirname('/tmp/')
     """
 become_pass = None
 remote_user = 'root'

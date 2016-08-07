@@ -236,6 +236,9 @@ class ScriptExecAdapter(object):
             variable_manager=self.variable_manager,
             host_list=self.hosts_file.name)
         self.variable_manager.set_inventory(self.inventory)
+        # file = open(self.script_file.name)
+        # read=file.read()
+        # print read
         play_source = dict(
             name="script task",
             remote_user=remote_user,

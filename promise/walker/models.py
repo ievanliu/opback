@@ -31,7 +31,7 @@ class Walker(db.Model):
     scriptmission = db.relationship(
         'ScriptMission', backref='walker', lazy='dynamic')
     # owner of this walker
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    owner_id = db.Column(db.String(64), db.ForeignKey('user.user_id'))
     # state code:
     # Null: has no state yet
     # -2: established
@@ -267,7 +267,7 @@ class Script(db.Model):
     script_id = db.Column(db.String(64), primary_key=True)
     script_name = db.Column(db.String(64))
     script_text = db.Column(db.Text)
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    owner_id = db.Column(db.String(64), db.ForeignKey('user.user_id'))
     time_create = db.Column(db.DATETIME)
     time_last_edit = db.Column(db.DATETIME)
     # languages of scripts may be : 1.shell  2.python
@@ -379,7 +379,7 @@ class Trail(db.Model):
     sum_changed = db.Column(db.Integer)
     sum_failures = db.Column(db.Integer)
 
-    walker_id = db.Column(db.Integer, db.ForeignKey('walker.walker_id'))
+    walker_id = db.Column(db.String(64), db.ForeignKey('walker.walker_id'))
 
     def __repr__(self):
         return '<trail %r>' % self.trail_id

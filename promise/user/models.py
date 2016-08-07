@@ -32,7 +32,7 @@ roles = db.Table(
         db.ForeignKey('role.role_id')),
     db.Column(
         'user_id',
-        db.Integer,
+        db.String(64),
         db.ForeignKey('user.user_id'))
 )
 
