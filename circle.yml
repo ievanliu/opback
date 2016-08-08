@@ -4,3 +4,7 @@ machine:
 
   pre:
     - if [ ! -e '/home/ubuntu/virtualenvs/venv-2.7.8' ]; then mkdir -p '/home/ubuntu/virtualenvs'; pushd '/home/ubuntu/virtualenvs'; virtualenv venv-2.7.8; popd; fi
+
+test:
+  minitest_globs:
+    - tests/**/*.py
