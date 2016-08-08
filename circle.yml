@@ -1,0 +1,6 @@
+machine:
+  python:
+    version: 2.7.8
+
+  pre:
+    - if [ ! -e '/home/ubuntu/virtualenvs/flask' ]; then mkdir -p '/home/ubuntu/virtualenvs'; pushd '/home/ubuntu/virtualenvs'; virtualenv flask; popd; fi
