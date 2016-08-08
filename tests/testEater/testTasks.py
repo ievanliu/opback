@@ -21,7 +21,7 @@ from promise.user.models import *
 from promise.eater.tasks import *
 
 
-class TestModels():
+class TestTasks():
     '''
         Unit test for tasks in Eater
     '''
