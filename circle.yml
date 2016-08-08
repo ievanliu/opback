@@ -3,4 +3,4 @@ machine:
     version: 2.7.8
 
   pre:
-    - if [ ! -e '/home/ubuntu/virtualenvs/flask' ]; then mkdir -p '/home/ubuntu/virtualenvs'; pushd '/home/ubuntu/virtualenvs'; virtualenv flask; popd; fi
+    - if [ ! -e '/home/ubuntu/virtualenvs/venv-2.7.8' ]; then mkdir -p '/home/ubuntu/virtualenvs'; pushd '/home/ubuntu/virtualenvs'; virtualenv venv-2.7.8; popd; fi
