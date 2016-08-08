@@ -30,14 +30,14 @@ class TestModels():
         app.testing = True
 
         # sqlite3 database for test
-        app.config['DB_FILE'] = 'test.db'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-                        os.path.join(app.config['DB_FOLDER'],
-                        app.config['DB_FILE'])
+        # app.config['DB_FILE'] = 'test.db'
+        # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
+        #                 os.path.join(app.config['DB_FOLDER'],
+        #                 app.config['DB_FILE'])
 
         # mysql database for test
         # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://dbuser:dbpassword@ip:port/common'
-        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/eater'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/eater'
         # app.config['SQLALCHEMY_BINDS'] = {
         #     'eater': 'mysql://root:11111111@localhost:3306/eater'
         # }
@@ -45,7 +45,7 @@ class TestModels():
         self.tester = app.test_client(self)
 
         # database initialization
-        db.drop_all(bind=self.default_bind_key)
+        # db.drop_all(bind=self.default_bind_key)
         db.create_all(bind=self.default_bind_key)
 
         # table initialization
@@ -122,7 +122,7 @@ class TestModels():
     # drop db
     def tearDown(self):
         db.session.close()
-        # db.drop_all(bind=self.default_bind_key)
+        db.drop_all(bind=self.default_bind_key)
 
     # super model test
     @with_setup(setUp, tearDown)

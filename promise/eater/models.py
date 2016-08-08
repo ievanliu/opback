@@ -471,7 +471,7 @@ class Computer(ITEquipment):
         db.String(64), db.ForeignKey('itequipment.id'),
         primary_key=True)
     # iscsi name
-    iqn_id = db.Column(db.String(256), nullable=True, unique=True)
+    iqn_id = db.Column(db.String(64), nullable=True, unique=True)
     # computer specification
     spec_id = db.Column(
         db.String(64), db.ForeignKey('computer_specification.id'))

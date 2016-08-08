@@ -27,9 +27,19 @@ class TestHostAPI():
     # log in
     def setUp(self):
         app.testing = True
-        app.config['DB_FILE'] = 'test.db'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-            os.path.join(app.config['DB_FOLDER'], app.config['DB_FILE'])
+
+        # sqlite3 database for test
+        # app.config['DB_FILE'] = 'test.db'
+        # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
+        #                 os.path.join(app.config['DB_FOLDER'],
+        #                 app.config['DB_FILE'])
+
+        # mysql database for test
+        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://dbuser:dbpassword@ip:port/common'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/eater'
+        # app.config['SQLALCHEMY_BINDS'] = {
+        #     'eater': 'mysql://root:11111111@localhost:3306/eater'
+        # }
 
         self.tester = app.test_client(self)
 
@@ -65,6 +75,7 @@ class TestHostAPI():
     # log out
     def tearDown(self):
         self.token = ''
+        db.session.close()
         db.drop_all()
 
     @with_setup(setUp, tearDown)
