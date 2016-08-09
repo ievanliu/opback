@@ -102,6 +102,8 @@ class User(db.Model):
                 utils.logmsg('save user ' + self.user_name + ' to db.'))
         except Exception, e:
             db.session.rollback()
+            msg = self.__DoraemonContraintException % e
+            app.logger.info(utils.logmsg(msg))
 
     @staticmethod
     def getValidUser(userName=None, userId=None):
@@ -354,6 +356,8 @@ class Role(db.Model):
                 utils.logmsg('save role ' + self.role_name + ' to db.'))
         except Exception, e:
             db.session.rollback()
+            msg = self.__DoraemonContraintException % e
+            app.logger.info(utils.logmsg(msg))
 
     def addPrivilege(self, privilegeList=None, privilege=None):
         if privilegeList:
@@ -365,6 +369,8 @@ class Role(db.Model):
             db.session.commit()
         except Exception, e:
             db.session.rollback()
+            msg = self.__DoraemonContraintException % e
+            app.logger.info(utils.logmsg(msg))
 
     @staticmethod
     def getValidRole(roleName=None, roleId=None):
@@ -460,8 +466,8 @@ class Privilege(db.Model):
                 utils.logmsg('insert privilege:' + self.privilege_name))
         except Exception, e:
             db.session.rollback()
-            apps.logger.debug(
-                utils.logmsg('insert privilege faild.'))
+            msg = self.__DoraemonContraintException % e
+            app.logger.info(utils.logmsg(msg))
 
 
 #####################################################################
