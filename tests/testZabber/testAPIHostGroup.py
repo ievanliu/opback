@@ -118,7 +118,7 @@ class TestHostGroupAPI():
         """
             create, get, update, delete a hostgroup
         """
-        default_hostgroup_name = 'helloworldgroup'
+        default_hostgroup_name = 'ohshalalala'
 
         # 1. cerate a new hostgroup
         # 1.1 hostgroup not existing yet

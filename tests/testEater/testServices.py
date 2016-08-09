@@ -182,7 +182,7 @@ class TestServices():
             data=json.dumps(d))
         assert 'data' in response.data
         ret = json.loads(response.data)
-        eq_(ret['totalpage'], 2)
+        eq_(ret['totalpage'], 3)
         eq_(response.status_code, 200)
 
         # 3. get specific hosts
