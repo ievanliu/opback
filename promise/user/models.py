@@ -25,10 +25,10 @@ As Flask official documentation recommanded, this helper table
 should not be a model but an actual table.
 """
 roles = db.Table(
-    'rolees',
+    'roles',
     db.Column(
         'role_id',
-        db.Integer,
+        db.String(64),
         db.ForeignKey('role.role_id')),
     db.Column(
         'user_id',
@@ -46,11 +46,11 @@ privileges = db.Table(
     'privileges',
     db.Column(
         'privilege_id',
-        db.Integer,
+        db.String(64),
         db.ForeignKey('privilege.privilege_id')),
     db.Column(
         'role_id',
-        db.Integer,
+        db.String(64),
         db.ForeignKey('role.role_id'))
 )
 
@@ -93,6 +93,15 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User %r>' % self.user_id
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            app.logger.debug(
+                utils.logmsg('save user ' + self.user_name + ' to db.'))
+        except Exception, e:
+            db.session.rollback()
 
     @staticmethod
     def getValidUser(userName=None, userId=None):
@@ -316,7 +325,7 @@ class Role(db.Model):
     role model
     """
     __tablename__ = 'role'
-    role_id = db.Column(db.Integer, primary_key=True)
+    role_id = db.Column(db.String(64), primary_key=True)
     role_name = db.Column(db.String(64))
     # user = db.relationship('User', backref='role', lazy='dynamic')
     valid = db.Column(db.SmallInteger)
@@ -333,8 +342,18 @@ class Role(db.Model):
         return '<Role %r>' % self.role_id
 
     def __init__(self, roleName, valid=1):
+        self.role_id = utils.genUuid(roleName)
         self.role_name = roleName
         self.valid = valid
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            app.logger.debug(
+                utils.logmsg('save role ' + self.role_name + ' to db.'))
+        except Exception, e:
+            db.session.rollback()
 
     def addPrivilege(self, privilegeList=None, privilege=None):
         if privilegeList:
@@ -342,7 +361,10 @@ class Role(db.Model):
         if privilege:
             self.privilege = [privilege]
         db.session.add(self)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception, e:
+            db.session.rollback()
 
     @staticmethod
     def getValidRole(roleName=None, roleId=None):
@@ -354,7 +376,7 @@ class Role(db.Model):
             role = Role.query.filter_by(
                 role_id=roleId, role_name=roleName, valid=1).first()
         else:
-            role = role = Role.query.filter_by(valid=1).all()
+            role = Role.query.filter_by(valid=1).all()
         return role
 
 #    @staticmethod
@@ -391,7 +413,7 @@ class Privilege(db.Model):
     privilege model
     """
     __tablename__ = 'privilege'
-    privilege_id = db.Column(db.Integer, primary_key=True)
+    privilege_id = db.Column(db.String(64), primary_key=True)
     privilege_name = db.Column(db.String(64))
     valid = db.Column(db.SmallInteger)
     roles = db.relationship(
@@ -403,6 +425,7 @@ class Privilege(db.Model):
         return '<privilege %r>' % self.privilege_id
 
     def __init__(self, privilegeName, valid=1):
+        self.privilege_id = utils.genUuid(privilegeName)
         self.privilege_name = privilegeName
         self.valid = valid
 
@@ -431,9 +454,14 @@ class Privilege(db.Model):
 
     def insertPrivilege(self):
         db.session.add(self)
-        db.session.commit()
-        app.logger.debug(
-            utils.logmsg('insert privilege:' + self.privilege_name))
+        try:
+            db.session.commit()
+            app.logger.debug(
+                utils.logmsg('insert privilege:' + self.privilege_name))
+        except Exception, e:
+            db.session.rollback()
+            apps.logger.debug(
+                utils.logmsg('insert privilege faild.'))
 
 
 #####################################################################
