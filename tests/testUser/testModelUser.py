@@ -31,6 +31,7 @@ class TestModelsUser():
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
                         os.path.join(app.config['DB_FOLDER'],
                         app.config['DB_FILE'])
+        #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/test'
 #        # establish log and exception handler
 #        if not os.path.exists(app.config['DB_FOLDER']):
 #            os.mkdir(app.config['DB_FOLDER'])
@@ -59,10 +60,9 @@ class TestModelsUser():
         roleOperator = Role('operator')
         roleInventoryAdmin = Role('InventoryAdmin')
         roleInventoryAdmin.addPrivilege(privilege=newPrivilege)
-        db.session.add(roleRoot)
-        db.session.add(roleOperator)
-        db.session.add(roleInventoryAdmin)
-        db.session.commit() # commit the roles before user init
+        roleRoot.save()
+        roleOperator.save()
+        roleInventoryAdmin.save()
 
         # init users
         user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
@@ -92,7 +92,10 @@ class TestModelsUser():
         mikeUserId = mike.user_id
         mike.insertUser()
         user = User.getValidUser(userId=mikeUserId)
-        eq_(user.user_name, 'mike')
+        name=user.user_name
+        name=str(name)
+        print type(name)
+        eq_(name, 'mike')
     
     # test to deleting data
     @with_setup(setUp, tearDown)
@@ -100,9 +103,13 @@ class TestModelsUser():
         '''
         delete user
         '''
-        tom = User.getValidUser(userName='tom')
-        tom.setInvalid()
-        searchUser = User.getValidUser(userName='tom')
+        roleOperator = Role.getValidRole(roleName='operator')
+        mike = User('mike', userUtils.hash_pass('mikepass'),roleOperator)
+        mike.insertUser()
+        mike_test = User.getValidUser(userName='mike')
+        eq_(mike_test.user_name, 'mike')
+        mike_test.setInvalid()
+        searchUser = User.getValidUser(userId=mike_test.user_id)
         eq_(searchUser, None)#
 
     # test to updating data
@@ -134,8 +141,12 @@ class TestModelsUser():
     # test userLogin4Token
     @with_setup(setUp, tearDown)
     def test_user_Login4token(self):
-        testUser = User.getValidUser(userName='tom')
-        [token, refreshToken, user, msg] = User.userLogin4token('tom','tompass')
+        '''
+        test login for token
+        '''
+        testUser = User.getValidUser(userName='jerry')
+        [token, refreshToken, user, msg] = User.userLogin4token('jerry', 'jerrypass')
+        print msg
         eq_(user.user_id, testUser.user_id)
 
 
