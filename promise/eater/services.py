@@ -3,7 +3,7 @@
 #
 # Author: Leann Mak
 # Email: leannmak@139.com
-# Date: Aug 6, 2016
+# Date: Aug 10, 2016
 #
 # This is the service module of eater package.
 
@@ -43,7 +43,11 @@ class DoraemonListAPI(Resource):
         self.parser.add_argument(
             'pp', type=inputs.positive,
             help='PerPage must be a positive integer', dest='per_page')
-        # parameters
+        # if ask for more specific informations
+        self.parser.add_argument(
+            'extend', type=inputs.boolean,
+            help='extend must be boolean')
+        # multi-type parameters
         setattr(self, 'params', [])
         type_dict = {'str_params': str, 'int_params': inputs.positive}
         for k, w in kw.items():
@@ -61,16 +65,18 @@ class DoraemonListAPI(Resource):
         for x in self.params:
             if args[x]:
                 kw[x] = args[x]
+        depth = 1 if args['extend'] else 0
         page = args['page']
         if kw or not page:
-            data = self.obj.get(**kw)
+            data = self.obj.get(depth=depth, **kw)
         else:
             query = []
             per_page = args['per_page']
             if per_page:
-                query = self.obj.get(page, per_page, **kw)
+                query = self.obj.get(
+                    page=page, per_page=per_page, depth=depth, **kw)
             else:
-                query = self.obj.get(page, **kw)
+                query = self.obj.get(page=page, depth=depth, **kw)
             if query:
                 data, pages = query[0], query[1]
         return {'totalpage': pages, 'data': data}, 200
@@ -102,6 +108,11 @@ class DoraemonAPI(Resource):
     def __init__(self, obj, **kw):
         super(DoraemonAPI, self).__init__()
         self.parser = reqparse.RequestParser()
+        # if ask for more specific informations
+        self.parser.add_argument(
+            'extend', type=inputs.boolean,
+            help='extend must be boolean')
+        # multi-type parameters
         setattr(self, 'params', [])
         type_dict = {'str_params': str, 'int_params': inputs.positive}
         for k, w in kw.items():
@@ -113,7 +124,9 @@ class DoraemonAPI(Resource):
 
     # get a specific object
     def get(self, id):
-        query = self.obj.get(id=id, depth=2)
+        args = self.parser.parse_args()
+        depth = 2 if args['extend'] else 1
+        query = self.obj.get(id=id, depth=depth)
         if query:
             data = query[0]
             return {'data': data}, 200

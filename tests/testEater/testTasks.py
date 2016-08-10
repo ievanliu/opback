@@ -58,7 +58,7 @@ class TestTasks():
     @with_setup(setUp, tearDown)
     def test_host_refresh(self):
         """
-            host info synchronization for eater
+            host synchronization for eater
         """
         eq_(host_sync()['message'], 'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')
         eq_(host_sync()['message'], 'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')

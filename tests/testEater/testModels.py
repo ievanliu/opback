@@ -128,7 +128,7 @@ class TestModels():
     @with_setup(setUp, tearDown)
     def test_super_model(self):
         '''
-        test super model in eater
+        test super model for eater
         '''
         # vm0 = VirtualMachine.query.filter_by(iqn_id='iqn-4').first()
         # vm = VirtualMachine().get(iqn_id='iqn-4')
@@ -193,7 +193,7 @@ class TestModels():
     @with_setup(setUp, tearDown)
     def test_model_relationships(self):
         '''
-        test relationships in eater
+        test relationships for eater
         '''
         # 1. os and osuser
         os = OperatingSystem.query.filter_by(id='os-1').first()
@@ -259,23 +259,11 @@ class TestModels():
         assert ip2 in vlan.ip
         eq_(ip2.vlan_id, vlan.id)
 
-    # IP model test
-    @with_setup(setUp, tearDown)
-    def test_ip_insert(self):
-        '''
-        maintain an IP
-        '''
-        pass
-        # 1. insert an IP
-        # 2. query an IP
-        # 3. update an IP
-        # 4. delete an IP
-
     # computer specification model test
     @with_setup(setUp, tearDown)
     def test_computer_specification(self):
         '''
-        maintain a computer specification
+        test computer specification model for eater
         '''
         # 0. common test
         # 0.0 print test
@@ -335,7 +323,7 @@ class TestModels():
     @with_setup(setUp, tearDown)
     def test_virtual_machine(self):
         '''
-        maintain a virtual machine
+        test virtual machine model for eater
         '''
         # 0. common test
         # 0.0 print test
