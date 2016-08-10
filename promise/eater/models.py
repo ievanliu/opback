@@ -255,6 +255,17 @@ class Doraemon(db.Model):
 
 
 """
+many-to-many relationships between IP and Connection
+"""
+connect2ip = db.Table(
+    'connect2ip',
+    db.Column('connect_id', db.String(64), db.ForeignKey('connection.id')),
+    db.Column('ip_id', db.String(64), db.ForeignKey('ip.id')),
+    info={'bind_key': my_default_database}
+)
+
+
+"""
 many-to-many relationships between OperatingSystem and OSUser
 """
 user2os = db.Table(
@@ -320,6 +331,28 @@ class IP(Doraemon):
     it_id = db.Column(db.String(64), db.ForeignKey('itequipment.id'))
     # vlan which IP belongs to
     vlan_id = db.Column(db.String(64), db.ForeignKey('vlan.id'))
+    # way to connect to IP
+    connect = db.relationship(
+        'Connection', secondary='connect2ip',
+        enable_typechecks=False, lazy='dynamic')
+
+
+class Connection(Doraemon):
+    """
+        Connection Model.
+    """
+    __bind_key__ = my_default_database
+    __table_args__ = (
+        db.UniqueConstraint('method', 'port', name='_com_uc'),)
+
+    # connection method name
+    method = db.Column(db.String(64))
+    # connection port
+    port = db.Column(db.Integer)
+    # IP
+    ip = db.relationship(
+        'IP', secondary='connect2ip',
+        enable_typechecks=False, lazy='dynamic')
 
 
 class Vlan(Doraemon):
