@@ -32,7 +32,7 @@ class DoraemonListAPI(Resource):
     __abstract__ = True
 
     # constructor
-    def __init__(self, params, obj):
+    def __init__(self, obj, **kw):
         super(DoraemonListAPI, self).__init__()
         self.parser = reqparse.RequestParser()
         # page
@@ -43,9 +43,14 @@ class DoraemonListAPI(Resource):
         self.parser.add_argument(
             'pp', type=inputs.positive,
             help='PerPage must be a positive integer', dest='per_page')
-        setattr(self, 'params', params)
-        for x in self.params:
-            self.parser.add_argument(x, type=str)
+        # parameters
+        setattr(self, 'params', [])
+        type_dict = {'str_params': str, 'int_params': inputs.positive}
+        for k, w in kw.items():
+            if k in type_dict.keys():
+                self.params.extend(w)
+                for x in w:
+                    self.parser.add_argument(x, type=type_dict[k])
         setattr(self, 'obj', obj)
 
     # get whole list of the object
@@ -94,12 +99,16 @@ class DoraemonAPI(Resource):
         privilegeRequired="inventoryAdmin")]
 
     # constructor
-    def __init__(self, params, obj):
+    def __init__(self, obj, **kw):
         super(DoraemonAPI, self).__init__()
         self.parser = reqparse.RequestParser()
-        setattr(self, 'params', params)
-        for x in self.params:
-            self.parser.add_argument(x, type=str)
+        setattr(self, 'params', [])
+        type_dict = {'str_params': str, 'int_params': inputs.positive}
+        for k, w in kw.items():
+            if k in type_dict.keys():
+                self.params.extend(w)
+                for x in w:
+                    self.parser.add_argument(x, type=type_dict[k])
         setattr(self, 'obj', obj)
 
     # get a specific object
@@ -120,9 +129,9 @@ class HostListAPI(DoraemonListAPI):
         Inherits from Super DataList API.
     """
     def __init__(self):
-        params = ('category', 'label', 'name', 'os_id', 'setup_time')
+        str_params = ('category', 'label', 'name', 'os_id', 'setup_time')
         obj = ITEquipment()
-        super(HostListAPI, self).__init__(params=params, obj=obj)
+        super(HostListAPI, self).__init__(str_params=str_params, obj=obj)
 
 
 class HostAPI(DoraemonAPI):
@@ -131,9 +140,9 @@ class HostAPI(DoraemonAPI):
         Inherits from Super Data API.
     """
     def __init__(self):
-        params = []
+        str_params = []
         obj = ITEquipment()
-        super(HostAPI, self).__init__(params=params, obj=obj)
+        super(HostAPI, self).__init__(str_params=str_params, obj=obj)
 
 
 class HostGroupListAPI(DoraemonListAPI):
@@ -142,10 +151,10 @@ class HostGroupListAPI(DoraemonListAPI):
         Inherits from Super DataList API.
     """
     def __init__(self):
-        params = ['name']
+        str_params = ['name']
         obj = Group()
         super(HostGroupListAPI, self).__init__(
-            params=params, obj=obj)
+            str_params=str_params, obj=obj)
 
 
 class HostGroupAPI(DoraemonAPI):
@@ -154,10 +163,10 @@ class HostGroupAPI(DoraemonAPI):
         Inherits from Super Data API.
     """
     def __init__(self):
-        params = []
+        str_params = []
         obj = Group()
         super(HostGroupAPI, self).__init__(
-            params=params, obj=obj)
+            str_params=str_params, obj=obj)
 
 
 """
