@@ -326,7 +326,7 @@ class IP(Doraemon):
     # IP category (vm/pm/network/security/storage/ipmi/vip/unused)
     ip_category = db.Column(db.String(64))
     # interface which IP belongs to
-    if_id = db.Column(db.String(32), db.ForeignKey('interface.id'))
+    if_id = db.Column(db.String(64), db.ForeignKey('interface.id'))
     # IT equipment which IP belongs to
     it_id = db.Column(db.String(64), db.ForeignKey('itequipment.id'))
     # vlan which IP belongs to
@@ -469,7 +469,9 @@ class ITEquipment(Doraemon):
     # IT equipment setup time
     setup_time = db.Column(db.String(64))
     # operating system
-    os_id = db.Column(db.String(32), db.ForeignKey('operating_system.id'))
+    os_id = db.Column(db.String(64), db.ForeignKey('operating_system.id'))
+    # IT equipment model id
+    model_id = db.Column(db.String(64), db.ForeignKey('itmodel.id'))
     # OS user
     osuser = db.relationship(
         'OSUser', secondary='osuser2it',
@@ -488,6 +490,23 @@ class ITEquipment(Doraemon):
     # IT equipment location
     rack = db.relationship(
         'Rack', enable_typechecks=False, backref='it', lazy='dynamic')
+
+
+class ITModel(Doraemon):
+    """
+        IT Model Model.
+    """
+    __bind_key__ = my_default_database
+    __table_args__ = (
+        db.UniqueConstraint('name', 'vender', name='_it_mod_uc'),)
+
+    # IT equipment model name
+    name = db.Column(db.String(64))
+    # IT equipment vender
+    vender = db.Column(db.String(64))
+    # IT equipment
+    it = db.relationship(
+        'ITEquipment', backref='model', lazy='dynamic')
 
 
 class Computer(ITEquipment):
@@ -572,6 +591,58 @@ class VirtualMachine(Computer):
         db.String(64), db.ForeignKey('physical_machine.id'))
     # vm pid
     vm_pid = db.Column(db.String(64), nullable=False)
+
+
+class Network(ITEquipment):
+    """
+        Network Model.
+        Child of ITEquipment.
+    """
+    __bind_key__ = my_default_database
+
+    # use super class ITEquipment uuid as Network uuid
+    id = db.Column(
+        db.String(64), db.ForeignKey('itequipment.id'),
+        primary_key=True)
+
+
+class Firewall(Network):
+    """
+        Firewall Model.
+        Child of Network.
+    """
+    __bind_key__ = my_default_database
+
+    # use super class Network uuid as Firewall uuid
+    id = db.Column(
+        db.String(64), db.ForeignKey('network.id'),
+        primary_key=True)
+
+
+class Router(Network):
+    """
+        Router Model.
+        Child of Network.
+    """
+    __bind_key__ = my_default_database
+
+    # use super class Network uuid as Router uuid
+    id = db.Column(
+        db.String(64), db.ForeignKey('network.id'),
+        primary_key=True)
+
+
+class Switch(Network):
+    """
+        Switch Model.
+        Child of Network.
+    """
+    __bind_key__ = my_default_database
+
+    # use super class Network uuid as Switch uuid
+    id = db.Column(
+        db.String(64), db.ForeignKey('network.id'),
+        primary_key=True)
 
 
 class Group(Doraemon):
