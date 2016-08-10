@@ -31,6 +31,7 @@ class TestModelsPriv():
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
                         os.path.join(app.config['DB_FOLDER'],
                         app.config['DB_FILE'])
+        #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/test'
 #        # establish log and exception handler
 #        if not os.path.exists(app.config['DB_FOLDER']):
 #            os.mkdir(app.config['DB_FOLDER'])
@@ -41,46 +42,45 @@ class TestModelsPriv():
 #            os.mkdir(app.config['DB_FOLDER'])
 #        # init the logger obj
 #        app.logger.addHandler(utils.handler)
-
         self.tester = app.test_client(self)
-        db.drop_all()
         db.create_all()
 
-        # init privileges
-        privilegeNameList = ['userAdmin', 'inventoryAdmin']
-        privilegeList = []
-        for item in privilegeNameList:
-            newPrivilege = Privilege(item)
-            db.session.add(newPrivilege)
-            privilegeList.append(newPrivilege)
+        ## init privileges
+        #privilegeNameList = ['userAdmin', 'inventoryAdmin']
+        #privilegeList = []
+        #for item in privilegeNameList:
+        #    newPrivilege = Privilege(item)
+        #    db.session.add(newPrivilege)
+        #    privilegeList.append(newPrivilege)
 
-        # init roles
-        roleRoot = Role('root')
-        roleRoot.addPrivilege(privilegeList=privilegeList)
-        roleOperator = Role('operator')
-        roleInventoryAdmin = Role('InventoryAdmin')
-        roleInventoryAdmin.addPrivilege(privilege=newPrivilege)
-        db.session.add(roleRoot)
-        db.session.add(roleOperator)
-        db.session.add(roleInventoryAdmin)
-        db.session.commit() # commit the roles before user init
+      #  ## init roles
+        #roleRoot = Role('root')
+        #roleRoot.addPrivilege(privilegeList=privilegeList)
+        #roleOperator = Role('operator')
+        #roleInventoryAdmin = Role('InventoryAdmin')
+        #roleInventoryAdmin.addPrivilege(privilege=newPrivilege)
+        #db.session.add(roleRoot)
+        #db.session.add(roleOperator)
+        #db.session.add(roleInventoryAdmin)
+        #db.session.commit() # commit the roles before user init
 
-        # init users
-        user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
-        user2 = User('jerry', userUtils.hash_pass("jerrypass"), roleInventoryAdmin)
-        rootUser = User(app.config['DEFAULT_ROOT_USER_NAME'], userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']), roleRoot)
-        visitor = User('visitor', 'visitor', roleOperator)
+      #  ## init users
+        #user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
+        #user2 = User('jerry', userUtils.hash_pass("jerrypass"), roleInventoryAdmin)
+        #rootUser = User(app.config['DEFAULT_ROOT_USER_NAME'], userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']), roleRoot)
+        #visitor = User('visitor', 'visitor', roleOperator)
 
-        db.session.add(rootUser)
-        db.session.add(visitor)
-        db.session.add(user1)
-        db.session.add(user2)
-        db.session.commit()
+      #  #db.session.add(rootUser)
+        #db.session.add(visitor)
+        #db.session.add(user1)
+        #db.session.add(user2)
+        #db.session.commit()
         print 'Data imported'
 
    # drop db
     def tearDown(self):
-        db.drop_all()
+        pass
+        #db.drop_all()
 
     # test to insertting data
     @with_setup(setUp, tearDown)

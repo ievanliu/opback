@@ -32,6 +32,7 @@ class TestApiUserLogin():
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
                         os.path.join(app.config['DB_FOLDER'],
                         app.config['DB_FILE'])
+        #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/test'
 #        # establish log and exception handler
 #        if not os.path.exists(app.config['DB_FOLDER']):
 #            os.mkdir(app.config['DB_FOLDER'])
@@ -63,7 +64,10 @@ class TestApiUserLogin():
         db.session.add(roleRoot)
         db.session.add(roleOperator)
         db.session.add(roleInventoryAdmin)
-        db.session.commit() # commit the roles before user init
+        try:
+            db.session.commit() # commit the roles before user init
+        except Exception, e:
+            db.session.rollback()
 
         # init users
         user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
