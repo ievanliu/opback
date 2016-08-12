@@ -32,7 +32,7 @@ class TestApiUserLogin():
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
                         os.path.join(app.config['DB_FOLDER'],
                         app.config['DB_FILE'])
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/test'
+        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/test'
 #        # establish log and exception handler
 #        if not os.path.exists(app.config['DB_FOLDER']):
 #            os.mkdir(app.config['DB_FOLDER'])
