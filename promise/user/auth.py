@@ -52,7 +52,8 @@ class UserLogin(Resource):
             app.logger.info(utils.logmsg(msg))
             response = {"message": msg,
                         "token": token,
-                        "rftoken": refreshToken}
+                        "rftoken": refreshToken,
+                        "user_id": user.user_id}
 #            response.status_code = 200
             return response, 200
         g.logined = False
@@ -84,13 +85,13 @@ class TokenAuth(Resource):
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
         # verify the token
-        [userId, roleId, msg] = User.tokenAuth(token)
-        if not userId:
+        [user_id, role_id_list, msg] = User.tokenAuth(token)
+        if not user_id:
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
         # we don't tell too much so rewrite the message
         msg = "user logged in"
-        response = {"message": msg}
+        response = {"message": msg, "user_id": user_id}
         return response, 200
 
 
@@ -111,9 +112,10 @@ class TokenRefresh(Resource):
         args = self.reqparse.parse_args()
         grantType = args['granttype']
         rfToken = args['refreshtoken']
-        if grantType is not 'refreshtoken':
+        if not (grantType == 'refreshtoken'):
             msg = 'granttype must be "refreshtoken"'
             app.logger.info(utils.logmsg(msg))
+            raise utils.InvalidAPIUsage(msg)
         if not rfToken:
             msg = 'you need a refreshToken to login.'
             app.logger.info(utils.logmsg(msg))
