@@ -95,15 +95,18 @@ class User(db.Model):
         return '<User %r>' % self.user_id
 
     def save(self):
+        db.session.add(self)
         try:
-            db.session.add(self)
             db.session.commit()
-            app.logger.debug(
-                utils.logmsg('save user ' + self.user_name + ' to db.'))
+            msg = utils.logmsg('save user ' + self.user_name + ' to db.')
+            app.logger.debug(msg)
+            state = True
         except Exception, e:
             db.session.rollback()
-            msg = self.__DoraemonContraintException % e
-            app.logger.info(utils.logmsg(msg))
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
 
     @staticmethod
     def getValidUser(userName=None, userId=None):
@@ -117,6 +120,10 @@ class User(db.Model):
         else:
             user = User.query.filter_by(valid=1).all()
         return user
+
+#    def getValidUserFromId(user_id=user_id):
+#        user = User.query.filter_by(user_id=user_id, valid=1).first()
+#        return user
 
     def setInvalid(self):
         self.valid = 0
@@ -177,7 +184,7 @@ class User(db.Model):
             msg = 'cannot find user_name:' + userName
             app.logger.debug(msg)
             return [None, None, None, msg]
-        elif not userUtils.hash_pass(password) == user.hashed_password:
+        if not userUtils.hash_pass(password) == user.hashed_password:
             msg = 'user name and password cannot match.'
             app.logger.debug(msg)
             return [None, None, None, msg]
@@ -245,9 +252,9 @@ class User(db.Model):
             return [None, None, msg]
         msg = 'user(' + data['user_id'] + ') logged in by token.'
 #        app.logger.info(msg)
-        userId = data['user_id']
-        roleId = data['user_role']
-        return [userId, roleId, msg]
+        user_id = data['user_id']
+        role_id_list = data['user_role']
+        return [user_id, role_id_list, msg]
 
     @staticmethod
     def tokenRefresh(refreshToken):
@@ -349,15 +356,18 @@ class Role(db.Model):
         self.valid = valid
 
     def save(self):
+        db.session.add(self)
         try:
-            db.session.add(self)
             db.session.commit()
-            app.logger.debug(
-                utils.logmsg('save role ' + self.role_name + ' to db.'))
+            msg = utils.logmsg('save role ' + self.role_name + ' to db.')
+            app.logger.debug(msg)
+            state = True
         except Exception, e:
             db.session.rollback()
-            msg = self.__DoraemonContraintException % e
-            app.logger.info(utils.logmsg(msg))
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
 
     def addPrivilege(self, privilegeList=None, privilege=None):
         if privilegeList:
