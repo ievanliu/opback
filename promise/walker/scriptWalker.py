@@ -15,12 +15,14 @@ from flask import g
 from flask_restful import reqparse, Resource
 from .models import Walker, ScriptMission, Script
 from . import utils as walkerUtils
-from .. import app
+from .. import app, db
 from ..ansiAdapter.ansiAdapter import ScriptExecAdapter
 from .. import utils
 from ..user import auth
+import threading
 import thread
 from .. import dont_cache
+import time
 
 
 class ScriptWalkerAPI(Resource):
@@ -35,7 +37,8 @@ class ScriptWalkerAPI(Resource):
     @auth.PrivilegeAuth(privilegeRequired="scriptExec")
     def post(self):
         # check the arguments
-        [iplist, script, os_user, params, walker_name] = self.argCheckForPost()
+        [iplist, script, os_user, params, walker_name, time_out] = \
+            self.argCheckForPost()
         # setup a walker
         walker = Walker(walker_name)
 
@@ -44,21 +47,37 @@ class ScriptWalkerAPI(Resource):
         script_mission = ScriptMission(script, os_user, params, walker)
         script_mission.save()
         walker.save()
+        walker_id = walker.walker_id
 
         # setup a shell mission walker executor
-        script_walker_executor = ScriptWalkerExecutor(script_mission)
-
-        if script_walker_executor:
+        try:
+            script_walker_executor = ScriptWalkerExecutor(script_mission)
             # run the executor
-            thread.start_new_thread(script_walker_executor.run, ())
-            # script_walker_executor.run()
+            script_walker_executor.start()
+        except:
+            msg = 'faild to establish mission.'
+            walker.state = -4
+            return {'message': msg, 'walker_id': walker.walker_id}, 200
 
-        [trails, json_trails] = walker.getTrails()
-
-        msg = 'mission start'
-        return {
-            'message': msg, 'walker_id': walker.walker_id,
-            'trails': json_trails}, 200
+        while time_out:
+            time.sleep(0.1)
+            db.session.close()
+            [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
+                walker_id, g.currentUser)
+            [trails, json_trails] = walker.getTrails()
+            time_out -= 1
+            if walker.state > -1:
+                msg = 'mission completed.'
+                [trails, json_trails] = walker.getTrails()
+                # script_walker_executor.exit()
+                return {
+                    'message': msg, 'walker_id': walker.walker_id,
+                    'trails': json_trails}, 200
+        # script_walker_executor.exit()
+        walker.state = -3
+        walker.save()
+        msg = 'target script execution timeout exited!'
+        return {'message': msg, 'walker_id': walker.walker_id}, 200
 
     """
     find out all the script-mission walkers or one of them
@@ -71,11 +90,12 @@ class ScriptWalkerAPI(Resource):
             [msg, json_walkers] = self.getWalkerListOfTokenOwner()
             return {'message': msg, 'walkers': json_walkers}, 200
         else:
-            [msg, walker_name, json_trails] = self.getWalkerInfoOfTokenOwner(
-                walker_id)
+            [msg, walker_name, state, json_trails] = \
+                self.getWalkerInfoOfTokenOwner(walker_id)
             return {
                 'message': msg,
                 'walker_name': walker_name,
+                'walker_state': state,
                 'trails': json_trails}, 200
 
     """
@@ -97,6 +117,9 @@ class ScriptWalkerAPI(Resource):
         self.reqparse.add_argument(
             'name', type=str, location='json',
             help='default walker-name: time-scriptname')
+        self.reqparse.add_argument(
+            'time_out', type=int, location='json',
+            help='longest wait time, 3min default')
         args = self.reqparse.parse_args()
         iplist = args['iplist']
         # cheak all IPs of the iplist
@@ -108,6 +131,9 @@ class ScriptWalkerAPI(Resource):
         params = args['params']
         os_user = args['osuser']
         walker_name = args['name']
+        time_out = args['time_out']
+        if not time_out:
+            time_out = app.config['WALKER_MISSION_TIMEOUT']
         # check if the script belongs to the current user
         [script, json_script] = Script.getFromIdWithinUser(
             script_id, g.currentUser)
@@ -119,7 +145,7 @@ class ScriptWalkerAPI(Resource):
                 params = " ".join(params)
             else:
                 params = None
-            return [iplist, script, os_user, params, walker_name]
+            return [iplist, script, os_user, params, walker_name, time_out]
         else:
             msg = 'wrong script id.'
             raise utils.InvalidAPIUsage(msg)
@@ -141,16 +167,6 @@ class ScriptWalkerAPI(Resource):
         return [msg, json_walkers]
 
     @staticmethod
-    def getWalkerInfo(walker_id):
-        walker = Walker.getFromWalkerId(walker_id)
-        if walker:
-            [trails, json_trails] = Walker.getTrails(walker)
-            msg = 'walker info'
-        else:
-            msg = 'wrong walker id'
-        return [msg, walker.walker_name, json_trails]
-
-    @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
         [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
             walker_id, g.currentUser)
@@ -159,12 +175,12 @@ class ScriptWalkerAPI(Resource):
             msg = 'walker info'
         else:
             msg = 'wrong walker id'
-        return [msg, walker.walker_name, json_trails]
+        return [msg, walker.walker_name, walker.state, json_trails]
 
-    @staticmethod
-    def run(shell_walker_executor):
-        shell_walker_executor.run()
-        thread.exit()
+#    @staticmethod
+#    def run(shell_walker_executor):
+#        shell_walker_executor.run()
+#        thread.exit()
 
 
 class ScriptAPI(Resource):
@@ -351,9 +367,10 @@ class ScriptAPI(Resource):
             return [msg, None]
 
 
-class ScriptWalkerExecutor(object):
+class ScriptWalkerExecutor(threading.Thread):
     def __init__(self, script_mission, private_key_file='~/.ssh/id_rsa',
                  become_pass=None):
+        threading.Thread.__init__(self)
         self.script_mission = script_mission
         self.walker = script_mission.getWalker()
         self.script = script_mission.getScript()
@@ -376,17 +393,23 @@ class ScriptWalkerExecutor(object):
             script_mission.params)
 
     def run(self):
+        msg = 'walker<id:' + self.walker.walker_id + '> begin to run.'
+        app.logger.info(utils.logmsg(msg))
+
         [state, stats_sum, results] = self.script_exec_adpater.run()
         self.walker.state = state
         self.walker.save()
+
         for trail in self.trails:
             host_result = results[trail.ip]
             host_stat_sum = stats_sum[trail.ip]
             trail.resultUpdate(host_stat_sum, host_result)
             trail.save()
+
+        msg = 'walker<id:' + self.walker.walker_id + \
+            '>scriptExecutor task finished.'
         try:
             thread.exit()
-            msg = 'walker<' + self.walker.walker_id + '> thread exit.'
         except:
             msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
-        app.logger.info(msg)
+            app.logger.info(utils.logmsg(msg))
