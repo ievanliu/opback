@@ -9,7 +9,8 @@
 #
 
 from .services import HostListAPI, HostAPI, \
-    HostGroupListAPI, HostGroupAPI, HostSyncAPI
+    HostGroupListAPI, HostGroupAPI, HostSyncAPI, \
+    IPListAPI, IPAPI, ForwardInfoAPI
 from .. import api
 
 """
@@ -25,6 +26,16 @@ api.add_resource(
 api.add_resource(
     HostGroupAPI, '/api/v0.0/eater/hostgroup/<id>',
     endpoint='et_hostgroup_id_ep')
+api.add_resource(
+    IPListAPI, '/api/v0.0/eater/ip',
+    endpoint='et_ip_list_ep')
+api.add_resource(
+    IPAPI, '/api/v0.0/eater/ip/<id>',
+    endpoint='et_ip_id_ep')
+api.add_resource(
+    ForwardInfoAPI, '/api/v0.0/eater/forwardinfo',
+    endpoint='et_forword_info_ep')
+
 
 """
     Task Services

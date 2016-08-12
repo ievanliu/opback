@@ -51,7 +51,7 @@ class Doraemon(db.Model):
     # last update time
     @declared_attr
     def last_update_time(cls):
-        return db.Column(db.DateTime)
+        return db.Column(db.DateTime, onupdate=datetime.now())
 
     # name list of base classes
     def bases(self):
@@ -81,8 +81,6 @@ class Doraemon(db.Model):
                     setattr(self, 'id', utils.genUuid(self.__class__.__name__))
                 # set category by default
                 setattr(self, 'category', self.__class__.__name__)
-                # set last update time by default
-                setattr(self, 'last_update_time', datetime.now())
 
     # for print
     def __str__(self):

@@ -15,7 +15,7 @@ from .. import app, utils
 """
     Data Services
 """
-from .models import ITEquipment, Group
+from .models import ITEquipment, Group, IP
 
 
 class DoraemonListAPI(Resource):
@@ -180,6 +180,81 @@ class HostGroupAPI(DoraemonAPI):
         obj = Group()
         super(HostGroupAPI, self).__init__(
             str_params=str_params, obj=obj)
+
+
+class IPListAPI(DoraemonListAPI):
+    """
+        IPList Restful API.
+        Inherits from Super DataList API.
+    """
+    def __init__(self):
+        str_params = (
+            'ip_addr', 'ip_mask', 'ip_category', 'if_id', 'it_id', 'vlan_id')
+        obj = IP()
+        super(IPListAPI, self).__init__(str_params=str_params, obj=obj)
+
+
+class IPAPI(DoraemonAPI):
+    """
+        IP Restful API.
+        Inherits from Super Data API.
+    """
+    def __init__(self):
+        str_params = []
+        obj = IP()
+        super(IPAPI, self).__init__(str_params=str_params, obj=obj)
+
+
+"""
+    Forward Services
+"""
+
+
+class ForwardInfoAPI(DoraemonListAPI):
+    """
+        Forward Info Restful API.
+        Inherits from Super DataList API.
+    """
+    def __init__(self):
+        str_params = ['ip_addr']
+        obj = IP()
+        super(ForwardInfoAPI, self).__init__(str_params=str_params, obj=obj)
+
+    # get whole list of the object
+    @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
+    def get(self):
+        pages, data, kw = False, [], {}
+        args = self.parser.parse_args()
+        for x in self.params:
+            if args[x]:
+                kw[x] = args[x]
+        depth = 2
+        page = args['page']
+        if kw or not page:
+            query = self.obj.get(depth=depth, **kw)
+        else:
+            query = []
+            per_page = args['per_page']
+            if per_page:
+                query = self.obj.get(
+                    page=page, per_page=per_page, depth=depth, **kw)
+            else:
+                query = self.obj.get(page=page, depth=depth, **kw)
+            if query:
+                pages = query[1]
+                query = query[0]
+        if query:
+            for x in query:
+                d = {
+                    'id': x['id'], 'ip_addr': x['ip_addr'],
+                    'connect': x['connect'],
+                    'last_update_time': x['last_update_time']}
+                if x['it']:
+                    for y in x['it']:
+                        d['model'] = y['model']
+                        d['osuser'] = y['osuser']
+                data.append(d)
+        return {'totalpage': pages, 'data': data}, 200
 
 
 """
