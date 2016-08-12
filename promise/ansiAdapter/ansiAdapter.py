@@ -246,9 +246,9 @@ class ScriptExecAdapter(object):
             gather_facts='no',
             tasks=[
                 dict(script=self.script_file.name + ' ' + str(params),
-                     register='script_out'),
+                     register='script_out', no_log=True),
                 dict(action=dict(module='debug',
-                     args=dict(msg='{{script_out.stdout}}')))])
+                     args=dict(msg='{{script_out.stdout}}'), no_log=True))])
         self.play = Play().load(
             play_source, variable_manager=self.variable_manager,
             loader=self.loader)
@@ -259,6 +259,7 @@ class ScriptExecAdapter(object):
             options=self.options,
             passwords=passwords,
             stdout_callback='default')
+        print play_source
 
     def run(self):
         # Results of PlaybookExecutor
