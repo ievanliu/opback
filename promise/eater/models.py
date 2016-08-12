@@ -184,7 +184,7 @@ class Doraemon(db.Model):
             except Exception, e:
                 db.session.rollback()
                 msg = self.__DoraemonContraintException % e
-                app.logger.info(utils.logmsg(msg))
+                app.logger.error(utils.logmsg(msg))
         return None
 
     # update a record
@@ -206,7 +206,7 @@ class Doraemon(db.Model):
             except Exception, e:
                 db.session.rollback()
                 msg = self.__DoraemonContraintException % e
-                app.logger.info(utils.logmsg(msg))
+                app.logger.error(utils.logmsg(msg))
         return None
 
     # get (a) record(s)
@@ -248,7 +248,7 @@ class Doraemon(db.Model):
             except Exception, e:
                 db.session.rollback()
                 msg = self.__DoraemonContraintException % e
-                app.logger.info(utils.logmsg(msg))
+                app.logger.error(utils.logmsg(msg))
         return False
 
 

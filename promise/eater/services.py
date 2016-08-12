@@ -132,7 +132,7 @@ class DoraemonAPI(Resource):
             return {'data': data}, 200
         else:
             msg = self.__ObjNotFound % {'id': id}
-            app.logger.info(utils.logmsg(msg))
+            app.logger.error(utils.logmsg(msg))
             return {'error': msg}, 404
 
 
@@ -295,7 +295,7 @@ class DoraemonTaskAPI(Resource):
             return {'id': t.task_id}, 201
         except Exception as e:
             msg = self.__ExeFailed % e
-            app.logger.info(utils.logmsg(msg))
+            app.logger.error(utils.logmsg(msg))
             return {'error': msg}, 500
 
     # check a specific task status
@@ -310,7 +310,7 @@ class DoraemonTaskAPI(Resource):
             return {'result': result}, 200
         except Exception as e:
             msg = self.__CheckFailed % e
-            app.logger.info(utils.logmsg(msg))
+            app.logger.error(utils.logmsg(msg))
             return {'error': msg}, 500
 
 

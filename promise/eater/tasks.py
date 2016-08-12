@@ -97,8 +97,8 @@ def host_sync(self):
         return {'current': 100, 'total': 100, 'message': msg}
     except Exception as e:
         # mark the errors
-        app.logger.info(utils.logmsg(e))
+        app.logger.error(utils.logmsg(e))
         msg = __DoraemonUpdateNotify % \
             'Error occurs while updating Host Infos.'
-        app.logger.info(utils.logmsg(msg))
+        app.logger.error(utils.logmsg(msg))
         return {'current': 100, 'total': 100, 'message': msg}
