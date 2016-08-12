@@ -73,7 +73,7 @@ class ScriptWalkerAPI(Resource):
                 return {
                     'message': msg, 'walker_id': walker.walker_id,
                     'trails': json_trails}, 200
-        # script_walker_executor.exit()
+
         walker.state = -3
         walker.save()
         msg = 'target script execution timeout exited!'
@@ -408,6 +408,7 @@ class ScriptWalkerExecutor(threading.Thread):
 
         msg = 'walker<id:' + self.walker.walker_id + \
             '>scriptExecutor task finished.'
+        app.logger.info(utils.logmsg(msg))
         try:
             thread.exit()
         except:
