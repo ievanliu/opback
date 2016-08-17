@@ -64,23 +64,32 @@ def importdata():
     db.session.commit()  # commit the roles before user init
 
     # init users
-    user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
+    user1 = User(
+        user_name='tom',
+        hashed_password=userUtils.hash_pass("tompass"),
+        role_list=[roleOperator])
     user2 = User(
-        'jerry', userUtils.hash_pass("jerrypass"), roleInventoryAdmin)
-    user3 = User('mike', userUtils.hash_pass("mikepass"), roleUserAdmin)
-    user2.addRole(role=roleInventoryAdmin)
+        user_name='jerry',
+        hashed_password=userUtils.hash_pass("jerrypass"),
+        role_list=[roleInventoryAdmin])
+    user3 = User(
+        user_name='mike',
+        hashed_password=userUtils.hash_pass("mikepass"),
+        role_list=[roleUserAdmin])
+    #user2.addRole(role=roleInventoryAdmin)
     rootUser = User(
-        app.config['DEFAULT_ROOT_USER_NAME'],
-        userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']),
-        roleRoot)
-    visitor = User('visitor', 'visitor', roleOperator)
-
-    db.session.add(rootUser)
-    db.session.add(visitor)
-    db.session.add(user1)
-    db.session.add(user2)
-    db.session.add(user3)
-    db.session.commit()
+        user_name=app.config['DEFAULT_ROOT_USER_NAME'],
+        hashed_password=userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']),
+        role_list=[roleRoot])
+    visitor = User(
+        user_name='visitor',
+        hashed_password=userUtils.hash_pass('visitor'))
+    
+    user1.save()
+    user2.save()
+    user3.save()
+    rootUser.save()
+    visitor.save()
     print 'Data imported'
 
 
