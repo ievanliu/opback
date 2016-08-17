@@ -69,27 +69,28 @@ class User(db.Model):
     hashed_password = db.Column(db.String(128))
     valid = db.Column(db.SmallInteger)
     last_login = db.Column(db.DATETIME)
-#    role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'))
+    tel = db.Column(db.String(32))
+    email = db.Column(db.String(32))
+    sign_up_date = db.Column(db.DATETIME)
     roles = db.relationship(
         'Role',
         secondary=roles,
         backref=db.backref('roles', lazy='select'))
 
-#    token = db.relationship(
-#        'Token', backref='user', lazy='select')
-
     def __init__(
-            self, userName, hashedPassword, role=None, roleList=None, valid=1):
-        self.user_id = utils.genUuid(userName)
-        self.user_name = userName
-        self.hashed_password = hashedPassword
+            self, user_name, hashed_password,
+            role_list=None, valid=1, tel=None, email=None):
+        self.user_id = utils.genUuid(user_name)
+        self.user_name = user_name
+        self.hashed_password = hashed_password
         self.valid = valid
-        # self.role_id = role.role_id
-        if roleList:
-            self.role = roleList
-        if role:
-            self.role = [role]
-        db.session.commit()
+        if tel:
+            self.tel = tel
+        if email:
+            self.email = email
+        if role_list:
+            self.roles = role_list
+        self.sign_up_date = datetime.datetime.now()
 
     def __repr__(self):
         return '<User %r>' % self.user_id
@@ -109,49 +110,50 @@ class User(db.Model):
         return [state, msg]
 
     @staticmethod
-    def getValidUser(userName=None, userId=None):
-        if userName and not userId:
-            user = User.query.filter_by(user_name=userName, valid=1).first()
-        elif not userName and userId:
-            user = User.query.filter_by(user_id=userId, valid=1).first()
-        elif userName and userId:
+    def getValidUser(user_name=None, user_id=None):
+        if user_name and not user_id:
+            user = User.query.filter_by(user_name=user_name, valid=1).first()
+        elif not user_name and user_id:
+            user = User.query.filter_by(user_id=user_id, valid=1).first()
+        elif user_name and user_id:
             user = User.query.filter_by(
-                user_id=userId, userName=userName).first()
+                user_id=user_id, user_name=user_name).first()
         else:
             user = User.query.filter_by(valid=1).all()
         return user
 
-#    def getValidUserFromId(user_id=user_id):
-#        user = User.query.filter_by(user_id=user_id, valid=1).first()
-#        return user
+#    def setInvalid(self):
+#        self.valid = 0
+#        app.logger.debug(utils.logmsg('set invalid user:' + self.user_name))
 
-    def setInvalid(self):
-        self.valid = 0
-        db.session.commit()
-        app.logger.debug(utils.logmsg('set invalid user:' + self.user_name))
-
-    def insertUser(self):
-        db.session.add(self)
-        db.session.commit()
-        app.logger.debug(utils.logmsg('insert new user:' + self.user_name))
-
-    def updateUser(self):
-        db.session.commit()
+    def update(
+            self, user_name=None, hashed_password=None, last_login=None, 
+            tel=None, email=None, sign_up_date=None, valid=None,
+            role_list=None):
+        if user_name is not None:
+            self.user_name = user_name;
+        if hashed_password is not None:
+            self.hashed_password = hashed_password
+        if last_login is not None:
+            self.last_login = last_login
+        if tel is not None:
+            self.tel = tel
+        if email is not None:
+            self.email = email
+        if sign_up_date is not None:
+            self.sign_up_date = sign_up_date
+        if valid is not None:
+            self.valid = valid
+        if role_list is not None:
+            self.roles = role_list
         app.logger.debug(utils.logmsg(
-            'user info change user:' + self.user_name))
+            'user info update user:' + self.user_name))
 
-    def addRole(self, roleList=None, role=None):
-        if roleList:
-            self.roles = roleList
-        if role:
-            self.roles = [role]
-        db.session.commit()
-    # def getUserPrivileges(self):
-        # self.roles.privileges
-#    @staticmethod
-#    def getFromUserId(userId):
-#        user = User.query.filter_by(user_id=userId, valid=1).first()
-#        return user
+#    def addRole(self, roleList=None, role=None):
+#        if roleList:
+#            self.roles = roleList
+#        if role:
+#            self.roles = [role]
 
     """
     token is generated as the JWT protocol.
@@ -178,10 +180,10 @@ class User(db.Model):
     user auth and return user token
     """
     @staticmethod
-    def userLogin4token(userName, password):
-        user = User.getValidUser(userName=userName)
+    def userLogin4token(user_name, password):
+        user = User.getValidUser(user_name=user_name)
         if not user:
-            msg = 'cannot find user_name:' + userName
+            msg = 'cannot find user_name:' + user_name
             app.logger.debug(msg)
             return [None, None, None, msg]
         if not userUtils.hash_pass(password) == user.hashed_password:
@@ -207,10 +209,10 @@ class User(db.Model):
 #            db.session.commit()
 #        except Exception as e:
 #            raise utils.InvalidModuleUsage(e)
-        msg = 'user (' + userName + ') logged in.'
+        msg = 'user (' + user_name + ') logged in.'
         # write the login time to db
         user.last_login = datetime.datetime.now()
-        user.updateUser()
+        user.update()
         app.logger.debug(msg)
         return [token, refreshToken, user, msg]
 
@@ -259,15 +261,15 @@ class User(db.Model):
     @staticmethod
     def tokenRefresh(refreshToken):
         # varify the refreshToken
-        [userId, roleIdList, msg] = User.tokenAuth(refreshToken)
-        if userId:
-            user = User.getValidUser(userId=userId)
+        [user_id, roleIdList, msg] = User.tokenAuth(refreshToken)
+        if user_id:
+            user = User.getValidUser(user_id=user_id)
             if not user:
-                msg = 'cannot find userid'
+                msg = 'cannot find user_id'
                 app.logger.warning(msg)
                 return [None, msg]
         else:
-            msg = 'lost userid'
+            msg = 'lost user_id'
             app.logger.warning(msg)
             return [None, msg]
 
@@ -335,7 +337,7 @@ class Role(db.Model):
     """
     __tablename__ = 'role'
     role_id = db.Column(db.String(64), primary_key=True)
-    role_name = db.Column(db.String(64))
+    role_name = db.Column(db.String(64), unique=True)
     # user = db.relationship('User', backref='role', lazy='dynamic')
     valid = db.Column(db.SmallInteger)
     privileges = db.relationship(
@@ -489,7 +491,8 @@ class UserSchema(ma.HyperlinkModelSchema):
     """
     class Meta:
         model = User
-        fields = ['user_id', 'user_name', 'last_login']
+        fields = ['user_id', 'user_name', 'last_login', 'tel', 'email',
+            'sign_up_date']
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)

@@ -20,7 +20,7 @@ class UserLogin(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument(
-            'username', type=str, help='username must be a string')
+            'user_name', type=str, help='user name must be a string')
         self.reqparse.add_argument(
             'password', type=str, help='password must be a string')
         super(UserLogin, self).__init__()
@@ -32,11 +32,11 @@ class UserLogin(Resource):
 
         # check the arguments
         args = self.reqparse.parse_args()
-        userName = args['username']
+        user_name = args['user_name']
         password = args['password']
 
-        if not userName:
-            msg = 'you need a username to login.'
+        if not user_name:
+            msg = 'you need a user_name to login.'
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
         if not password:
@@ -46,19 +46,23 @@ class UserLogin(Resource):
 
         # try to log in
         [token, refreshToken, user, msg] = User.userLogin4token(
-            userName, password)
+            user_name, password)
         if token:
             g.logined = True
             app.logger.info(utils.logmsg(msg))
             response = {"message": msg,
+                        "user_name": user.user_name,
                         "token": token,
                         "rftoken": refreshToken,
-                        "user_id": user.user_id}
-#            response.status_code = 200
+                        "user_id": user.user_id,
+                        "sign_up_date": user.sign_up_date,
+                        "last_login": user.last_login,
+                        "tel": user.tel,
+                        "email": user.email}
             return response, 200
         g.logined = False
         # rewrite the msg, we do not tell them too mutch:)
-        msg = 'wrong username & password'
+        msg = 'wrong user_name & password'
         app.logger.info(utils.logmsg(msg))
         raise utils.InvalidAPIUsage(msg)
 
@@ -79,19 +83,30 @@ class TokenAuth(Resource):
         token = request.headers.get('token')
         # if token is put in body, use this:
         # args = self.reqparse.parse_args()
-        # userName = args['token']
+        # user_name = args['token']
         if not token:
             msg = 'you need a token to login.'
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
         # verify the token
         [user_id, role_id_list, msg] = User.tokenAuth(token)
+        user = User.getValidUser(user_id = user_id)
         if not user_id:
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
+        else:
+            user = User.getValidUser(user_id=user_id)
+            if not user:
+                msg = "cannot find user when autherization"
+                raise utils.InvalidAPIUsage(msg)
         # we don't tell too much so rewrite the message
         msg = "user logged in"
-        response = {"message": msg, "user_id": user_id}
+        response = {"message": msg,
+                    "user_name": user.user_name,
+                    "user_id": user.user_id,
+                    "sign_up_date": user.sign_up_date,
+                    "tel": user.tel,
+                    "email": user.email}
         return response, 200
 
 
@@ -180,12 +195,12 @@ class PrivilegeAuth(Resource):
             if not token:
                 msg = "you need a token to access"
                 raise utils.InvalidAPIUsage(msg)
-            [userId, roleIdList, msg] = User.tokenAuth(token)
-            if not userId:
+            [user_id, roleIdList, msg] = User.tokenAuth(token)
+            if not user_id:
                 msg = msg + " when autherization"
                 raise utils.InvalidAPIUsage(msg)
             else:
-                currentUser = User.getValidUser(userId=userId)
+                currentUser = User.getValidUser(user_id=user_id)
                 if not currentUser:
                     msg = "cannot find user when autherization"
                     raise utils.InvalidAPIUsage(msg)
