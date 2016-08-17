@@ -37,8 +37,7 @@ class ScriptWalkerAPI(Resource):
     @auth.PrivilegeAuth(privilegeRequired="scriptExec")
     def post(self):
         # check the arguments
-        [iplist, script, os_user, params, walker_name, time_out] = \
-            self.argCheckForPost()
+        [iplist, script, os_user, params, walker_name] = self.argCheckForPost()
         # setup a walker
         walker = Walker(walker_name)
 
@@ -46,38 +45,23 @@ class ScriptWalkerAPI(Resource):
         # setup a scriptmission and link to the walker
         script_mission = ScriptMission(script, os_user, params, walker)
         script_mission.save()
+        walker.state = -1
         walker.save()
-        walker_id = walker.walker_id
+        # setup a shell mission walker executor thread
 
-        # setup a shell mission walker executor
         try:
             script_walker_executor = ScriptWalkerExecutor(script_mission)
-            # run the executor
+            # run the executor thread
             script_walker_executor.start()
+
+            msg = 'target script execution established!'
+            return {'message': msg, 'walker_id': walker.walker_id}, 200
+
         except:
             msg = 'faild to establish mission.'
             walker.state = -4
+            walker.save()
             return {'message': msg, 'walker_id': walker.walker_id}, 200
-
-        while time_out:
-            time.sleep(0.1)
-            db.session.close()
-            [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
-                walker_id, g.currentUser)
-            [trails, json_trails] = walker.getTrails()
-            time_out -= 1
-            if walker.state > -1:
-                msg = 'mission completed.'
-                [trails, json_trails] = walker.getTrails()
-                # script_walker_executor.exit()
-                return {
-                    'message': msg, 'walker_id': walker.walker_id,
-                    'trails': json_trails}, 200
-
-        walker.state = -3
-        walker.save()
-        msg = 'target script execution timeout exited!'
-        return {'message': msg, 'walker_id': walker.walker_id}, 200
 
     """
     find out all the script-mission walkers or one of them
@@ -117,9 +101,7 @@ class ScriptWalkerAPI(Resource):
         self.reqparse.add_argument(
             'name', type=str, location='json',
             help='default walker-name: time-scriptname')
-        self.reqparse.add_argument(
-            'time_out', type=int, location='json',
-            help='longest wait time, 3min default')
+
         args = self.reqparse.parse_args()
         iplist = args['iplist']
         # cheak all IPs of the iplist
@@ -131,9 +113,7 @@ class ScriptWalkerAPI(Resource):
         params = args['params']
         os_user = args['osuser']
         walker_name = args['name']
-        time_out = args['time_out']
-        if not time_out:
-            time_out = app.config['WALKER_MISSION_TIMEOUT']
+
         # check if the script belongs to the current user
         [script, json_script] = Script.getFromIdWithinUser(
             script_id, g.currentUser)
@@ -145,7 +125,7 @@ class ScriptWalkerAPI(Resource):
                 params = " ".join(params)
             else:
                 params = None
-            return [iplist, script, os_user, params, walker_name, time_out]
+            return [iplist, script, os_user, params, walker_name]
         else:
             msg = 'wrong script id.'
             raise utils.InvalidAPIUsage(msg)
@@ -393,12 +373,11 @@ class ScriptWalkerExecutor(threading.Thread):
             script_mission.params)
 
     def run(self):
+        #db.session.reconnect()
         msg = 'walker<id:' + self.walker.walker_id + '> begin to run.'
         app.logger.info(utils.logmsg(msg))
 
         [state, stats_sum, results] = self.script_exec_adpater.run()
-        self.walker.state = state
-        self.walker.save()
 
         for trail in self.trails:
             host_result = results[trail.ip]
@@ -406,11 +385,13 @@ class ScriptWalkerExecutor(threading.Thread):
             trail.resultUpdate(host_stat_sum, host_result)
             trail.save()
 
+        self.walker.state = state
+        self.walker.save()
         msg = 'walker<id:' + self.walker.walker_id + \
             '>scriptExecutor task finished.'
         app.logger.info(utils.logmsg(msg))
-        try:
-            thread.exit()
-        except:
-            msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
-            app.logger.info(utils.logmsg(msg))
+        thread.exit()
+        # try:
+        # except:
+        #     msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
+        #     app.logger.info(utils.logmsg(msg))
