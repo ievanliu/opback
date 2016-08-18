@@ -42,7 +42,7 @@ class ShellWalkerAPI(Resource):
         # setup a walker
         walker = Walker(walker_name)
 
-        [msg, trails] = walker.establish(iplist, g.currentUser)
+        [msg, trails] = walker.establish(iplist, g.current_user)
         # setup a shellmission and link to the walker
         shell_mission = ShellMission(shell, os_user, walker)
         shell_mission.save()
@@ -123,14 +123,14 @@ class ShellWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-        [walkers, json_walkers] = Walker.getShellMissionWalker(g.currentUser)
-        msg = 'walker list of ' + g.currentUser.user_name
+        [walkers, json_walkers] = Walker.getShellMissionWalker(g.current_user)
+        msg = 'walker list of ' + g.current_user.user_name
         return [msg, json_walkers]
 
     @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
         [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
-            walker_id, g.currentUser)
+            walker_id, g.current_user)
         if walker:
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'

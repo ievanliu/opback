@@ -41,7 +41,7 @@ class ScriptWalkerAPI(Resource):
         # setup a walker
         walker = Walker(walker_name)
 
-        [msg, trails] = walker.establish(iplist, g.currentUser)
+        [msg, trails] = walker.establish(iplist, g.current_user)
         # setup a scriptmission and link to the walker
         script_mission = ScriptMission(script, os_user, params, walker)
         script_mission.save()
@@ -116,7 +116,7 @@ class ScriptWalkerAPI(Resource):
 
         # check if the script belongs to the current user
         [script, json_script] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if script:
             if not walker_name:
                 walker_name = str(walkerUtils.serialCurrentTime()) + \
@@ -142,14 +142,14 @@ class ScriptWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-        [walkers, json_walkers] = Walker.getScriptMissionWalker(g.currentUser)
-        msg = 'walker list of ' + g.currentUser.user_name
+        [walkers, json_walkers] = Walker.getScriptMissionWalker(g.current_user)
+        msg = 'walker list of ' + g.current_user.user_name
         return [msg, json_walkers]
 
     @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
         [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
-            walker_id, g.currentUser)
+            walker_id, g.current_user)
         if walker:
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
@@ -179,7 +179,7 @@ class ScriptAPI(Resource):
 
         # create a script object
         script = Script(
-            script_name, script_text, g.currentUser, script_lang, is_public)
+            script_name, script_text, g.current_user, script_lang, is_public)
         script.save()
         msg = 'script created.'
         return {'message': msg, 'script_id': script.script_id}, 200
@@ -191,9 +191,9 @@ class ScriptAPI(Resource):
             self.argCheckForPut()
         # modify target script object
         [script, jsonScript] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if script:
-            script.update(script_name, script_text, script_lang, g.currentUser,
+            script.update(script_name, script_text, script_lang, g.current_user,
                           is_public)
             script.save()
             msg = 'script<id:' + script.script_id + '>uptaded'
@@ -207,7 +207,7 @@ class ScriptAPI(Resource):
     def get(self):
         script_id = self.argCheckForGet()
         if not script_id:
-            callableScripts = Script.getCallableScripts(g.currentUser)
+            callableScripts = Script.getCallableScripts(g.current_user)
             json_callableScripts = list()
             for callableScript in callableScripts:
                 result = dict()
@@ -225,7 +225,7 @@ class ScriptAPI(Resource):
             return {'message': msg, 'scripts': json_callableScripts}, 200
         else:
             callableScript = Script.getCallableScripts(
-                g.currentUser, script_id)
+                g.current_user, script_id)
             if callableScript:
                 result = dict()
                 result['script_id'] = callableScript.Script.script_id
@@ -246,7 +246,7 @@ class ScriptAPI(Resource):
     def delete(self):
         script_id = self.argCheckForDelete()
         [script, jsonScript] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if not script:
             msg = 'wrong script_id.'
             raise utils.InvalidAPIUsage(msg)
@@ -323,7 +323,7 @@ class ScriptAPI(Resource):
 
     @staticmethod
     def getScriptListOfTokenOwner():
-        [scripts, json_scripts] = Script.getWithinUser(g.currentUser)
+        [scripts, json_scripts] = Script.getWithinUser(g.current_user)
         if json_scripts:
             msg = 'scripts info'
             return [msg, json_scripts]
@@ -338,7 +338,7 @@ class ScriptAPI(Resource):
     @staticmethod
     def getScriptInfo(script_id):
         [script, json_script] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if script:
             msg = 'walker info'
             return [msg, json_script]
