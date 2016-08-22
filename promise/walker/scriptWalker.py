@@ -15,14 +15,13 @@ from flask import g
 from flask_restful import reqparse, Resource
 from .models import Walker, ScriptMission, Script
 from . import utils as walkerUtils
-from .. import app, db
+from .. import app
 from ..ansiAdapter.ansiAdapter import ScriptExecAdapter
 from .. import utils
 from ..user import auth
 import threading
 import thread
 from .. import dont_cache
-import time
 
 
 class ScriptWalkerAPI(Resource):
@@ -41,7 +40,7 @@ class ScriptWalkerAPI(Resource):
         # setup a walker
         walker = Walker(walker_name)
 
-        [msg, trails] = walker.establish(iplist, g.current_user)
+        [msg, trails] = walker.establish(iplist, current_user)
         # setup a scriptmission and link to the walker
         script_mission = ScriptMission(script, os_user, params, walker)
         script_mission.save()
@@ -142,8 +141,9 @@ class ScriptWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
+
         [walkers, json_walkers] = Walker.getScriptMissionWalker(g.current_user)
-        msg = 'walker list of ' + g.current_user.user_name
+        msg = 'walker list of ' + g.current_user.username
         return [msg, json_walkers]
 
     @staticmethod
@@ -193,8 +193,9 @@ class ScriptAPI(Resource):
         [script, jsonScript] = Script.getFromIdWithinUser(
             script_id, g.current_user)
         if script:
-            script.update(script_name, script_text, script_lang, g.current_user,
-                          is_public)
+            script.update(
+                script_name, script_text, script_lang, g.current_user,
+                is_public)
             script.save()
             msg = 'script<id:' + script.script_id + '>uptaded'
             return {'message': msg}, 200
@@ -214,7 +215,7 @@ class ScriptAPI(Resource):
                 result['script_id'] = callableScript.Script.script_id
                 result['script_name'] = callableScript.Script.script_name
                 result['script_text'] = callableScript.Script.script_text
-                result['owner_name'] = callableScript.User.user_name
+                result['owner_name'] = callableScript.User.username
                 result['owner_id'] = callableScript.Script.owner_id
                 result['time_create'] = callableScript.Script.time_create
                 result['time_last_edit'] = callableScript.Script.time_last_edit
@@ -231,7 +232,7 @@ class ScriptAPI(Resource):
                 result['script_id'] = callableScript.Script.script_id
                 result['script_name'] = callableScript.Script.script_name
                 result['script_text'] = callableScript.Script.script_text
-                result['owner_name'] = callableScript.User.user_name
+                result['owner_name'] = callableScript.User.username
                 result['owner_id'] = callableScript.Script.owner_id
                 result['time_create'] = callableScript.Script.time_create
                 result['time_last_edit'] = callableScript.Script.time_last_edit
@@ -373,7 +374,6 @@ class ScriptWalkerExecutor(threading.Thread):
             script_mission.params)
 
     def run(self):
-        #db.session.reconnect()
         msg = 'walker<id:' + self.walker.walker_id + '> begin to run.'
         app.logger.info(utils.logmsg(msg))
 
@@ -391,7 +391,3 @@ class ScriptWalkerExecutor(threading.Thread):
             '>scriptExecutor task finished.'
         app.logger.info(utils.logmsg(msg))
         thread.exit()
-        # try:
-        # except:
-        #     msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
-        #     app.logger.info(utils.logmsg(msg))

@@ -15,14 +15,13 @@ from flask import g
 from flask_restful import reqparse, Resource
 from .models import Walker, ShellMission
 from . import utils as walkerUtils
-from .. import app, db
+from .. import app
 from ..ansiAdapter.ansiAdapter import ShellExecAdapter
 from .. import utils
 from ..user import auth
 import threading
 import thread
 from .. import dont_cache
-import time
 
 
 class ShellWalkerAPI(Resource):
@@ -60,7 +59,6 @@ class ShellWalkerAPI(Resource):
             walker.state = -4
             walker.save()
             return {'message': msg, 'walker_id': walker.walker_id}, 200
-
 
     """
     find out all the shell-mission walkers or one of them
@@ -124,7 +122,7 @@ class ShellWalkerAPI(Resource):
     @staticmethod
     def getWalkerListOfTokenOwner():
         [walkers, json_walkers] = Walker.getShellMissionWalker(g.current_user)
-        msg = 'walker list of ' + g.current_user.user_name
+        msg = 'walker list of ' + g.current_user.username
         return [msg, json_walkers]
 
     @staticmethod

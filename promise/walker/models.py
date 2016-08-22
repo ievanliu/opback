@@ -62,7 +62,7 @@ class Walker(db.Model):
             db.session.rollback()
             msg = utils.logmsg('exception: %s.' % e)
             app.logger.info(msg)
-            state = True
+            state = False
         return [state, msg]
 
     def establish(self, iplist, owner):

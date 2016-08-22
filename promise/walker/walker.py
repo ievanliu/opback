@@ -106,7 +106,7 @@ class WalkerAPI(Resource):
     @staticmethod
     def getWalkerListOfTokenOwner():
         [walkers, json_walkers] = Walker.getFromUser(g.current_user)
-        msg = 'walker list of ' + g.current_user.user_name
+        msg = 'walker list of ' + g.current_user.username
         return [msg, json_walkers]
 
     @staticmethod
