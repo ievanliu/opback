@@ -22,49 +22,83 @@ from itsdangerous import SignatureExpired, BadSignature, BadData
 import datetime
 import time
 
+
 class TokenAPI(Resource):
+    """
+    authentification of token
+    """
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(TokenAPI, self).__init__()
 
     """
-    user login or token refresh, return access token
+    user login or token refresh, return access token.
+    determited by granttype:
+    * login: request with username & password, return access token
+      & refresh token.
+    * refreshtoken: request with refreshtoken, return access token.
     """
     def post(self):
-        # check the arguments
         args = self.argCheckForPost()
-        
+
         if args['granttype'] == 'login':
+            # use username and password to login and get token
             [token, refreshToken, user, last_login, msg] = AuthMethods.login(
-                args['user_name'], args['password'])
+                args['username'], args['password'])
             if token:
-                g.current_user = user
                 app.logger.info(utils.logmsg(msg))
+                msg = 'user logged in.<user:' + user.username + '>'
                 response = {"message": msg,
-                            "user_name": user.user_name,
                             "token": token,
                             "rftoken": refreshToken,
-                            "user_id": user.user_id,
-                            "sign_up_date": user.sign_up_date,
-                            "last_login": last_login,
-                            "tel": user.tel,
-                            "email": user.email}
+                            "user_info": user.getDictInfo()}
                 return response, 200
-            g.current_user = None
             # rewrite the msg, we do not tell them too mutch:)
-            msg = 'wrong user_name & password'
+            msg = 'wrong username & password'
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
+
         elif args['granttype'] == 'refreshtoken':
-            # get a new access token
+            # use refresh token to get a new access token
             [token, msg] = AuthMethods.tokenRefresh(args['refreshtoken'])
             if not token:
                 app.logger.info(utils.logmsg(msg))
                 raise utils.InvalidAPIUsage(msg)
             response = {"message": msg, "token": token}
             return response, 200
+
         else:
+            # error happen
             return {"message": 'wrong grant_type.'}, 500
+
+    """
+    use token to authentification, return user info
+    """
+    def get(self):
+        token = self.argCheckForGet()
+        # verify the token
+        [user_id, priv_name_list, msg] = AuthMethods.tokenAuth(token)
+        user = User.getValidUser(user_id=user_id)
+        if not user_id:
+            app.logger.info(utils.logmsg(msg))
+            raise utils.InvalidAPIUsage(msg)
+        else:
+            user = User.getValidUser(user_id=user_id)
+            if not user:
+                msg = "cannot find user when autherization"
+                app.logger.info(utils.logmsg(msg))
+                raise utils.InvalidAPIUsage(msg)
+        # we don't tell too much so rewrite the message
+        msg = "user logged in"
+        response = {"message": msg,
+                    "username": user.username,
+                    "user_id": user.user_id,
+                    "sign_up_date": user.sign_up_date,
+                    "tel": user.tel,
+                    "email": user.email,
+                    "privilege": priv_name_list}
+        app.logger.debug(utils.logmsg(msg))
+        return response, 200
 
     def argCheckForPost(self):
         self.reqparse.add_argument(
@@ -73,8 +107,9 @@ class TokenAPI(Resource):
         args = self.reqparse.parse_args()
         grant_type = args['granttype']
         if grant_type == 'login':
+            # need username and password to login
             self.reqparse.add_argument(
-                'user_name', type=str, location='json',
+                'username', type=str, location='json',
                 required=True, help='user name must be string')
             self.reqparse.add_argument(
                 'password', type=str, location='json',
@@ -82,40 +117,15 @@ class TokenAPI(Resource):
             args = self.reqparse.parse_args()
             return args
         elif grant_type == 'refreshtoken':
+            # need refresh token to refresh token
             self.reqparse.add_argument(
                 'refreshtoken', type=str, location='json',
-                help='refreshtoken must be a string')
+                required=True, help='refreshtoken must be a string')
             args = self.reqparse.parse_args()
-            refreshtoken = args['refreshtoken']
             return args
         else:
             raise utils.InvalidAPIUsage(
-                'granttype must be "refreshtoken/login"')
-    """
-    user token authentication
-    """
-    def get(self):
-        token = self.argCheckForGet()
-        # verify the token
-        [user_id, role_id_list, msg] = AuthMethods.tokenAuth(token)
-        user = User.getValidUser(user_id = user_id)
-        if not user_id:
-            app.logger.info(utils.logmsg(msg))
-            raise utils.InvalidAPIUsage(msg)
-        else:
-            user = User.getValidUser(user_id=user_id)
-            if not user:
-                msg = "cannot find user when autherization"
-                raise utils.InvalidAPIUsage(msg)
-        # we don't tell too much so rewrite the message
-        msg = "user logged in"
-        response = {"message": msg,
-                    "user_name": user.user_name,
-                    "user_id": user.user_id,
-                    "sign_up_date": user.sign_up_date,
-                    "tel": user.tel,
-                    "email": user.email}
-        return response, 200
+                'granttype must be "refreshtoken"/"login"')
 
     def argCheckForGet(self):
         self.reqparse.add_argument(
@@ -127,22 +137,25 @@ class TokenAPI(Resource):
 
 
 class AuthMethods(Resource):
+    """
+    some static methods for authentification.
+    """
     def __init__(self, user=None):
-        super(Auth, self).__init__()
+        super(AuthMethods, self).__init__()
 
     """
     user auth and return user token
     """
     @staticmethod
-    def login(user_name, password):
-        user = User.getValidUser(user_name=user_name)
+    def login(username, password):
+        user = User.getValidUser(username=username)
         if not user:
-            msg = 'cannot find user_name:' + user_name
-            app.logger.debug(msg)
+            msg = 'cannot find username:' + username
+            app.logger.debug(utils.logmsg(msg))
             return [None, None, None, msg]
         if not userUtils.hash_pass(password) == user.hashed_password:
             msg = 'user name and password cannot match.'
-            app.logger.debug(msg)
+            app.logger.debug(utils.logmsg(msg))
             return [None, None, None, msg]
         # generate token sequence
         # token expiration time is set in the config file
@@ -152,12 +165,12 @@ class AuthMethods(Resource):
         # generate refresh_token
         refreshToken = AuthMethods.genTokenSeq(
             user, app.config['REFRESH_TOKEN_EXPIRATION'])
-        msg = 'user (' + user_name + ') logged in.'
+        msg = 'user (' + username + ') logged in.'
         # write the login time to db
         last_login = user.last_login
         user.last_login = datetime.datetime.now()
         user.save()
-        app.logger.debug(msg)
+        app.logger.debug(utils.logmsg(msg))
         return [token, refreshToken, user, last_login, msg]
 
     """
@@ -171,12 +184,11 @@ class AuthMethods(Resource):
             salt=app.config['AUTH_SALT'],
             expires_in=expires)
         timestamp = time.time()
-        roleIdList = []
-        for role in user.roles:
-            roleIdList.append(role.role_id)
+        priv_name_list = user.getPrivilegeNameList()
         return s.dumps(
             {'user_id': user.user_id,
-             'user_role': roleIdList,
+             'username': user.username,
+             'priv': priv_name_list,
              'iat': timestamp})
         # The token contains userid, user role and the token generation time.
         # u can add sth more inside, if needed.
@@ -195,7 +207,7 @@ class AuthMethods(Resource):
             # trying to attact your server, so it should be a warning.
         except SignatureExpired:
             msg = 'token expired'
-            app.logger.warning(msg)
+            app.logger.warning(utils.logmsg(msg))
             return [None, None, msg]
         except BadSignature, e:
             encoded_payload = e.payload
@@ -205,55 +217,44 @@ class AuthMethods(Resource):
                 except BadData:
                     # the token is tampered.
                     msg = 'token tampered'
-                    app.logger.warning(msg)
+                    app.logger.warning(utils.logmsg(msg))
                     return [None, None, msg]
             msg = 'badSignature of token'
-            app.logger.warning(msg)
+            app.logger.warning(utils.logmsg(msg))
             return [None, None, msg]
         except:
             msg = 'wrong token with unknown reason.'
-            app.logger.warning(msg)
+            app.logger.warning(utils.logmsg(msg))
             return [None, None, msg]
-        if ('user_id' not in data) or ('user_role' not in data):
+        if ('user_id' not in data) or ('priv' not in data):
             msg = 'illegal payload inside'
-            app.logger.warning(msg)
+            app.logger.warning(utils.logmsg(msg))
             return [None, None, msg]
-        msg = 'user(' + data['user_id'] + ') logged in by token.'
-        app.logger.debug(msg)
+        msg = 'user(' + data['username'] + ') logged in by token.'
+        app.logger.debug(utils.logmsg(msg))
         user_id = data['user_id']
-        role_id_list = data['user_role']
-        return [user_id, role_id_list, msg]
+        priv_name_list = data['priv']
+        return [user_id, priv_name_list, msg]
 
     @staticmethod
     def tokenRefresh(refreshToken):
         # varify the refreshToken
-        [user_id, roleIdList, msg] = AuthMethods.tokenAuth(refreshToken)
+        [user_id, priv_name_list, msg] = AuthMethods.tokenAuth(refreshToken)
         if user_id:
             user = User.getValidUser(user_id=user_id)
             if not user:
-                msg = 'cannot find user_id'
-                app.logger.warning(msg)
+                msg = 'invalid refresh token with wrong user_id'
+                app.logger.warning(utils.logmsg(msg))
                 return [None, msg]
         else:
-            msg = 'lost user_id'
-            app.logger.warning(msg)
-            return [None, msg]
-
-        if roleIdList:
-            for roleId in roleIdList:
-                role = Role.getValidRole(roleId=roleId)
-                if not role:
-                    msg = 'cannot find roleid' + roleId
-                    app.logger.warning(msg)
-                    return [None, msg]
-        else:
-            msg = 'lost roleid'
+            msg = 'invalid refresh token missing user_id'
             app.logger.warning(msg)
             return [None, msg]
 
         token = AuthMethods.genTokenSeq(
             user, app.config['ACCESS_TOKEN_EXPIRATION'])
         msg = "token refreshed"
+        app.logger.info(utils.logmsg(msg))
         return [token, msg]
 
 
@@ -271,42 +272,41 @@ class PrivilegeAuth(Resource):
     def __init__(self, privilegeRequired):
         # argument 'privilegeRequired' is to set up your method's privilege
         # name
-        self.privilegeRequired = privilegeRequired
+        self.privilege_required = privilegeRequired
         super(PrivilegeAuth, self).__init__()
 
     def __call__(self, fn):
         def wrapped(*args, **kwargs):
 
-            try:
-                rolesReq = Privilege.getFromPrivilegeName(
-                    self.privilegeRequired).roles
-            except:
-                msg = 'wrong privilege setting: privilege (' +\
-                    self.privilegeRequired + ') doesnot set in any roles'
-                app.logger.error(utils.logmsg(msg))
-                raise utils.InvalidModuleUsage('wrong privilege setting')
+#            # find out the target roles by privilege name
+#            privilege = Privilege.getValidPrivilege(
+#                    privilege_name=self.privilege_required)
+#            if not privilege:
+#                msg = 'wrong privilege setting: privilege (' +\
+#                    self.privilege_required + ') invalid.'
+#                app.logger.error(utils.logmsg(msg))
+#                raise utils.InvalidModuleUsage('wrong privilege setting.')
 
             token = request.headers.get('token')
             if not token:
                 msg = "you need a token to access"
                 raise utils.InvalidAPIUsage(msg)
-            [user_id, roleIdList, msg] = AuthMethods.tokenAuth(token)
+            [user_id, priv_name_list, msg] = AuthMethods.tokenAuth(token)
             if not user_id:
                 msg = msg + " when autherization"
                 raise utils.InvalidAPIUsage(msg)
             else:
-                currentUser = User.getValidUser(user_id=user_id)
-                if not currentUser:
+                current_user = User.getValidUser(user_id=user_id)
+                if not current_user:
                     msg = "cannot find user when autherization"
                     raise utils.InvalidAPIUsage(msg)
 
-            g.current_user = currentUser
-
-            # user's privilege auth
-            for role in currentUser.roles:
-                for roleReq in rolesReq:
-                    if role.role_id == roleReq.role_id:
-                        return fn(*args, **kwargs)
+            g.current_user = current_user
+#            state = current_user.privilege_validation(privilege.privilege_id)
+#            if state:
+#                return fn(*args, **kwargs)
+            if self.privilege_required in priv_name_list:
+                return fn(*args, **kwargs)
 
             msg = "Privilege not Allowed."
             app.logger.info(utils.logmsg(msg))

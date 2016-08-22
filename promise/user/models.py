@@ -7,15 +7,11 @@
 # This is the model module for the user package
 # holding user, token, role and  privilege models, etc.
 #
-from .. import db, api, app
-from . import utils as userUtils
+from .. import db, app
 from .. import utils, ma
-# serializer for JWT
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-# exceptions for JWT
-from itsdangerous import SignatureExpired, BadSignature, BadData
+from sqlalchemy import sql, and_
+
 import datetime
-import time
 
 
 """
@@ -65,7 +61,7 @@ class User(db.Model):
     __tablename__ = 'user'
     # user_id is a 64Byte UUID depend on the timestamp, namespace and username
     user_id = db.Column(db.String(64), primary_key=True)
-    user_name = db.Column(db.String(128))
+    username = db.Column(db.String(128), nullable=False)
     hashed_password = db.Column(db.String(128))
     valid = db.Column(db.SmallInteger)
     last_login = db.Column(db.DATETIME)
@@ -78,10 +74,10 @@ class User(db.Model):
         backref=db.backref('roles', lazy='select'))
 
     def __init__(
-            self, user_name, hashed_password,
+            self, username, hashed_password,
             role_list=None, valid=1, tel=None, email=None):
-        self.user_id = utils.genUuid(user_name)
-        self.user_name = user_name
+        self.user_id = utils.genUuid(username)
+        self.username = username
         self.hashed_password = hashed_password
         self.valid = valid
         if tel:
@@ -99,7 +95,7 @@ class User(db.Model):
         db.session.add(self)
         try:
             db.session.commit()
-            msg = utils.logmsg('save user ' + self.user_name + ' to db.')
+            msg = utils.logmsg('save user ' + self.username + ' to db.')
             app.logger.debug(msg)
             state = True
         except Exception, e:
@@ -110,28 +106,86 @@ class User(db.Model):
         return [state, msg]
 
     @staticmethod
-    def getValidUser(user_name=None, user_id=None):
-        if user_name and not user_id:
-            user = User.query.filter_by(user_name=user_name, valid=1).first()
-        elif not user_name and user_id:
+    def getValidUser(username=None, user_id=None):
+        if username and not user_id:
+            user = User.query.filter_by(username=username, valid=1).first()
+        elif not username and user_id:
             user = User.query.filter_by(user_id=user_id, valid=1).first()
-        elif user_name and user_id:
+        elif username and user_id:
             user = User.query.filter_by(
-                user_id=user_id, user_name=user_name).first()
+                user_id=user_id, username=username).first()
         else:
             user = User.query.filter_by(valid=1).all()
         return user
 
-#    def setInvalid(self):
-#        self.valid = 0
-#        app.logger.debug(utils.logmsg('set invalid user:' + self.user_name))
+    def getDictInfo(self):
+        priv_list = self.getPrivilegeList()
+        role_list = self.getRoleList()
+        user_info = {
+            "username": self.username,
+            "user_id": self.user_id,
+            "sign_up_date": self.sign_up_date,
+            "last_login": self.last_login,
+            "tel": self.tel,
+            "email": self.email,
+            "role": role_list,
+            "privelege": priv_list}
+        return user_info
+
+    def getPrivilegeList(self):
+        q = sql.select(
+                [Privilege.privilege_name, Privilege.description]).where(
+                    and_(
+                        roles.c.user_id==self.user_id,
+                        roles.c.role_id==privileges.c.role_id,
+                        privileges.c.privilege_id==Privilege.privilege_id))
+        db_exec = db.session.execute(q)
+        rest = db_exec.fetchall()
+        db_exec.close()
+        priv_list = list()
+        for priv in rest:
+            priv_list.append({
+                'name': priv.privilege_name,
+                'description': priv.description})
+        return priv_list
+
+    def getPrivilegeNameList(self):
+        q = sql.select(
+                [Privilege.privilege_name]).where(
+                    and_(
+                        roles.c.user_id==self.user_id,
+                        roles.c.role_id==privileges.c.role_id,
+                        privileges.c.privilege_id==Privilege.privilege_id))
+        db_exec = db.session.execute(q)
+        rest = db_exec.fetchall()
+        db_exec.close()
+        priv_list = list()
+        for priv in rest:
+            priv_list.append(priv.privilege_name)
+        return priv_list
+
+    def getRoleList(self):
+        q = sql.select([Role.role_name, Role.description]).where(
+                and_(
+                    roles.c.user_id==self.user_id,
+                    roles.c.role_id==Role.role_id))
+        db_exec = db.session.execute(q)
+        rest = db_exec.fetchall()
+        db_exec.close()
+        role_name_list = list()
+        for role in rest:
+            role_name_list.append({
+                'name': role.role_name,
+                'description': role.description
+                })
+        return role_name_list
 
     def update(
-            self, user_name=None, hashed_password=None, last_login=None, 
+            self, username=None, hashed_password=None, last_login=None,
             tel=None, email=None, sign_up_date=None, valid=None,
             role_list=None):
-        if user_name is not None:
-            self.user_name = user_name;
+        if username is not None:
+            self.username = username
         if hashed_password is not None:
             self.hashed_password = hashed_password
         if last_login is not None:
@@ -147,136 +201,21 @@ class User(db.Model):
         if role_list is not None:
             self.roles = role_list
         app.logger.debug(utils.logmsg(
-            'user info update user:' + self.user_name))
+            'user info update user:' + self.username))
 
-#    def addRole(self, roleList=None, role=None):
-#        if roleList:
-#            self.roles = roleList
-#        if role:
-#            self.roles = [role]
-
-#    """
-#    token is generated as the JWT protocol.
-#    JSON Web Tokens(JWT) are an open, industry standard RFC 7519 method
-#    """
-#    def genTokenSeq(self, expires):
-#        s = Serializer(
-#            secret_key=app.config['SECRET_KEY'],
-#            salt=app.config['AUTH_SALT'],
-#            expires_in=expires)
-#        timestamp = time.time()
-#        roleIdList = []
-#        for role in self.roles:
-#            roleIdList.append(role.role_id)
-#        return s.dumps(
-#            {'user_id': self.user_id,
-#             'user_role': roleIdList,
-#             'iat': timestamp})
-#        # The token contains userid, user role and the token generation time.
-#        # u can add sth more inside, if needed.
-#        # 'iat' means 'issued at'. claimed in JWT.
-
-#    """
-#    user auth and return user token
-#    """
-#    @staticmethod
-#    def userLogin4token(user_name, password):
-#        user = User.getValidUser(user_name=user_name)
-#        if not user:
-#            msg = 'cannot find user_name:' + user_name
-#            app.logger.debug(msg)
-#            return [None, None, None, msg]
-#        if not userUtils.hash_pass(password) == user.hashed_password:
-#            msg = 'user name and password cannot match.'
-#            app.logger.debug(msg)
-#            return [None, None, None, msg]
-#        # generate token sequence
-#        # token expiration time is set in the config file
-#        # the value is set in seconds: (day,second,microsecond)
-#        token = user.genTokenSeq(app.config['ACCESS_TOKEN_EXPIRATION'])
-#        # generate refresh_token
-#        refreshToken = user.genTokenSeq(app.config['REFRESH_TOKEN_EXPIRATION'])
-#        msg = 'user (' + user_name + ') logged in.'
-#        # write the login time to db
-#        last_login = user.last_login
-#        user.last_login = datetime.datetime.now()
-#        user.save()
-#        app.logger.debug(msg)
-#        return [token, refreshToken, user, last_login, msg]
-
-#    @staticmethod
-#    def tokenAuth(token):
-#        # token decoding
-#        s = Serializer(
-#            secret_key=api.app.config['SECRET_KEY'],
-#            salt=api.app.config['AUTH_SALT'])
-#        try:
-#            data = s.loads(token)
-#            # token decoding faild
-#            # if it happend a plenty of times, there might be someone
-#            # trying to attact your server, so it should be a warning.
-#        except SignatureExpired:
-#            msg = 'token expired'
-#            app.logger.warning(msg)
-#            return [None, None, msg]
-#        except BadSignature, e:
-#            encoded_payload = e.payload
-#            if encoded_payload is not None:
-#                try:
-#                    s.load_payload(encoded_payload)
-#                except BadData:
-#                    # the token is tampered.
-#                    msg = 'token tampered'
-#                    app.logger.warning(msg)
-#                    return [None, None, msg]
-#            msg = 'badSignature of token'
-#            app.logger.warning(msg)
-#            return [None, None, msg]
-#        except:
-#            msg = 'wrong token with unknown reason'
-#            app.logger.warning(msg)
-#            return [None, None, msg]
-#        if ('user_id' not in data) or ('user_role' not in data):
-#            msg = 'illegal payload inside'
-#            app.logger.warning(msg)
-#            return [None, None, msg]
-#        msg = 'user(' + data['user_id'] + ') logged in by token.'
-##        app.logger.info(msg)
-#        user_id = data['user_id']
-#        role_id_list = data['user_role']
-#        return [user_id, role_id_list, msg]
-
-#    @staticmethod
-#    def tokenRefresh(refreshToken):
-#        # varify the refreshToken
-#        [user_id, roleIdList, msg] = User.tokenAuth(refreshToken)
-#        if user_id:
-#            user = User.getValidUser(user_id=user_id)
-#            if not user:
-#                msg = 'cannot find user_id'
-#                app.logger.warning(msg)
-#                return [None, msg]
-#        else:
-#            msg = 'lost user_id'
-#            app.logger.warning(msg)
-#            return [None, msg]#
-
-#        if roleIdList:
-#            for roleId in roleIdList:
-#                role = Role.getValidRole(roleId=roleId)
-#                if not role:
-#                    msg = 'cannot find roleid' + roleId
-#                    app.logger.warning(msg)
-#                    return [None, msg]
-#        else:
-#            msg = 'lost roleid'
-#            app.logger.warning(msg)
-#            return [None, msg]#
-
-#        token = user.genTokenSeq(app.config['ACCESS_TOKEN_EXPIRATION'])
-#        msg = "token refreshed"
-#        return [token, msg]
-
+    def privilege_validation(self, privilege_id):
+        q = sql.select([roles.c.role_id]).where(
+                and_(
+                    privileges.c.privilege_id==privilege_id,
+                    roles.c.user_id==self.user_id,
+                    roles.c.role_id==privileges.c.role_id))
+        db_exec = db.session.execute(q)
+        rest = db_exec.fetchall()
+        db_exec.close()
+        if rest:
+            return True
+        else:
+            return False
 
 
 
@@ -285,8 +224,10 @@ class Role(db.Model):
     role model
     """
     __tablename__ = 'role'
+    # role_id is a 64Byte UUID depend on the timestamp, namespace and rolename
     role_id = db.Column(db.String(64), primary_key=True)
-    role_name = db.Column(db.String(64), unique=True)
+    role_name = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.Text)
     valid = db.Column(db.SmallInteger)
     privileges = db.relationship(
         'Privilege',
@@ -300,10 +241,17 @@ class Role(db.Model):
     def __repr__(self):
         return '<Role %r>' % self.role_id
 
-    def __init__(self, roleName, valid=1):
-        self.role_id = utils.genUuid(roleName)
-        self.role_name = roleName
+    def __init__(
+            self, role_name, description=None, users=None, privileges=None,
+            valid=1):
+        self.role_id = utils.genUuid(role_name)
+        self.role_name = role_name
+        self.description = description
         self.valid = valid
+        if users is not None:
+            self.users = users
+        if privileges is not None:
+            self.privileges = privileges
 
     def save(self):
         db.session.add(self)
@@ -319,59 +267,58 @@ class Role(db.Model):
             state = False
         return [state, msg]
 
-    def addPrivilege(self, privilegeList=None, privilege=None):
-        if privilegeList:
-            self.privilege = privilegeList
-        if privilege:
-            self.privilege = [privilege]
-        db.session.add(self)
-        try:
-            db.session.commit()
-        except Exception, e:
-            db.session.rollback()
-            msg = self.__DoraemonContraintException % e
-            app.logger.info(utils.logmsg(msg))
+    def update(
+            self, role_name=None, valid=None, privileges=None, users=None,
+            description=None):
+        if role_name:
+            self.role_name = role_name
+        if valid is not None:
+            self.valid = valid
+        if privileges is not None:
+            self.privileges = privileges
+        if users is not None:
+            self.users = users
+        if description is not None:
+            self.description = description
+        app.logger.debug(utils.logmsg(
+            'role info update role:' + self.role_name))
 
     @staticmethod
-    def getValidRole(roleName=None, roleId=None):
-        if roleName and not roleId:
-            role = Role.query.filter_by(role_name=roleName, valid=1).first()
-        elif not roleName and roleId:
-            role = Role.query.filter_by(role_id=roleId, valid=1).first()
-        elif roleName and roleId:
+    def getValidRole(role_name=None, role_id=None, valid=1):
+        if role_name and not role_id:
             role = Role.query.filter_by(
-                role_id=roleId, role_name=roleName, valid=1).first()
+                role_name=role_name, valid=valid).first()
+        elif not role_name and role_id:
+            role = Role.query.filter_by(role_id=role_id, valid=valid).first()
+        elif role_name and role_id:
+            role = Role.query.filter_by(
+                role_id=role_id, role_name=role_name, valid=valid).first()
         else:
-            role = Role.query.filter_by(valid=1).all()
+            role = Role.query.filter_by(valid=valid).all()
         return role
 
-#    @staticmethod
-#    def getFromRoleName(roleName):
-#        role = Role.query.filter_by(role_name=roleName).first()
-#        return role
+    def getPrivilegeList(self):
+        privileges = self.privileges
+        return privileges_schema.dump(privileges).data
+
+    def getUserList(self):
+        users = self.users
+        return users_schema.dump(users).data
+
+    def getDictInfo(self):
+        priv_list = self.getPrivilegeList()
+        user_list = self.getUserList()
+        role_info = {
+            "role_name": self.role_name,
+            "role_id": self.role_id,
+            "privelege": priv_list,
+            "user": user_list}
+        return role_info
 
     def setInvalid(self):
+        self.privileges = []
+        self.users = []
         self.valid = 0
-        db.session.commit()
-
-    @staticmethod
-    def deleteFromRoleName(roleName):
-        role = Role.getValidRole(roleName)
-        if role:
-            # deal with the dependence with other tables:
-            # Privilege, User have a foriegn key of role_id
-            role.privileges = []
-            role.users = []
-
-            role.valid = 0
-            db.session.commit()
-
-            msg = 'invalid role(' + roleName + ')'
-            app.logger.debug(utils.logmsg(msg))
-            return True
-        msg = 'cannot find role(' + roleName + ')'
-        app.logger.debug(utils.logmsg(msg))
-        return False
 
 
 class Privilege(db.Model):
@@ -379,8 +326,11 @@ class Privilege(db.Model):
     privilege model
     """
     __tablename__ = 'privilege'
+    # privilege_id is a 64Byte UUID depend on the timestamp, namespace and
+    # privilege name
     privilege_id = db.Column(db.String(64), primary_key=True)
-    privilege_name = db.Column(db.String(64))
+    privilege_name = db.Column(db.String(64), unique=True, nullable=False)
+    description = db.Column(db.Text)
     valid = db.Column(db.SmallInteger)
     roles = db.relationship(
         'Role',
@@ -390,45 +340,79 @@ class Privilege(db.Model):
     def __repr__(self):
         return '<privilege %r>' % self.privilege_id
 
-    def __init__(self, privilegeName, valid=1):
-        self.privilege_id = utils.genUuid(privilegeName)
-        self.privilege_name = privilegeName
+    def __init__(self, privilege_name, description, valid=1):
+        self.privilege_id = utils.genUuid(privilege_name)
+        self.privilege_name = privilege_name
+        self.description = description
         self.valid = valid
 
+    def save(self):
+        db.session.add(self)
+        try:
+            db.session.commit()
+            msg = utils.logmsg(
+                'save privilege ' + self.privelege_name + ' to db.')
+            app.logger.debug(msg)
+            state = True
+        except Exception, e:
+            db.session.rollback()
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
+
+    def update(self, description=None, valid=None):
+        if valid is not None:
+            self.valid = valid
+        if description is not None:
+            self.description = description
+        app.logger.debug(utils.logmsg(
+            'privilege info update:' + self.privilege_name))
+
     @staticmethod
-    def getValidPrivilege(privilegeId=None, privilegeName=None):
-        if privilegeId and not privilegeName:
+    def getValidPrivilege(privilege_id=None, privilege_name=None, valid=1):
+        if privilege_id and not privilege_name:
             privilege = Privilege.query.filter_by(
-                privilege_id=privilegeId, valid=1).first()
-        elif not privilegeId and privilegeName:
+                privilege_id=privilege_id, valid=1).first()
+        elif not privilege_id and privilege_name:
             privilege = Privilege.query.filter_by(
-                privilege_name=privilegeName, valid=1).first()
-        elif privilegeId and privilegeName:
+                privilege_name=privilege_name, valid=1).first()
+        elif privilege_id and privilege_name:
             privilege = Privilege.query.filter_by(
-                privilege_id=privilegeId,
-                privilege_name=privilegeName,
+                privilege_id=privilege_id,
+                privilege_name=privilege_name,
                 valid=1).first()
         else:
             privilege = Privilege.query.filter_by(valid=1).all()
         return privilege
 
-    @staticmethod
-    def getFromPrivilegeName(privilegeName):
-        privilege = Privilege.query.filter_by(
-            privilege_name=privilegeName).first()
-        return privilege
+    def getDictInfo(self):
+        role_list = self.getRoleList()
+        user_list = self.getUserList()
+        role_info = {
+            "privilege_name": self.privilege_name,
+            "privilege_id": self.privilege_id,
+            "description": self.description,
+            "role": role_list,
+            "user": user_list}
+        return role_info
 
-    def insertPrivilege(self):
-        db.session.add(self)
-        try:
-            db.session.commit()
-            app.logger.debug(
-                utils.logmsg('insert privilege:' + self.privilege_name))
-        except Exception, e:
-            db.session.rollback()
-            msg = self.__DoraemonContraintException % e
-            app.logger.info(utils.logmsg(msg))
+    def getRoleList(self):
+        roles = self.roles
+        return roles_schema.dump(roles).data
 
+    def getUserList(self):
+        q = sql.select([User]).where(
+                and_(
+                    privileges.c.privilege_id==self.privilege_id,
+                    privileges.c.role_id==roles.c.role_id,
+                    roles.c.user_id==User.user_id,
+                    User.valid==1))
+        db_exec = db.session.execute(q)
+        users = db_exec.fetchall()
+        db_exec.close()
+
+        return users_schema.dump(users).data
 
 #####################################################################
 #    establish a meta data class for data print                     #
@@ -439,7 +423,8 @@ class UserSchema(ma.HyperlinkModelSchema):
     """
     class Meta:
         model = User
-        fields = ['user_id', 'user_name', 'last_login', 'tel', 'email',
+        fields = [
+            'user_id', 'username', 'last_login', 'tel', 'email',
             'sign_up_date']
 
 user_schema = UserSchema()
@@ -452,7 +437,7 @@ class RoleSchema(ma.HyperlinkModelSchema):
     """
     class Meta:
         model = Role
-        fields = ['role_id']
+        fields = ['role_id', 'role_name', 'description']
 
 role_schema = RoleSchema()
 roles_schema = RoleSchema(many=True)
@@ -464,7 +449,7 @@ class PrivilegeSchema(ma.HyperlinkModelSchema):
     """
     class Meta:
         model = Privilege
-        fields = ['privilege_id', 'privilege_name']
+        fields = ['privilege_id', 'privilege_name', 'description']
 
 privilege_schema = PrivilegeSchema()
 privileges_schema = PrivilegeSchema(many=True)
