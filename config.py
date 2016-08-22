@@ -55,7 +55,7 @@ TOKEN_DURATION = 7200  # in second
 ACCESS_TOKEN_EXPIRATION = 3600  # in second
 REFRESH_TOKEN_EXPIRATION = 86400  # in second
 # root user default setting
-DEFAULT_ROOT_USER_NAME = 'admin'
+DEFAULT_ROOT_USERNAME = 'admin'
 DEFAULT_ROOT_PASSWORD = 'admin'
 
 """
