@@ -12,7 +12,8 @@
 
 from flask import g, request
 from flask_restful import reqparse, Resource
-from .models import User, Privilege, Role
+from .models import User
+# , Privilege, Role
 from .. import app, utils
 from . import utils as userUtils
 # serializer for JWT
@@ -277,16 +278,6 @@ class PrivilegeAuth(Resource):
 
     def __call__(self, fn):
         def wrapped(*args, **kwargs):
-
-#            # find out the target roles by privilege name
-#            privilege = Privilege.getValidPrivilege(
-#                    privilege_name=self.privilege_required)
-#            if not privilege:
-#                msg = 'wrong privilege setting: privilege (' +\
-#                    self.privilege_required + ') invalid.'
-#                app.logger.error(utils.logmsg(msg))
-#                raise utils.InvalidModuleUsage('wrong privilege setting.')
-
             token = request.headers.get('token')
             if not token:
                 msg = "you need a token to access"
@@ -302,9 +293,6 @@ class PrivilegeAuth(Resource):
                     raise utils.InvalidAPIUsage(msg)
 
             g.current_user = current_user
-#            state = current_user.privilege_validation(privilege.privilege_id)
-#            if state:
-#                return fn(*args, **kwargs)
             if self.privilege_required in priv_name_list:
                 return fn(*args, **kwargs)
 

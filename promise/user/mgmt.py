@@ -11,7 +11,6 @@
 from flask_restful import reqparse, Resource
 # User Model is named Muser, to be seperated with the User API
 from .models import User, Role, Privilege
-#from .models import user_schema, users_schema, privielge
 from . import auth
 from .. import app, utils
 from . import utils as userUtils
@@ -39,7 +38,7 @@ class UserAPI(Resource):
                 user_info = user.getDictInfo()
                 user_info_list.append(user_info)
             msg = "infomations of all users."
-            return {'message':msg, 'user_list': user_info_list}, 200
+            return {'message': msg, 'user_list': user_info_list}, 200
 
     @auth.PrivilegeAuth(privilegeRequired="userAdmin")
     def post(self):
@@ -123,7 +122,7 @@ class UserAPI(Resource):
                 role = Role.getValidRole(roleN_name=role_name)
                 if not role:
                     msg = 'invalid role name:' + role_name
-                    raise utils.InvalidAPIUsage(utile.logmsg(msg))
+                    raise utils.InvalidAPIUsage(utils.logmsg(msg))
                 role_list.append(role)
         else:
             role_list = None

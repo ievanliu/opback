@@ -30,31 +30,26 @@ def initdb():
 def importdata():
     "Import data into database tables"
 
-    # init privileges
-#    privilege_name_list = [
-#        'userAdmin', 'inventoryAdmin', 'shellExec', 'scriptExec', 'walkerInfo']
-#    privilege_list = []
-#    for item in privilege_name_list:
-#        newPrivilege = Privilege(item)
-#        db.session.add(newPrivilege)
-#        privilegeList.append(newPrivilege)
-    user_admin_privilege = Privilege(privilege_name='userAdmin',
+    user_admin_privilege = Privilege(
+        privilege_name='userAdmin',
         description='user/role/privlilege administration.')
-    inventory_admin_privilege = Privilege(privilege_name='InventoryAdmin',
+    inventory_admin_privilege = Privilege(
+        privilege_name='InventoryAdmin',
         description='cmdb/inventory administration')
-    shell_exec_privilege = Privilege(privilege_name='shellExec',
+    shell_exec_privilege = Privilege(
+        privilege_name='shellExec',
         description='execution of shell module of walker.')
-    script_exec_privilege = Privilege(privilege_name='scriptExec',
+    script_exec_privilege = Privilege(
+        privilege_name='scriptExec',
         description='execution of script module of walker.')
-    walker_info_privilege = Privilege(privilege_name='walkerInfo',
+    walker_info_privilege = Privilege(
+        privilege_name='walkerInfo',
         description='get the details infomation of walkers.')
     user_admin_privilege.save()
     inventory_admin_privilege.save()
     shell_exec_privilege.save()
     script_exec_privilege.save()
     walker_info_privilege.save()
-
-
 
     # init roles
     role_root = Role(role_name='root', description='超级用户')

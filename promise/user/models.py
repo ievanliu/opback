@@ -134,11 +134,11 @@ class User(db.Model):
 
     def getPrivilegeList(self):
         q = sql.select(
-                [Privilege.privilege_name, Privilege.description]).where(
-                    and_(
-                        roles.c.user_id==self.user_id,
-                        roles.c.role_id==privileges.c.role_id,
-                        privileges.c.privilege_id==Privilege.privilege_id))
+            [Privilege.privilege_name, Privilege.description]).where(
+            and_(
+                roles.c.user_id == self.user_id,
+                roles.c.role_id == privileges.c.role_id,
+                privileges.c.privilege_id == Privilege.privilege_id))
         db_exec = db.session.execute(q)
         rest = db_exec.fetchall()
         db_exec.close()
@@ -151,11 +151,11 @@ class User(db.Model):
 
     def getPrivilegeNameList(self):
         q = sql.select(
-                [Privilege.privilege_name]).where(
-                    and_(
-                        roles.c.user_id==self.user_id,
-                        roles.c.role_id==privileges.c.role_id,
-                        privileges.c.privilege_id==Privilege.privilege_id))
+            [Privilege.privilege_name]).where(
+            and_(
+                roles.c.user_id == self.user_id,
+                roles.c.role_id == privileges.c.role_id,
+                privileges.c.privilege_id == Privilege.privilege_id))
         db_exec = db.session.execute(q)
         rest = db_exec.fetchall()
         db_exec.close()
@@ -166,9 +166,9 @@ class User(db.Model):
 
     def getRoleList(self):
         q = sql.select([Role.role_name, Role.description]).where(
-                and_(
-                    roles.c.user_id==self.user_id,
-                    roles.c.role_id==Role.role_id))
+            and_(
+                roles.c.user_id == self.user_id,
+                roles.c.role_id == Role.role_id))
         db_exec = db.session.execute(q)
         rest = db_exec.fetchall()
         db_exec.close()
@@ -176,8 +176,7 @@ class User(db.Model):
         for role in rest:
             role_name_list.append({
                 'name': role.role_name,
-                'description': role.description
-                })
+                'description': role.description})
         return role_name_list
 
     def update(
@@ -205,10 +204,10 @@ class User(db.Model):
 
     def privilege_validation(self, privilege_id):
         q = sql.select([roles.c.role_id]).where(
-                and_(
-                    privileges.c.privilege_id==privilege_id,
-                    roles.c.user_id==self.user_id,
-                    roles.c.role_id==privileges.c.role_id))
+            and_(
+                privileges.c.privilege_id == privilege_id,
+                roles.c.user_id == self.user_id,
+                roles.c.role_id == privileges.c.role_id))
         db_exec = db.session.execute(q)
         rest = db_exec.fetchall()
         db_exec.close()
@@ -216,7 +215,6 @@ class User(db.Model):
             return True
         else:
             return False
-
 
 
 class Role(db.Model):
@@ -403,16 +401,16 @@ class Privilege(db.Model):
 
     def getUserList(self):
         q = sql.select([User]).where(
-                and_(
-                    privileges.c.privilege_id==self.privilege_id,
-                    privileges.c.role_id==roles.c.role_id,
-                    roles.c.user_id==User.user_id,
-                    User.valid==1))
+            and_(
+                privileges.c.privilege_id == self.privilege_id,
+                privileges.c.role_id == roles.c.role_id,
+                roles.c.user_id == User.user_id,
+                User.valid == 1))
         db_exec = db.session.execute(q)
         users = db_exec.fetchall()
         db_exec.close()
-
         return users_schema.dump(users).data
+
 
 #####################################################################
 #    establish a meta data class for data print                     #

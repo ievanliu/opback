@@ -16,6 +16,6 @@ api.add_resource(
 api.add_resource(
     UserAPI, '/api/v0.0/user/user', endpoint='user_ep')
 api.add_resource(
-	RoleAPI, '/api/v0.0/user/role', endpoint='role_ep')
+    RoleAPI, '/api/v0.0/user/role', endpoint='role_ep')
 api.add_resource(
-	PrivilegeAPI, '/api/v0.0/user/privilege', endpoint='priv_ep')
+    PrivilegeAPI, '/api/v0.0/user/privilege', endpoint='priv_ep')
