@@ -40,7 +40,7 @@ class ScriptWalkerAPI(Resource):
         # setup a walker
         walker = Walker(walker_name)
 
-        [msg, trails] = walker.establish(iplist, current_user)
+        [msg, trails] = walker.establish(iplist, g.current_user)
         # setup a scriptmission and link to the walker
         script_mission = ScriptMission(script, os_user, params, walker)
         script_mission.save()

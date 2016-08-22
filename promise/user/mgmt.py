@@ -302,7 +302,7 @@ class RoleAPI(Resource):
         target_role.save()
         msg = 'role updated.<role:' + target_role.role_id + '>'
         app.logger.info(msg)
-        response = {"message": msg, "user_id": target_role.role_id}
+        response = {"message": msg, "role_id": target_role.role_id}
         return response, 200
 
     def argCheckForPost(self):
