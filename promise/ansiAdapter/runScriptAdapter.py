@@ -13,7 +13,7 @@ run_data = {
     'user_id': '123123'
 }
 
-hostnames = ['192.168.182.1', '192.168.182.12']#, '192.168.182.13', '192.168.182.25', '192.168.182.34']
+hostnames = ['192.168.182.1', '192.168.182.12']
 private_key_file = '~/.ssh/id_rsa'
 script = """#!/usr/bin/python
 #-*- coding:utf-8 -*-
