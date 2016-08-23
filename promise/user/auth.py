@@ -359,6 +359,7 @@ class PrivilegeAuth(Resource):
 
             for priv_name in priv_name_list:
                 if u_priv_name == self.privilege_required:
+                    g.current_user = current_user
                     return fn(*args, **kwargs)
 
             msg = "Privilege not Allowed."
