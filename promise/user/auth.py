@@ -51,7 +51,7 @@ class TokenAPI(Resource):
                 msg = 'user logged in.<user:' + user.username + '>'
                 response = {"message": msg,
                             "token": token,
-                            "rftoken": refreshToken,
+                            "refreshtoken": refreshToken,
                             "user_info": user.getDictInfo()}
                 return response, 200
             # rewrite the msg, we do not tell them too mutch:)
@@ -79,7 +79,6 @@ class TokenAPI(Resource):
         token = self.argCheckForGet()
         # verify the token
         [user_id, priv_name_list, msg] = AuthMethods.tokenAuth(token)
-        user = User.getValidUser(user_id=user_id)
         if not user_id:
             app.logger.info(utils.logmsg(msg))
             raise utils.InvalidAPIUsage(msg)
@@ -90,15 +89,27 @@ class TokenAPI(Resource):
                 app.logger.info(utils.logmsg(msg))
                 raise utils.InvalidAPIUsage(msg)
         # we don't tell too much so rewrite the message
-        msg = "user logged in"
+        msg = "user logged in.<username:" + user.username +">"
         response = {"message": msg,
-                    "username": user.username,
-                    "user_id": user.user_id,
-                    "sign_up_date": user.sign_up_date,
-                    "tel": user.tel,
-                    "email": user.email,
-                    "privilege": priv_name_list}
+                    "token": token,
+                    "user_info": user.getDictInfo()}
         app.logger.debug(utils.logmsg(msg))
+        return response, 200
+
+    def put(self):
+        """
+        modf token owner userinfo
+        """
+        [target_user, username, hashed_password, tel, email] = \
+            self.argCheckForPut()
+        # update user
+        target_user.update(
+            username=username, hashed_password=hashed_password,
+            tel=tel, email=email)
+        target_user.save()
+        msg = 'current user info updated.'
+        app.logger.info(msg)
+        response = {"message": msg, "user_id": target_user.user_id}
         return response, 200
 
     def argCheckForPost(self):
@@ -135,6 +146,58 @@ class TokenAPI(Resource):
         args = self.reqparse.parse_args()
         token = args['token']
         return token
+
+    def argCheckForPut(self):
+        # verify the token
+        token = self.argCheckForGet()
+
+        [user_id, priv_name_list, msg] = AuthMethods.tokenAuth(token)
+        if not user_id:
+            app.logger.info(utils.logmsg(msg))
+            raise utils.InvalidAPIUsage(msg)
+        else:
+            target_user = User.getValidUser(user_id=user_id)
+            if not target_user:
+                msg = "cannot find user when autherization"
+                app.logger.info(utils.logmsg(msg))
+                raise utils.InvalidAPIUsage(msg)
+
+        # check other argument
+        self.reqparse.add_argument(
+            'username', type=str, location='json',
+            help='user name must be string')
+        self.reqparse.add_argument(
+            'password', type=str, location='json',
+            help='password must be string')
+        self.reqparse.add_argument(
+            'tel', type=str, location='json',
+            help='tel must be str')
+        self.reqparse.add_argument(
+            'email', type=str, location='json',
+            help='email must be str')
+
+        args = self.reqparse.parse_args()
+        # required args check
+
+        password = args['password']
+        if password:
+            hashed_password = userUtils.hash_pass(password)
+        else:
+            hashed_password = None
+
+        tel = args['tel']
+        email = args['email']
+
+        username = args['username']
+        if username:
+            user = User.getValidUser(username=username)
+            if user:
+                msg = 'user name is in used.'
+                raise utils.InvalidAPIUsage(msg)
+        elif username is '':
+            msg = 'user name should not be empty string.'
+            raise utils.InvalidAPIUsage(msg)
+        return [target_user, username, hashed_password, tel, email]
 
 
 class AuthMethods(Resource):
