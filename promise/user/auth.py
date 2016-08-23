@@ -355,9 +355,11 @@ class PrivilegeAuth(Resource):
                     msg = "cannot find user when autherization"
                     raise utils.InvalidAPIUsage(msg)
 
-            g.current_user = current_user
-            if self.privilege_required in priv_name_list:
-                return fn(*args, **kwargs)
+            u_priv_name = unicode(self.privilege_required, "UTF-8")
+
+            for priv_name in priv_name_list:
+                if u_priv_name == self.privilege_required:
+                    return fn(*args, **kwargs)
 
             msg = "Privilege not Allowed."
             app.logger.info(utils.logmsg(msg))
