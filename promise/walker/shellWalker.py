@@ -23,6 +23,7 @@ import threading
 import thread
 from .. import dont_cache
 
+threadLock = threading.Lock()
 
 class ShellWalkerAPI(Resource):
     def __init__(self):
@@ -170,14 +171,16 @@ class ShellWalkerExecutor(threading.Thread):
         app.logger.info(utils.logmsg(msg))
 
         [state, stats_sum, results] = self.shell_exec_adpater.run()
-        self.walker.state = state
-        self.walker.save()
-
+        
+        threadLock.acquire()
         for trail in self.trails:
             host_result = results[trail.ip]
             host_stat_sum = stats_sum[trail.ip]
             trail.resultUpdate(host_stat_sum, host_result)
             trail.save()
+        self.walker.state = state
+        self.walker.save()
+        threadLock.release()
 
         msg = 'walker<id:' + self.walker.walker_id + \
             '>shellExecutor task finished.'
