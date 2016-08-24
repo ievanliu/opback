@@ -44,6 +44,8 @@ class TokenAPI(Resource):
 
         if args['granttype'] == 'login':
             # use username and password to login and get token
+            print args['username']
+            print args['password']
             [token, refreshToken, user, last_login, msg] = AuthMethods.login(
                 args['username'], args['password'])
             if token:
@@ -216,11 +218,11 @@ class AuthMethods(Resource):
         if not user:
             msg = 'cannot find username:' + username
             app.logger.debug(utils.logmsg(msg))
-            return [None, None, None, msg]
+            return [None, None, None, None, msg]
         if not userUtils.hash_pass(password) == user.hashed_password:
             msg = 'user name and password cannot match.'
             app.logger.debug(utils.logmsg(msg))
-            return [None, None, None, msg]
+            return [None, None, None, None, msg]
         # generate token sequence
         # token expiration time is set in the config file
         # the value is set in seconds: (day,second,microsecond)
@@ -356,9 +358,9 @@ class PrivilegeAuth(Resource):
                     raise utils.InvalidAPIUsage(msg)
 
             u_priv_name = unicode(self.privilege_required, "UTF-8")
-
+            print priv_name_list
             for priv_name in priv_name_list:
-                if u_priv_name == self.privilege_required:
+                if u_priv_name == priv_name:
                     g.current_user = current_user
                     return fn(*args, **kwargs)
 

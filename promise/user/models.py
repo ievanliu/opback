@@ -349,7 +349,7 @@ class Privilege(db.Model):
         try:
             db.session.commit()
             msg = utils.logmsg(
-                'save privilege ' + self.privelege_name + ' to db.')
+                'save privilege ' + self.privilege_name + ' to db.')
             app.logger.debug(msg)
             state = True
         except Exception, e:

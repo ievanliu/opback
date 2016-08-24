@@ -34,7 +34,7 @@ def importdata():
         privilege_name='userAdmin',
         description='user/role/privlilege administration.')
     inventory_admin_privilege = Privilege(
-        privilege_name='InventoryAdmin',
+        privilege_name='inventoryAdmin',
         description='cmdb/inventory administration')
     shell_exec_privilege = Privilege(
         privilege_name='shellExec',
@@ -55,7 +55,7 @@ def importdata():
     role_root = Role(role_name='root', description='超级用户')
     role_operator = Role(role_name='operator', description='运维操作员')
     role_inventory_admin = Role(
-        role_name='InventoryAdmin', description='资源管理员')
+        role_name='inventoryAdmin', description='资源管理员')
     role_user_admin = Role(role_name='userAdmin', description='用户管理员')
 
     role_root.update(
