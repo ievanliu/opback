@@ -25,6 +25,7 @@ from .. import dont_cache
 
 threadLock = threading.Lock()
 
+
 class ScriptWalkerAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -379,7 +380,6 @@ class ScriptWalkerExecutor(threading.Thread):
         app.logger.info(utils.logmsg(msg))
 
         [state, stats_sum, results] = self.script_exec_adpater.run()
-        
         threadLock.acquire()
         for trail in self.trails:
             host_result = results[trail.ip]

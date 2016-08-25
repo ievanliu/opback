@@ -129,16 +129,17 @@ class User(db.Model):
             "tel": self.tel,
             "email": self.email,
             "role": role_list,
-            "privelege": priv_list}
+            "privilege": priv_list}
         return user_info
 
-    def getPrivilegeList(self):
+    def getPrivilegeList(self, valid=1):
         q = sql.select(
             [Privilege.privilege_name, Privilege.description]).where(
             and_(
                 roles.c.user_id == self.user_id,
                 roles.c.role_id == privileges.c.role_id,
-                privileges.c.privilege_id == Privilege.privilege_id))
+                privileges.c.privilege_id == Privilege.privilege_id,
+                Privilege.valid == valid))
         db_exec = db.session.execute(q)
         rest = db_exec.fetchall()
         db_exec.close()
@@ -149,13 +150,14 @@ class User(db.Model):
                 'description': priv.description})
         return priv_list
 
-    def getPrivilegeNameList(self):
+    def getPrivilegeNameList(self, valid=1):
         q = sql.select(
             [Privilege.privilege_name]).where(
             and_(
                 roles.c.user_id == self.user_id,
                 roles.c.role_id == privileges.c.role_id,
-                privileges.c.privilege_id == Privilege.privilege_id))
+                privileges.c.privilege_id == Privilege.privilege_id,
+                Privilege.valid == 1))
         db_exec = db.session.execute(q)
         rest = db_exec.fetchall()
         db_exec.close()
@@ -164,11 +166,12 @@ class User(db.Model):
             priv_list.append(priv.privilege_name)
         return priv_list
 
-    def getRoleList(self):
+    def getRoleList(self, valid=1):
         q = sql.select([Role.role_name, Role.description]).where(
             and_(
                 roles.c.user_id == self.user_id,
-                roles.c.role_id == Role.role_id))
+                roles.c.role_id == Role.role_id,
+                Role.valid == valid))
         db_exec = db.session.execute(q)
         rest = db_exec.fetchall()
         db_exec.close()
@@ -295,13 +298,27 @@ class Role(db.Model):
             role = Role.query.filter_by(valid=valid).all()
         return role
 
-    def getPrivilegeList(self):
-        privileges = self.privileges
-        return privileges_schema.dump(privileges).data
+    def getPrivilegeList(self, valid=1):
+        q = sql.select([Privilege]).where(
+            and_(
+                privileges.c.role_id == self.role_id,
+                privileges.c.privilege_id == Privilege.privilege_id,
+                Privilege.valid == valid))
+        db_exec = db.session.execute(q)
+        target_privileges = db_exec.fetchall()
+        db_exec.close()
+        return privileges_schema.dump(target_privileges).data
 
-    def getUserList(self):
-        users = self.users
-        return users_schema.dump(users).data
+    def getUserList(self, valid=1):
+        q = sql.select([User]).where(
+            and_(
+                roles.c.role_id == self.role_id,
+                roles.c.user_id == User.user_id,
+                User.valid == valid))
+        db_exec = db.session.execute(q)
+        target_users = db_exec.fetchall()
+        db_exec.close()
+        return users_schema.dump(target_users).data
 
     def getDictInfo(self):
         priv_list = self.getPrivilegeList()
@@ -309,8 +326,9 @@ class Role(db.Model):
         role_info = {
             "role_name": self.role_name,
             "role_id": self.role_id,
-            "privelege": priv_list,
-            "user": user_list}
+            "privilege": priv_list,
+            "user": user_list,
+            "description": self.description}
         return role_info
 
     def setInvalid(self):

@@ -100,8 +100,8 @@ class UserAPI(Resource):
             'password', type=str, location='json',
             required=True, help='password must be string')
         self.reqparse.add_argument(
-            'role_name_list', type=list, location='json',
-            help='role name must be string list')
+            'role_id_list', type=list, location='json',
+            help='role id must be string list')
         self.reqparse.add_argument(
             'tel', type=str, location='json',
             help='tel must be str')
@@ -115,14 +115,14 @@ class UserAPI(Resource):
         tel = args['tel']
         email = args['email']
 
-        role_name_list = args['role_name_list']
-        if role_name_list:
+        role_id_list = args['role_id_list']
+        if role_id_list:
             role_list = list()
-            for role_name in role_name_list:
-                role = Role.getValidRole(roleN_name=role_name)
+            for role_id in role_id_list:
+                role = Role.getValidRole(role_id=role_id)
                 if not role:
-                    msg = 'invalid role name:' + role_name
-                    raise utils.InvalidAPIUsage(utils.logmsg(msg))
+                    msg = 'invalid role id:' + role_id
+                    raise utils.InvalidAPIUsage(msg)
                 role_list.append(role)
         else:
             role_list = None
@@ -176,8 +176,8 @@ class UserAPI(Resource):
             'password', type=str, location='json',
             help='password must be string')
         self.reqparse.add_argument(
-            'role_name_list', type=list, location='json',
-            help='role name must be string list')
+            'role_id_list', type=list, location='json',
+            help='role id must be string list')
         self.reqparse.add_argument(
             'tel', type=str, location='json',
             help='tel must be str')
@@ -194,13 +194,13 @@ class UserAPI(Resource):
             raise utils.InvalidAPIUsage(msg)
 
         # other args check
-        role_name_list = args['role_name_list']
-        if role_name_list:
+        role_id_list = args['role_id_list']
+        if role_id_list:
             role_list = list()
-            for role_name in role_name_list:
-                role = Role.getValidRole(role_name=role_name)
+            for role_id in role_id_list:
+                role = Role.getValidRole(role_id=role_id)
                 if not role:
-                    msg = 'invalid role name:' + role_name
+                    msg = 'invalid role id:' + role_id
                     raise utils.InvalidAPIUsage(msg)
                 role_list.append(role)
         else:
@@ -309,7 +309,7 @@ class RoleAPI(Resource):
             'role_name', type=str, location='json',
             required=True, help='role name must be string')
         self.reqparse.add_argument(
-            'description', type=str, location='json',
+            'description', type=unicode, location='json',
             help='description must be string')
         self.reqparse.add_argument(
             'privilege_id_list', type=list, location='json',
@@ -341,7 +341,8 @@ class RoleAPI(Resource):
         if privilege_id_list:
             privilege_list = list()
             for privilege_id in privilege_id_list:
-                privilege = Privilege(privilege_id=privilege_id)
+                privilege = Privilege.getValidPrivilege(
+                    privilege_id=privilege_id)
                 if not privilege:
                     raise utils.InvalidAPIUsage(
                         'invalid privilege id:' + privilege_id)
@@ -457,7 +458,7 @@ class PrivilegeAPI(Resource):
             'privilege_id', type=str, location='args',
             required=True, help='privilege_id must be string.')
         self.reqparse.add_argument(
-            'description', type=str, location='json',
+            'description', type=unicode, location='json',
             required=True, help='description must be string.')
         args = self.reqparse.parse_args()
         privilege_id = args['privilege_id']

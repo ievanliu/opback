@@ -91,7 +91,7 @@ class TokenAPI(Resource):
                 app.logger.info(utils.logmsg(msg))
                 raise utils.InvalidAPIUsage(msg)
         # we don't tell too much so rewrite the message
-        msg = "user logged in.<username:" + user.username +">"
+        msg = "user logged in.<username:" + user.username + ">"
         response = {"message": msg,
                     "token": token,
                     "user_info": user.getDictInfo()}
@@ -358,7 +358,6 @@ class PrivilegeAuth(Resource):
                     raise utils.InvalidAPIUsage(msg)
 
             u_priv_name = unicode(self.privilege_required, "UTF-8")
-            print priv_name_list
             for priv_name in priv_name_list:
                 if u_priv_name == priv_name:
                     g.current_user = current_user
