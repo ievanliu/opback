@@ -14,6 +14,7 @@ basedir = os.path.abspath(os.path.dirname('..'))
 # database access string setting, by default we use mysql
 # for common using
 SQLALCHEMY_DATABASE_URI = 'mysql://yy:123@localhost:3306/common'
+# SQLALCHEMY_POOL_RECYCLE = 3600
 # for eater:
 # SQLALCHEMY_BINDS = {
 #     'eater': 'mysql://dbuser:dbpassword@ip:port/eater'
@@ -31,7 +32,7 @@ DB_SOURCEFILE = 'data.sql'
 DB_FILEPATH = os.path.join(DB_FOLDER, DB_FILE)
 DB_SOURCEFILEPATH = os.path.join(DB_FOLDER, DB_SOURCEFILE)
 # config the sqlite acces URI:
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DB_FOLDER, DB_FILE)
+# SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DB_FOLDER, DB_FILE)
 
 
 """
@@ -54,8 +55,13 @@ TOKEN_DURATION = 7200  # in second
 ACCESS_TOKEN_EXPIRATION = 3600  # in second
 REFRESH_TOKEN_EXPIRATION = 86400  # in second
 # root user default setting
-DEFAULT_ROOT_USER_NAME = 'admin'
+DEFAULT_ROOT_USERNAME = 'admin'
 DEFAULT_ROOT_PASSWORD = 'admin'
+
+"""
+    walker configuration
+"""
+WALKER_MISSION_TIMEOUT = 180  # in second
 
 """
     zabbix access configuration

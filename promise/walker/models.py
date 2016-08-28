@@ -14,6 +14,7 @@ from .. import utils, ma
 from ..user.models import User
 from sqlalchemy import and_, or_
 import datetime
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 
 class Walker(db.Model):
@@ -38,6 +39,8 @@ class Walker(db.Model):
     # -1: running
     #  0: all success
     # >0: num of faild tasks
+    # -3: timeout
+    # -4: faild to start
     state = db.Column(db.Integer)
 
     def __repr__(self):
@@ -50,9 +53,17 @@ class Walker(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
-        app.logger.debug(
-            utils.logmsg('save walker ' + self.walker_name + ' to db.'))
+        try:
+            db.session.commit()
+            msg = utils.logmsg('save walker ' + self.walker_name + ' to db.')
+            app.logger.debug(msg)
+            state = True
+        except Exception, e:
+            db.session.rollback()
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
 
     def establish(self, iplist, owner):
         # establish the walker
@@ -177,9 +188,17 @@ class ShellMission(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
-        app.logger.debug(
-            utils.logmsg('save shell mission:' + self.shellmission_id))
+        try:
+            db.session.commit()
+            msg = utils.logmsg('save shell mission:' + self.shellmission_id)
+            app.logger.debug(msg)
+            state = True
+        except Exception, e:
+            db.session.rollback()
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
 
     def getTrails(self):
         walker = self.getWalker()
@@ -228,9 +247,17 @@ class ScriptMission(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
-        app.logger.debug(
-            utils.logmsg('save script mission:' + self.scriptmission_id))
+        try:
+            db.session.commit()
+            msg = utils.logmsg('save script mission:' + self.scriptmission_id)
+            app.logger.debug(msg)
+            state = True
+        except Exception, e:
+            db.session.rollback()
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
 
     def getScript(self, valid=1):
         script = Script.query.filter_by(
@@ -293,9 +320,17 @@ class Script(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
-        app.logger.debug(
-            utils.logmsg('save script:' + self.script_id))
+        try:
+            db.session.commit()
+            msg = utils.logmsg('save script:' + self.script_id)
+            app.logger.debug(msg)
+            state = True
+        except Exception, e:
+            db.session.rollback()
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
 
     @staticmethod
     def getFromIdWithinUser(script_id, user, valid=1):
@@ -364,8 +399,8 @@ class Trail(db.Model):
     __tablename__ = 'trail'
     trail_id = db.Column(db.String(64), primary_key=True)
     ip = db.Column(db.String(15))
-    stdout = db.Column(db.Text)
-    stderr = db.Column(db.Text)
+    stdout = db.Column(LONGTEXT)
+    stderr = db.Column(LONGTEXT)
     msg = db.Column(db.Text)
     time_start = db.Column(db.DATETIME)
     time_end = db.Column(db.DATETIME)
@@ -415,9 +450,17 @@ class Trail(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
-        app.logger.debug(
-            utils.logmsg('save trail:' + self.trail_id))
+        try:
+            db.session.commit()
+            msg = utils.logmsg('save trail:' + self.trail_id)
+            app.logger.debug(msg)
+            state = True
+        except Exception, e:
+            db.session.rollback()
+            msg = utils.logmsg('exception: %s.' % e)
+            app.logger.info(msg)
+            state = False
+        return [state, msg]
 
 
 #####################################################################

@@ -79,7 +79,7 @@ class WalkerAPI(Resource):
         os_user = args['osuser']
         walker_name = args['name']
         [script, json_script] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if script:
             if not walker_name:
                 walker_name = str(walkerUtils.serialCurrentTime()) + \
@@ -105,8 +105,8 @@ class WalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-        [walkers, json_walkers] = Walker.getFromUser(g.currentUser)
-        msg = 'walker list of ' + g.currentUser.user_name
+        [walkers, json_walkers] = Walker.getFromUser(g.current_user)
+        msg = 'walker list of ' + g.current_user.username
         return [msg, json_walkers]
 
     @staticmethod
@@ -122,7 +122,7 @@ class WalkerAPI(Resource):
     @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
         [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
-            walker_id, g.currentUser)
+            walker_id, g.current_user)
         if walker:
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'

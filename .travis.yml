@@ -5,8 +5,8 @@ install:
     - "pip install -r requirements.txt"
 script:
     #- python scripts/manager.py recreatedb
-    - tox
-    - nosetests -v --with-coverage --cover-package=promise
+    #- tox
+    #- nosetests -v --with-coverage --cover-package=promise
 notifications:
     email:
         recipients:

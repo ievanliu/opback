@@ -19,8 +19,11 @@ from .. import app
 from ..ansiAdapter.ansiAdapter import ShellExecAdapter
 from .. import utils
 from ..user import auth
+import threading
 import thread
 from .. import dont_cache
+
+threadLock = threading.Lock()
 
 
 class ShellWalkerAPI(Resource):
@@ -40,26 +43,24 @@ class ShellWalkerAPI(Resource):
         # setup a walker
         walker = Walker(walker_name)
 
-        [msg, trails] = walker.establish(iplist, g.currentUser)
+        [msg, trails] = walker.establish(iplist, g.current_user)
         # setup a shellmission and link to the walker
         shell_mission = ShellMission(shell, os_user, walker)
         shell_mission.save()
+        walker.state = -1
         walker.save()
 
         # setup a shell mission walker executor
-        shell_walker_executor = ShellWalkerExecutor(shell_mission)
-
-        if shell_walker_executor:
-            # run the executor
-            thread.start_new_thread(shell_walker_executor.run, ())
-            # shell_walker_executor.run()
-
-        [trails, json_trails] = walker.getTrails()
-
-        msg = 'mission start'
-        return {
-            'message': msg, 'walker_id': walker.walker_id,
-            'trails': json_trails}, 200
+        try:
+            shell_walker_executor = ShellWalkerExecutor(shell_mission)
+            shell_walker_executor.start()
+            msg = 'target shell execution timeout exited!'
+            return {'message': msg, 'walker_id': walker.walker_id}, 200
+        except:
+            msg = 'faild to establish mission.'
+            walker.state = -4
+            walker.save()
+            return {'message': msg, 'walker_id': walker.walker_id}, 200
 
     """
     find out all the shell-mission walkers or one of them
@@ -95,6 +96,7 @@ class ShellWalkerAPI(Resource):
         self.reqparse.add_argument(
             'name', type=str, location='json',
             help='default walker-name: time-shell')
+
         args = self.reqparse.parse_args()
         iplist = args['iplist']
         for ip in iplist:
@@ -106,6 +108,7 @@ class ShellWalkerAPI(Resource):
         walker_name = args['name']
         if not walker_name:
             walker_name = str(walkerUtils.serialCurrentTime()) + '-' + shell
+
         return [iplist, shell, os_user, walker_name]
 
     def argCheckForGet(self):
@@ -120,16 +123,15 @@ class ShellWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-        [walkers, json_walkers] = Walker.getShellMissionWalker(g.currentUser)
-        msg = 'walker list of ' + g.currentUser.user_name
+        [walkers, json_walkers] = Walker.getShellMissionWalker(g.current_user)
+        msg = 'walker list of ' + g.current_user.username
         return [msg, json_walkers]
 
     @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
         [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
-            walker_id, g.currentUser)
+            walker_id, g.current_user)
         if walker:
-            print walker
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
         else:
@@ -142,9 +144,10 @@ class ShellWalkerAPI(Resource):
         thread.exit()
 
 
-class ShellWalkerExecutor(object):
+class ShellWalkerExecutor(threading.Thread):
     def __init__(self, shell_mission, private_key_file='~/.ssh/id_rsa',
                  become_pass=None):
+        threading.Thread.__init__(self)
         self.shell_mission = shell_mission
         self.walker = shell_mission.getWalker()
         [trails, json_trails] = shell_mission.getTrails()
@@ -165,17 +168,25 @@ class ShellWalkerExecutor(object):
             shell_mission.shell)
 
     def run(self):
+        msg = 'walker<id:' + self.walker.walker_id + '> begin to run.'
+        app.logger.info(utils.logmsg(msg))
+
         [state, stats_sum, results] = self.shell_exec_adpater.run()
-        self.walker.state = state
-        self.walker.save()
+        threadLock.acquire()
         for trail in self.trails:
             host_result = results[trail.ip]
             host_stat_sum = stats_sum[trail.ip]
             trail.resultUpdate(host_stat_sum, host_result)
             trail.save()
-        try:
-            thread.exit()
-            msg = 'walker<' + self.walker.walker_id + '> thread exit.'
-        except:
-            msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
-        app.logger.info(msg)
+        self.walker.state = state
+        self.walker.save()
+        threadLock.release()
+
+        msg = 'walker<id:' + self.walker.walker_id + \
+            '>shellExecutor task finished.'
+        app.logger.info(utils.logmsg(msg))
+        thread.exit()
+#        try:
+#        except:
+#            msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
+#            app.logger.info(utils.logmsg(msg))

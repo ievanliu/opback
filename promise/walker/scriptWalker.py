@@ -19,8 +19,11 @@ from .. import app
 from ..ansiAdapter.ansiAdapter import ScriptExecAdapter
 from .. import utils
 from ..user import auth
+import threading
 import thread
 from .. import dont_cache
+
+threadLock = threading.Lock()
 
 
 class ScriptWalkerAPI(Resource):
@@ -39,26 +42,27 @@ class ScriptWalkerAPI(Resource):
         # setup a walker
         walker = Walker(walker_name)
 
-        [msg, trails] = walker.establish(iplist, g.currentUser)
+        [msg, trails] = walker.establish(iplist, g.current_user)
         # setup a scriptmission and link to the walker
         script_mission = ScriptMission(script, os_user, params, walker)
         script_mission.save()
+        walker.state = -1
         walker.save()
+        # setup a shell mission walker executor thread
 
-        # setup a shell mission walker executor
-        script_walker_executor = ScriptWalkerExecutor(script_mission)
+        try:
+            script_walker_executor = ScriptWalkerExecutor(script_mission)
+            # run the executor thread
+            script_walker_executor.start()
 
-        if script_walker_executor:
-            # run the executor
-            thread.start_new_thread(script_walker_executor.run, ())
-            # script_walker_executor.run()
+            msg = 'target script execution established!'
+            return {'message': msg, 'walker_id': walker.walker_id}, 200
 
-        [trails, json_trails] = walker.getTrails()
-
-        msg = 'mission start'
-        return {
-            'message': msg, 'walker_id': walker.walker_id,
-            'trails': json_trails}, 200
+        except:
+            msg = 'faild to establish mission.'
+            walker.state = -4
+            walker.save()
+            return {'message': msg, 'walker_id': walker.walker_id}, 200
 
     """
     find out all the script-mission walkers or one of them
@@ -71,11 +75,12 @@ class ScriptWalkerAPI(Resource):
             [msg, json_walkers] = self.getWalkerListOfTokenOwner()
             return {'message': msg, 'walkers': json_walkers}, 200
         else:
-            [msg, walker_name, json_trails] = self.getWalkerInfoOfTokenOwner(
-                walker_id)
+            [msg, walker_name, state, json_trails] = \
+                self.getWalkerInfoOfTokenOwner(walker_id)
             return {
                 'message': msg,
                 'walker_name': walker_name,
+                'walker_state': state,
                 'trails': json_trails}, 200
 
     """
@@ -97,6 +102,7 @@ class ScriptWalkerAPI(Resource):
         self.reqparse.add_argument(
             'name', type=str, location='json',
             help='default walker-name: time-scriptname')
+
         args = self.reqparse.parse_args()
         iplist = args['iplist']
         # cheak all IPs of the iplist
@@ -108,9 +114,10 @@ class ScriptWalkerAPI(Resource):
         params = args['params']
         os_user = args['osuser']
         walker_name = args['name']
+
         # check if the script belongs to the current user
         [script, json_script] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if script:
             if not walker_name:
                 walker_name = str(walkerUtils.serialCurrentTime()) + \
@@ -136,35 +143,26 @@ class ScriptWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-        [walkers, json_walkers] = Walker.getScriptMissionWalker(g.currentUser)
-        msg = 'walker list of ' + g.currentUser.user_name
-        return [msg, json_walkers]
 
-    @staticmethod
-    def getWalkerInfo(walker_id):
-        walker = Walker.getFromWalkerId(walker_id)
-        if walker:
-            [trails, json_trails] = Walker.getTrails(walker)
-            msg = 'walker info'
-        else:
-            msg = 'wrong walker id'
-        return [msg, walker.walker_name, json_trails]
+        [walkers, json_walkers] = Walker.getScriptMissionWalker(g.current_user)
+        msg = 'walker list of ' + g.current_user.username
+        return [msg, json_walkers]
 
     @staticmethod
     def getWalkerInfoOfTokenOwner(walker_id):
         [walker, json_walker] = Walker.getFromWalkerIdWithinUser(
-            walker_id, g.currentUser)
+            walker_id, g.current_user)
         if walker:
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
         else:
             msg = 'wrong walker id'
-        return [msg, walker.walker_name, json_trails]
+        return [msg, walker.walker_name, walker.state, json_trails]
 
-    @staticmethod
-    def run(shell_walker_executor):
-        shell_walker_executor.run()
-        thread.exit()
+#    @staticmethod
+#    def run(shell_walker_executor):
+#        shell_walker_executor.run()
+#        thread.exit()
 
 
 class ScriptAPI(Resource):
@@ -183,7 +181,7 @@ class ScriptAPI(Resource):
 
         # create a script object
         script = Script(
-            script_name, script_text, g.currentUser, script_lang, is_public)
+            script_name, script_text, g.current_user, script_lang, is_public)
         script.save()
         msg = 'script created.'
         return {'message': msg, 'script_id': script.script_id}, 200
@@ -195,10 +193,11 @@ class ScriptAPI(Resource):
             self.argCheckForPut()
         # modify target script object
         [script, jsonScript] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if script:
-            script.update(script_name, script_text, script_lang, g.currentUser,
-                          is_public)
+            script.update(
+                script_name, script_text, script_lang, g.current_user,
+                is_public)
             script.save()
             msg = 'script<id:' + script.script_id + '>uptaded'
             return {'message': msg}, 200
@@ -211,14 +210,14 @@ class ScriptAPI(Resource):
     def get(self):
         script_id = self.argCheckForGet()
         if not script_id:
-            callableScripts = Script.getCallableScripts(g.currentUser)
+            callableScripts = Script.getCallableScripts(g.current_user)
             json_callableScripts = list()
             for callableScript in callableScripts:
                 result = dict()
                 result['script_id'] = callableScript.Script.script_id
                 result['script_name'] = callableScript.Script.script_name
                 result['script_text'] = callableScript.Script.script_text
-                result['owner_name'] = callableScript.User.user_name
+                result['owner_name'] = callableScript.User.username
                 result['owner_id'] = callableScript.Script.owner_id
                 result['time_create'] = callableScript.Script.time_create
                 result['time_last_edit'] = callableScript.Script.time_last_edit
@@ -229,13 +228,13 @@ class ScriptAPI(Resource):
             return {'message': msg, 'scripts': json_callableScripts}, 200
         else:
             callableScript = Script.getCallableScripts(
-                g.currentUser, script_id)
+                g.current_user, script_id)
             if callableScript:
                 result = dict()
                 result['script_id'] = callableScript.Script.script_id
                 result['script_name'] = callableScript.Script.script_name
                 result['script_text'] = callableScript.Script.script_text
-                result['owner_name'] = callableScript.User.user_name
+                result['owner_name'] = callableScript.User.username
                 result['owner_id'] = callableScript.Script.owner_id
                 result['time_create'] = callableScript.Script.time_create
                 result['time_last_edit'] = callableScript.Script.time_last_edit
@@ -250,7 +249,7 @@ class ScriptAPI(Resource):
     def delete(self):
         script_id = self.argCheckForDelete()
         [script, jsonScript] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if not script:
             msg = 'wrong script_id.'
             raise utils.InvalidAPIUsage(msg)
@@ -327,7 +326,7 @@ class ScriptAPI(Resource):
 
     @staticmethod
     def getScriptListOfTokenOwner():
-        [scripts, json_scripts] = Script.getWithinUser(g.currentUser)
+        [scripts, json_scripts] = Script.getWithinUser(g.current_user)
         if json_scripts:
             msg = 'scripts info'
             return [msg, json_scripts]
@@ -342,7 +341,7 @@ class ScriptAPI(Resource):
     @staticmethod
     def getScriptInfo(script_id):
         [script, json_script] = Script.getFromIdWithinUser(
-            script_id, g.currentUser)
+            script_id, g.current_user)
         if script:
             msg = 'walker info'
             return [msg, json_script]
@@ -351,9 +350,10 @@ class ScriptAPI(Resource):
             return [msg, None]
 
 
-class ScriptWalkerExecutor(object):
+class ScriptWalkerExecutor(threading.Thread):
     def __init__(self, script_mission, private_key_file='~/.ssh/id_rsa',
                  become_pass=None):
+        threading.Thread.__init__(self)
         self.script_mission = script_mission
         self.walker = script_mission.getWalker()
         self.script = script_mission.getScript()
@@ -376,17 +376,21 @@ class ScriptWalkerExecutor(object):
             script_mission.params)
 
     def run(self):
+        msg = 'walker<id:' + self.walker.walker_id + '> begin to run.'
+        app.logger.info(utils.logmsg(msg))
+
         [state, stats_sum, results] = self.script_exec_adpater.run()
-        self.walker.state = state
-        self.walker.save()
+        threadLock.acquire()
         for trail in self.trails:
             host_result = results[trail.ip]
             host_stat_sum = stats_sum[trail.ip]
             trail.resultUpdate(host_stat_sum, host_result)
             trail.save()
-        try:
-            thread.exit()
-            msg = 'walker<' + self.walker.walker_id + '> thread exit.'
-        except:
-            msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
-        app.logger.info(msg)
+        self.walker.state = state
+        self.walker.save()
+        threadLock.release()
+
+        msg = 'walker<id:' + self.walker.walker_id + \
+            '>scriptExecutor task finished.'
+        app.logger.info(utils.logmsg(msg))
+        thread.exit()
