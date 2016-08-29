@@ -2,6 +2,10 @@
 # !/usr/bin/env python
 #
 from ansiAdapter import ShellExecAdapter
+import os
+basedir = os.path.abspath(os.path.dirname('..'))
+ROOT_SSH_KEY_FILE = os.path.join(basedir, 'root_id_rsa')
+ADMIN_SSH_KEY_FILE = os.path.join(basedir, 'admin_id_rsa')
 # import ansiAdapter
 # You may want this to run as user root instead
 # or make this an environmental variable, or
@@ -14,10 +18,14 @@ run_data = {
 }
 
 hostnames = ['192.168.182.1', '192.168.182.12']
-private_key_file = '~/.ssh/id_rsa'
+#private_key_file = ROOT_SSH_KEY_FILE
+private_key_file = ADMIN_SSH_KEY_FILE
 shell = "date>run_result;sleep 3;date>>run_result;cat run_result;"
+#shell = "dfkdjf"
 become_pass = None
-remote_user = 'root'
+#remote_user = 'root'
+remote_user = 'admin'
+print private_key_file
 
 shellExecAdapter = ShellExecAdapter(
     hostnames, remote_user, private_key_file, run_data, become_pass, shell)
