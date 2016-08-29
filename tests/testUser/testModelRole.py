@@ -28,21 +28,8 @@ class TestModelsRole():
     # establish db
     def setUp(self):
         app.testing = True
-        app.config['DB_FILE'] = 'test.db'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-                        os.path.join(app.config['DB_FOLDER'],
-                        app.config['DB_FILE'])
-        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/test'
-#        # establish log and exception handler
-#        if not os.path.exists(app.config['DB_FOLDER']):
-#            os.mkdir(app.config['DB_FOLDER'])
-#        # Init .data and .log Folder in root dir
-#        if not os.path.exists(app.config['LOGGER_FOLDER']):
-#            os.mkdir(app.config['LOGGER_FOLDER'])
-#        if not os.path.exists(app.config['DB_FOLDER']):
-#            os.mkdir(app.config['DB_FOLDER'])
-#        # init the logger obj
-#        app.logger.addHandler(utils.handler)
+        app.config['SQLALCHEMY_DATABASE_URI'] = \
+            'mysql://root@localhost:3306/test'
 
         self.tester = app.test_client(self)
         db.create_all()

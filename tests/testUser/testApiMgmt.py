@@ -29,11 +29,8 @@ class TestApiUserList():
     # establish db
     def setUp(self):
         app.testing = True
-        app.config['DB_FILE'] = 'test.db'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-                        os.path.join(app.config['DB_FOLDER'],
-                        app.config['DB_FILE'])
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/test'
+        app.config['SQLALCHEMY_DATABASE_URI'] = \
+            'mysql://root@localhost:3306/test'
         db.create_all()
         testUtils.importUserData()
         print 'Data imported'

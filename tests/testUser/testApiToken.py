@@ -30,12 +30,8 @@ class TestApiToken():
     # establish db
     def setUp(self):
         app.testing = True
-        app.config['DB_FILE'] = 'test.db'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-                        os.path.join(app.config['DB_FOLDER'],
-                        app.config['DB_FILE'])
         app.config['SQLALCHEMY_DATABASE_URI'] = \
-            'mysql://root:11111111@localhost:3306/test'
+            'mysql://root@localhost:3306/test'
         self.tester = app.test_client(self)
         db.create_all()
         
