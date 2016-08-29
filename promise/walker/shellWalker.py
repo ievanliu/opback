@@ -54,7 +54,7 @@ class ShellWalkerAPI(Resource):
         try:
             shell_walker_executor = ShellWalkerExecutor(shell_mission)
             shell_walker_executor.start()
-            msg = 'target shell execution timeout exited!'
+            msg = 'target shell execution established!'
             return {'message': msg, 'walker_id': walker.walker_id}, 200
         except:
             msg = 'faild to establish mission.'

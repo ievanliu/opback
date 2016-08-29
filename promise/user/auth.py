@@ -44,8 +44,6 @@ class TokenAPI(Resource):
 
         if args['granttype'] == 'login':
             # use username and password to login and get token
-            print args['username']
-            print args['password']
             [token, refreshToken, user, last_login, msg] = AuthMethods.login(
                 args['username'], args['password'])
             if token:

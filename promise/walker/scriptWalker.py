@@ -277,8 +277,8 @@ class ScriptAPI(Resource):
             'script_name', type=str, location='json',
             required=True, help='iplist ip must be a list')
         self.reqparse.add_argument(
-            'script_text', type=str, location='json',
-            required=True, help='script_text must be a string')
+            'script_text', type=unicode, location='json',
+            required=True, help='script_text must be a unicode text')
         self.reqparse.add_argument(
             'script_lang', type=str, location='json',
             required=True, help='osuser must be a string')
@@ -300,8 +300,8 @@ class ScriptAPI(Resource):
             'script_name', type=str, location='json',
             required=True, help='iplist_name must be a list')
         self.reqparse.add_argument(
-            'script_text', type=str, location='json',
-            required=True, help='script_text must be a string')
+            'script_text', type=unicode, location='json',
+            required=True, help='script_text must be a unicode text')
         self.reqparse.add_argument(
             'script_lang', type=str, location='json',
             required=True, help='script_lang must be a string')
