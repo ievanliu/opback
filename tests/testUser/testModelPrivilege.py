@@ -8,7 +8,7 @@
 # autotest for the Privilege model of user package
 
 import sys
-sys.path.append('.')
+sys.path.append('..')
 
 from nose.tools import *
 import json
@@ -19,6 +19,7 @@ from sqlite3 import dbapi2 as sqlite3
 from promise import app, db, utils
 from promise.user import utils as userUtils
 from promise.user.models import User, Privilege, Role
+from tests import utils as testUtils
 
 class TestModelsPriv():
     '''
@@ -44,54 +45,23 @@ class TestModelsPriv():
 #        app.logger.addHandler(utils.handler)
         self.tester = app.test_client(self)
         db.create_all()
-
-        ## init privileges
-        #privilegeNameList = ['userAdmin', 'inventoryAdmin']
-        #privilegeList = []
-        #for item in privilegeNameList:
-        #    newPrivilege = Privilege(item)
-        #    db.session.add(newPrivilege)
-        #    privilegeList.append(newPrivilege)
-
-      #  ## init roles
-        #roleRoot = Role('root')
-        #roleRoot.addPrivilege(privilegeList=privilegeList)
-        #roleOperator = Role('operator')
-        #roleInventoryAdmin = Role('InventoryAdmin')
-        #roleInventoryAdmin.addPrivilege(privilege=newPrivilege)
-        #db.session.add(roleRoot)
-        #db.session.add(roleOperator)
-        #db.session.add(roleInventoryAdmin)
-        #db.session.commit() # commit the roles before user init
-
-      #  ## init users
-        #user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
-        #user2 = User('jerry', userUtils.hash_pass("jerrypass"), roleInventoryAdmin)
-        #rootUser = User(app.config['DEFAULT_ROOT_USER_NAME'], userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']), roleRoot)
-        #visitor = User('visitor', 'visitor', roleOperator)
-
-      #  #db.session.add(rootUser)
-        #db.session.add(visitor)
-        #db.session.add(user1)
-        #db.session.add(user2)
-        #db.session.commit()
+        testUtils.importUserData()
         print 'Data imported'
 
    # drop db
     def tearDown(self):
-        pass
-        #db.drop_all()
+        db.drop_all()
 
-    # test to insertting data
-    @with_setup(setUp, tearDown)
-    def test_priv_insertinfo(self):
-        '''
-        insert privilege
-        '''
-        newPriv = Privilege('newPriv')
-        newPriv.insertPrivilege()
-        gotPriv = Privilege.getValidPrivilege(privilegeName='newPriv')
-        eq_(gotPriv.privilege_name, 'newPriv')
+#    # test to insertting data
+#    @with_setup(setUp, tearDown)
+#    def test_priv_insertinfo(self):
+#        '''
+#        insert privilege
+#        '''
+#        newPriv = Privilege('newPriv')
+#        newPriv.insertPrivilege()
+#        gotPriv = Privilege.getValidPrivilege(privilegeName='newPriv')
+#        eq_(gotPriv.privilege_name, 'newPriv')
     
     # test to deleting data
 #    @with_setup(setUp)
