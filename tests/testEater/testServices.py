@@ -1,5 +1,5 @@
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# !/usr/bin/env python
 #
 # Author: Leann Mak
 # Email: leannmak@139.com
@@ -31,14 +31,14 @@ class TestServices():
         app.testing = True
 
         # sqlite3 database for test
-        app.config['DB_FILE'] = 'test.db'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-                        os.path.join(app.config['DB_FOLDER'],
-                        app.config['DB_FILE'])
+        # app.config['DB_FILE'] = 'test.db'
+        # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
+        #                 os.path.join(app.config['DB_FOLDER'],
+        #                 app.config['DB_FILE'])
 
         # mysql database for test
         # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://dbuser:dbpassword@ip:port/common'
-        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/eater'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:11111111@localhost:3306/eater'
         # app.config['SQLALCHEMY_BINDS'] = {
         #     'eater': 'mysql://root:11111111@localhost:3306/eater'
         # }
@@ -113,32 +113,86 @@ class TestServices():
         # host_sync()
 
         # 1.2 init privileges
-        privilegeNameList = ['userAdmin', 'inventoryAdmin']
-        privilegeList = []
-        for item in privilegeNameList:
-            newPrivilege = Privilege(item)
-            db.session.add(newPrivilege)
-            privilegeList.append(newPrivilege)
+        user_admin_privilege = Privilege(
+            privilege_name='userAdmin',
+            description='user/role/privlilege administration.')
+        inventory_admin_privilege = Privilege(
+            privilege_name='inventoryAdmin',
+            description='cmdb/inventory administration')
+        shell_exec_privilege = Privilege(
+            privilege_name='shellExec',
+            description='execution of shell module of walker.')
+        script_exec_privilege = Privilege(
+            privilege_name='scriptExec',
+            description='execution of script module of walker.')
+        walker_info_privilege = Privilege(
+            privilege_name='walkerInfo',
+            description='get the details infomation of walkers.')
+        user_admin_privilege.save()
+        inventory_admin_privilege.save()
+        shell_exec_privilege.save()
+        script_exec_privilege.save()
+        walker_info_privilege.save()
 
         # 1.3 init roles: should be committed before user init
-        roleRoot = Role('root')
-        roleRoot.addPrivilege(privilegeList=privilegeList)
-        db.session.commit()
+        role_root = Role(role_name='root', description='超级用户')
+        role_operator = Role(role_name='operator', description='运维操作员')
+        role_inventory_admin = Role(
+            role_name='inventoryAdmin', description='资源管理员')
+        role_user_admin = Role(role_name='userAdmin', description='用户管理员')
+
+        role_root.update(
+            privileges=[
+                inventory_admin_privilege, user_admin_privilege,
+                shell_exec_privilege, script_exec_privilege,
+                walker_info_privilege])
+        role_user_admin.update(privileges=[user_admin_privilege])
+        role_inventory_admin.update(privileges=[inventory_admin_privilege])
+        role_operator.update(
+            privileges=[
+                shell_exec_privilege, script_exec_privilege,
+                walker_info_privilege])
+        role_root.save()
+        role_user_admin.save()
+        role_inventory_admin.save()
+        role_operator.save()
 
         # 1.4 init users
-        rootUser = User(
-            app.config['DEFAULT_ROOT_USER_NAME'],
-            userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']),
-            roleRoot)
-        db.session.add(rootUser)
-        db.session.commit()
+        user1 = User(
+            username='tom',
+            hashed_password=userUtils.hash_pass("tompass"),
+            role_list=[role_operator])
+        user2 = User(
+            username='jerry',
+            hashed_password=userUtils.hash_pass("jerrypass"),
+            role_list=[role_inventory_admin])
+        user3 = User(
+            username='mike',
+            hashed_password=userUtils.hash_pass("mikepass"),
+            role_list=[role_user_admin])
+        root_user = User(
+            username=app.config['DEFAULT_ROOT_USERNAME'],
+            hashed_password=userUtils.hash_pass(
+                app.config['DEFAULT_ROOT_PASSWORD']),
+            role_list=[role_root])
+        visitor = User(
+            username='visitor',
+            hashed_password=userUtils.hash_pass('visitor'))
+
+        user1.save()
+        user2.save()
+        user3.save()
+        root_user.save()
+        visitor.save()
 
         # 2. user login: get user token
+        d = {"username": app.config['DEFAULT_ROOT_USERNAME'],
+             "password": app.config['DEFAULT_ROOT_PASSWORD'],
+             "granttype":"login"}
         login = self.tester.post(
-            '/api/v0.0/user/login',
-            data=dict(
-                username=app.config['DEFAULT_ROOT_USER_NAME'],
-                password=app.config['DEFAULT_ROOT_PASSWORD']))
+            '/api/v0.0/user/token',
+            content_type='application/json',
+            data=json.dumps(d))
         self.token = json.loads(login.data)['token']
 
     # log out
@@ -227,44 +281,44 @@ class TestServices():
         eq_(response.status_code, 200)
 
 
-    @with_setup(setUp, tearDown)
-    def test_hostgroup_api(self):
-        """
-            get a hostgroup from eater
-        """
-        g = Group.query.order_by(Group.id).all()
-        # 1. hostgroup found
-        # 1.1 no extend
-        response = self.tester.get(
-            '/api/v0.0/eater/hostgroup/%s' % g[0].id,
-            headers={'token': self.token})
-        assert 'data' in response.data
-        eq_(response.status_code, 200)
-        data = json.loads(response.data)['data']
-        assert 'name' in data
-        eq_(data['name'], g[0].name)
-        assert 'it' in data
-        assert 'group' not in data['it'][0]
-        # 1.2 extend
-        d = dict(extend=True)
-        response = self.tester.get(
-            '/api/v0.0/eater/hostgroup/%s' % g[0].id,
-            content_type='application/json',
-            headers={'token': self.token},
-            data=json.dumps(d))
-        assert 'data' in response.data
-        eq_(response.status_code, 200)
-        data = json.loads(response.data)['data']
-        assert 'name' in data
-        eq_(data['name'], g[0].name)
-        assert 'it' in data
-        assert 'group' in data['it'][0]
+    # @with_setup(setUp, tearDown)
+    # def test_hostgroup_api(self):
+    #     """
+    #         get a hostgroup from eater
+    #     """
+    #     g = Group.query.order_by(Group.id).all()
+    #     # 1. hostgroup found
+    #     # 1.1 no extend
+    #     response = self.tester.get(
+    #         '/api/v0.0/eater/hostgroup/%s' % g[0].id,
+    #         headers={'token': self.token})
+    #     assert 'data' in response.data
+    #     eq_(response.status_code, 200)
+    #     data = json.loads(response.data)['data']
+    #     assert 'name' in data
+    #     eq_(data['name'], g[0].name)
+    #     assert 'it' in data
+    #     assert 'group' not in data['it'][0]
+    #     # 1.2 extend
+    #     d = dict(extend=True)
+    #     response = self.tester.get(
+    #         '/api/v0.0/eater/hostgroup/%s' % g[0].id,
+    #         content_type='application/json',
+    #         headers={'token': self.token},
+    #         data=json.dumps(d))
+    #     assert 'data' in response.data
+    #     eq_(response.status_code, 200)
+    #     data = json.loads(response.data)['data']
+    #     assert 'name' in data
+    #     eq_(data['name'], g[0].name)
+    #     assert 'it' in data
+    #     assert 'group' in data['it'][0]
 
-        # 2. hostgroup not found
-        response = self.tester.get(
-            '/api/v0.0/eater/hostgroup/nothing',
-            headers={'token': self.token})
-        assert 'error' in response.data
-        error = json.loads(response.data)['error']
-        assert 'Object Not Found' in error
-        eq_(response.status_code, 404)
+    #     # 2. hostgroup not found
+    #     response = self.tester.get(
+    #         '/api/v0.0/eater/hostgroup/nothing',
+    #         headers={'token': self.token})
+    #     assert 'error' in response.data
+    #     error = json.loads(response.data)['error']
+    #     assert 'Object Not Found' in error
+    #     eq_(response.status_code, 404)
