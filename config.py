@@ -62,6 +62,8 @@ DEFAULT_ROOT_PASSWORD = 'admin'
     walker configuration
 """
 WALKER_MISSION_TIMEOUT = 180  # in second
+ROOT_SSH_KEY_FILE = os.path.join(basedir, '.ssh_key/root_id_rsa')
+ADMIN_SSH_KEY_FILE = os.path.join(basedir, '.ssh_key/admin_id_rsa')
 
 """
     zabbix access configuration

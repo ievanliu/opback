@@ -8,7 +8,7 @@
 # autotest for the Privilege model of user package
 
 import sys
-sys.path.append('.')
+sys.path.append('..')
 
 from nose.tools import *
 import json
@@ -19,6 +19,8 @@ from sqlite3 import dbapi2 as sqlite3
 from promise import app, db, utils
 from promise.user import utils as userUtils
 from promise.user.models import User, Privilege, Role
+from tests import utils as testUtils
+
 
 class TestModelsUser():
     '''
@@ -45,108 +47,80 @@ class TestModelsUser():
 
         self.tester = app.test_client(self)
         db.create_all()
-
-        # init privileges
-        privilegeNameList = ['userAdmin', 'inventoryAdmin']
-        privilegeList = []
-        for item in privilegeNameList:
-            newPrivilege = Privilege(item)
-            db.session.add(newPrivilege)
-            privilegeList.append(newPrivilege)
-
-        # init roles
-        roleRoot = Role('root')
-        roleRoot.addPrivilege(privilegeList=privilegeList)
-        roleOperator = Role('operator')
-        roleInventoryAdmin = Role('InventoryAdmin')
-        roleInventoryAdmin.addPrivilege(privilege=newPrivilege)
-        roleRoot.save()
-        roleOperator.save()
-        roleInventoryAdmin.save()
-
-        # init users
-        user1 = User('tom', userUtils.hash_pass("tompass"), roleOperator)
-        user2 = User('jerry', userUtils.hash_pass("jerrypass"), roleInventoryAdmin)
-        rootUser = User(app.config['DEFAULT_ROOT_USER_NAME'], userUtils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']), roleRoot)
-        visitor = User('visitor', 'visitor', roleOperator)
-
-        db.session.add(rootUser)
-        db.session.add(visitor)
-        db.session.add(user1)
-        db.session.add(user2)
-        db.session.commit()
+        testUtils.importUserData()
         print 'Data imported'
 
     # drop db
     def tearDown(self):
         db.drop_all()
 
-    # test to insertting data
-    @with_setup(setUp, tearDown)
-    def test_role_insertinfo(self):
-        '''
-        insert user
-        '''
-        roleOperator = Role.getValidRole(roleName='operator')
-        mike = User('mike', userUtils.hash_pass("mikepass"), roleOperator)
-        mikeUserId = mike.user_id
-        mike.insertUser()
-        user = User.getValidUser(userId=mikeUserId)
-        name=user.user_name
-        name=str(name)
-        print type(name)
-        eq_(name, 'mike')
-    
-    # test to deleting data
-    @with_setup(setUp, tearDown)
-    def test_user_deleteinfo(self):
-        '''
-        delete user
-        '''
-        roleOperator = Role.getValidRole(roleName='operator')
-        mike = User('mike', userUtils.hash_pass('mikepass'),roleOperator)
-        mike.insertUser()
-        mike_test = User.getValidUser(userName='mike')
-        eq_(mike_test.user_name, 'mike')
-        mike_test.setInvalid()
-        searchUser = User.getValidUser(userId=mike_test.user_id)
-        eq_(searchUser, None)#
+#    # test to insertting data
+#    @with_setup(setUp, tearDown)
+#    def test_role_insertinfo(self):
+#        '''
+#        insert user
+#        '''
+#        roleOperator = Role.getValidRole(role_name='operator')
+#        mike = User(
+#            'mike', userUtils.hash_pass("mikepass"), roleOperator)
+#        mikeUserId = mike.user_id
+#        mike.insertUser()
+#        user = User.getValidUser(userId=mikeUserId)
+#        name=user.user_name
+#        name=str(name)
+#        print type(name)
+#        eq_(name, 'mike')
+#    
+#    # test to deleting data
+#    @with_setup(setUp, tearDown)
+#    def test_user_deleteinfo(self):
+#        '''
+#        delete user
+#        '''
+#        roleOperator = Role.getValidRole(roleName='operator')
+#        mike = User('mike', userUtils.hash_pass('mikepass'),roleOperator)
+#        mike.insertUser()
+#        mike_test = User.getValidUser(userName='mike')
+#        eq_(mike_test.user_name, 'mike')
+#        mike_test.setInvalid()
+#        searchUser = User.getValidUser(userId=mike_test.user_id)
+#        eq_(searchUser, None)##
 
-    # test to updating data
-    @with_setup(setUp, tearDown)
-    def test_user_updateinfo(self):
-        '''
-        update user
-        '''
-        user = User.getValidUser(userName='tom')
-        user.hashed_password = userUtils.hash_pass('tompass1')
-        User.updateUser(user)
-        user_get = User.getValidUser(userName='tom')
-        eq_(user_get.hashed_password, userUtils.hash_pass('tompass1'))#
+#    # test to updating data
+#    @with_setup(setUp, tearDown)
+#    def test_user_updateinfo(self):
+#        '''
+#        update user
+#        '''
+#        user = User.getValidUser(userName='tom')
+#        user.hashed_password = userUtils.hash_pass('tompass1')
+#        User.updateUser(user)
+#        user_get = User.getValidUser(userName='tom')
+#        eq_(user_get.hashed_password, userUtils.hash_pass('tompass1'))##
 
-    # test to get data
-    @with_setup(setUp, tearDown)
-    def test_user_getinfo(self):
-        '''
-        get user & get Relate role
-        '''
-        user = User.getValidUser(userName='tom')
-        eqTag = 0
-        roles = user.roles
-        for role in roles:
-            if role.role_name == 'operator':
-                eqTag = 1
-        eq_(eqTag, 1)
+#    # test to get data
+#    @with_setup(setUp, tearDown)
+#    def test_user_getinfo(self):
+#        '''
+#        get user & get Relate role
+#        '''
+#        user = User.getValidUser(userName='tom')
+#        eqTag = 0
+#        roles = user.roles
+#        for role in roles:
+#            if role.role_name == 'operator':
+#                eqTag = 1
+#        eq_(eqTag, 1)#
 
-    # test userLogin4Token
-    @with_setup(setUp, tearDown)
-    def test_user_Login4token(self):
-        '''
-        test login for token
-        '''
-        testUser = User.getValidUser(userName='jerry')
-        [token, refreshToken, user, msg] = User.userLogin4token('jerry', 'jerrypass')
-        print msg
-        eq_(user.user_id, testUser.user_id)
+#    # test userLogin4Token
+#    @with_setup(setUp, tearDown)
+#    def test_user_Login4token(self):
+#        '''
+#        test login for token
+#        '''
+#        testUser = User.getValidUser(userName='jerry')
+#        [token, refreshToken, user, msg] = User.userLogin4token('jerry', 'jerrypass')
+#        print msg
+#        eq_(user.user_id, testUser.user_id)
 
 

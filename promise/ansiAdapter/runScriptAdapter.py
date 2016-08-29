@@ -2,6 +2,8 @@
 # !/usr/bin/env python
 #
 from ansiAdapter import ScriptExecAdapter
+import os
+basedir = os.path.abspath(os.path.dirname('..'))
 # import ansiAdapter
 # You may want this to run as user root instead
 # or make this an environmental variable, or
@@ -14,7 +16,7 @@ run_data = {
 }
 
 hostnames = ['192.168.182.1', '192.168.182.12']
-private_key_file = '~/.ssh/id_rsa'
+private_key_file = os.path.join(basedir, '.ssh_key/root_id_rsa')
 script = """#!/usr/bin/python
 #-*- coding:utf-8 -*-
 import os
