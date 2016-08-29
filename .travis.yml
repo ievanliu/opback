@@ -1,12 +1,15 @@
 language: python
 python:
     - "2.7"
+service: mysql
+before_script:
+  - mysql -e 'create database test;'
 install:
     - "pip install -r requirements.txt"
 script:
-    #- python scripts/manager.py recreatedb
-    #- tox
-    #- nosetests -v --with-coverage --cover-package=promise
+    - python scripts/manager.py recreatedb
+    - tox
+    - nosetests -v --with-coverage --cover-package=promise
 notifications:
     email:
         recipients:
