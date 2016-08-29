@@ -18,12 +18,12 @@ run_data = {
 }
 
 hostnames = ['192.168.182.1', '192.168.182.12']
-#private_key_file = ROOT_SSH_KEY_FILE
+# private_key_file = ROOT_SSH_KEY_FILE
 private_key_file = ADMIN_SSH_KEY_FILE
 shell = "date>run_result;sleep 3;date>>run_result;cat run_result;"
-#shell = "dfkdjf"
+# shell = "dfkdjf"
 become_pass = None
-#remote_user = 'root'
+# remote_user = 'root'
 remote_user = 'admin'
 print private_key_file
 
