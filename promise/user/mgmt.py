@@ -195,16 +195,14 @@ class UserAPI(Resource):
 
         # other args check
         role_id_list = args['role_id_list']
+        role_list = list()
         if role_id_list:
-            role_list = list()
             for role_id in role_id_list:
                 role = Role.getValidRole(role_id=role_id)
                 if not role:
                     msg = 'invalid role id:' + role_id
                     raise utils.InvalidAPIUsage(msg)
                 role_list.append(role)
-        else:
-            role_list = None
 
         password = args['password']
         if password:
@@ -327,19 +325,17 @@ class RoleAPI(Resource):
         role = Role.getValidRole(role_name=role_name)
         if role:
             raise utils.InvalidAPIUsage('role name is in used.')
+        user_list = list()
         if user_id_list:
-            user_list = list()
             for user_id in user_id_list:
                 user = User.getValidUser(user_id=user_id)
                 if not user:
                     msg = 'invalid user id:' + user_id
                     raise utils.InvalidAPIUsage(msg)
                 user_list.append(user)
-        else:
-            user_list = None
 
+        privilege_list = list()
         if privilege_id_list:
-            privilege_list = list()
             for privilege_id in privilege_id_list:
                 privilege = Privilege.getValidPrivilege(
                     privilege_id=privilege_id)
@@ -347,8 +343,6 @@ class RoleAPI(Resource):
                     raise utils.InvalidAPIUsage(
                         'invalid privilege id:' + privilege_id)
                 privilege_list.append(privilege)
-        else:
-            privilege_list = None
         return [role_name, description, privilege_list, user_list]
 
     def argCheckForGet(self):

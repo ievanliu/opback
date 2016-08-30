@@ -17,7 +17,8 @@ run_data = {
     'user_id': '123123'
 }
 
-hostnames = ['192.168.182.1', '192.168.182.12']
+# hostnames = ['192.168.182.1', '192.168.182.12']
+hostnames = ['127.0.0.1']
 # private_key_file = ROOT_SSH_KEY_FILE
 private_key_file = ADMIN_SSH_KEY_FILE
 shell = "date>run_result;sleep 3;date>>run_result;cat run_result;"
