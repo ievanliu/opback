@@ -1,9 +1,12 @@
 # -*- coding:utf-8 -*-
 # !/usr/bin/env python
 #
-from ansiAdapter import ScriptExecAdapter
-import os
-basedir = os.path.abspath(os.path.dirname('..'))
+import sys
+sys.path.append('.')
+
+from promise.ansiAdapter.ansiAdapter import ScriptExecAdapter
+from promise import app
+
 # import ansiAdapter
 # You may want this to run as user root instead
 # or make this an environmental variable, or
@@ -16,14 +19,14 @@ run_data = {
 }
 
 hostnames = ['192.168.182.1', '192.168.182.12']
-private_key_file = os.path.join(basedir, '.ssh_key/root_id_rsa')
+private_key_file = app.config['ADMIN_SSH_KEY_FILE']
 script = """#!/usr/bin/python
 #-*- coding:utf-8 -*-
 import os
 print os.path.dirname('/tmp/')
     """
 become_pass = None
-remote_user = 'root'
+remote_user = 'admin'
 params = 'params1 params2'
 
 scriptExecAdapter = ScriptExecAdapter(
