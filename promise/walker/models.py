@@ -460,6 +460,21 @@ class Trail(db.Model):
             msg = utils.logmsg('exception: %s.' % e)
             app.logger.info(msg)
             state = False
+
+            # close db.session, reconnect and try again
+            db.session.close()
+            db.session.add(self)
+            try:
+                db.session.commit()
+                msg = utils.logmsg('save trail:' + self.trail_id)
+                app.logger.debug(msg)
+                state = True
+            except Exception, e:
+                db.session.rollback()
+                msg = utils.logmsg('exception: %s.' % e)
+                app.logger.info(msg)
+                state = False
+
         return [state, msg]
 
 

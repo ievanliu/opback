@@ -50,9 +50,13 @@ class ShellWalkerAPI(Resource):
         walker.state = -1
         walker.save()
 
+        private_key_file = app.config['ROOT_SSH_KEY_FILE']
+
         # setup a shell mission walker executor
         try:
-            shell_walker_executor = ShellWalkerExecutor(shell_mission)
+            shell_walker_executor = ShellWalkerExecutor(
+                shell_mission,
+                private_key_file=private_key_file)
             shell_walker_executor.start()
             msg = 'target shell execution established!'
             return {'message': msg, 'walker_id': walker.walker_id}, 200
@@ -135,9 +139,10 @@ class ShellWalkerAPI(Resource):
         if walker:
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
+            return [msg, walker.walker_name, walker.state, json_trails]
         else:
             msg = 'wrong walker id'
-        return [msg, walker.walker_name, walker.state, json_trails]
+            raise utils.InvalidAPIUsage(msg)
 
     @staticmethod
     def run(shell_walker_executor):
@@ -178,7 +183,7 @@ class ShellWalkerExecutor(threading.Thread):
             host_result = results[trail.ip]
             host_stat_sum = stats_sum[trail.ip]
             trail.resultUpdate(host_stat_sum, host_result)
-            trail.save()
+            [save_state, msg] = trail.save()
         self.walker.state = state
         self.walker.save()
         threadLock.release()

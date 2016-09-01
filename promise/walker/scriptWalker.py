@@ -155,9 +155,10 @@ class ScriptWalkerAPI(Resource):
         if walker:
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
+            return [msg, walker.walker_name, walker.state, json_trails]
         else:
             msg = 'wrong walker id'
-        return [msg, walker.walker_name, walker.state, json_trails]
+            raise utils.InvalidAPIUsage(msg)
 
 #    @staticmethod
 #    def run(shell_walker_executor):
