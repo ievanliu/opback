@@ -42,11 +42,12 @@ class WalkerAPI(Resource):
             [msg, json_walkers] = self.getWalkerListOfTokenOwner()
             return {'message': msg, 'walkers': json_walkers}, 200
         else:
-            [msg, walker_name, json_trails] = self.getWalkerInfoOfTokenOwner(
-                walker_id)
+            [msg, walker_name, state, json_trails] = \
+                self.getWalkerInfoOfTokenOwner(walker_id)
             return {
                 'message': msg,
                 'walker_name': walker_name,
+                'state': state,
                 'trails': json_trails}, 200
 
     """
@@ -126,7 +127,7 @@ class WalkerAPI(Resource):
         if walker:
             [trails, json_trails] = walker.getTrails()
             msg = 'walker info'
-            return [msg, walker.walker_name, json_trails]
+            return [msg, walker.walker_name, walker.state, json_trails]
         else:
             msg = 'wrong walker id'
             raise utils.InvalidAPIUsage(msg)

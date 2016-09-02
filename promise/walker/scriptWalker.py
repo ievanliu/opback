@@ -80,7 +80,7 @@ class ScriptWalkerAPI(Resource):
             return {
                 'message': msg,
                 'walker_name': walker_name,
-                'walker_state': state,
+                'state': state,
                 'trails': json_trails}, 200
 
     """
