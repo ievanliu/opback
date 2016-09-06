@@ -18,7 +18,7 @@ define("port", default=5000, help="run on the given port", type=int)
 # http_server = HTTPServer(WSGIContainer(app))
 # http_server.listen(options.port)
 # IOLoop.instance().start()
-if __name__=="__main__":
+if __name__ == "__main__":
     tornado.options.parse_command_line()
     http_server = HTTPServer(WSGIContainer(app))
     http_server.listen(options.port)
