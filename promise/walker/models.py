@@ -345,6 +345,17 @@ class Script(db.Model):
             return [None, None]
 
     @staticmethod
+    def getFromIdWithinUserOrPublic(script_id, user, valid=1):
+        script = Script.query.filter(
+            and_(
+                Script.script_id == script_id,
+                Script.valid == valid,
+                or_(
+                    Script.owner_id == user.user_id,
+                    Script.is_public == 1))).first()
+        return script
+
+    @staticmethod
     def getWithinUser(user, valid=1):
         scripts = Script.query.filter_by(
             owner_id=user.user_id, valid=valid).all()

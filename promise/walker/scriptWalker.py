@@ -124,7 +124,7 @@ class ScriptWalkerAPI(Resource):
         walker_name = args['name']
 
         # check if the script belongs to the current user
-        [script, json_script] = Script.getFromIdWithinUser(
+        script = Script.getFromIdWithinUserOrPublic(
             script_id, g.current_user)
         if script:
             if not walker_name:
@@ -359,7 +359,7 @@ class ScriptAPI(Resource):
             return [msg, None]
 
 
-#class ScriptWalkerExecutor(threading.Thread):
+# class ScriptWalkerExecutor(threading.Thread):
 class ScriptWalkerExecutor(Resource):
     def __init__(self, script_mission, private_key_file='~/.ssh/id_rsa',
                  become_pass=None):
