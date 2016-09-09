@@ -359,7 +359,7 @@ class ScriptAPI(Resource):
             return [msg, None]
 
 
-#class ScriptWalkerExecutor(threading.Thread):
+# class ScriptWalkerExecutor(threading.Thread):
 class ScriptWalkerExecutor(Resource):
     def __init__(self, script_mission, private_key_file='~/.ssh/id_rsa',
                  become_pass=None):
