@@ -19,11 +19,11 @@ from .. import app
 from ..ansiAdapter.ansiAdapter import ShellExecAdapter
 from .. import utils
 from ..user import auth
-import threading
-import thread
+# import threading
+# import thread
 from .. import dont_cache
 
-threadLock = threading.Lock()
+# threadLock = threading.Lock()
 
 
 class ShellWalkerAPI(Resource):
@@ -52,19 +52,25 @@ class ShellWalkerAPI(Resource):
 
         private_key_file = app.config['ROOT_SSH_KEY_FILE']
 
-        # setup a shell mission walker executor
-        try:
-            shell_walker_executor = ShellWalkerExecutor(
-                shell_mission,
-                private_key_file=private_key_file)
-            shell_walker_executor.start()
-            msg = 'target shell execution established!'
-            return {'message': msg, 'walker_id': walker.walker_id}, 200
-        except:
-            msg = 'faild to establish mission.'
-            walker.state = -4
-            walker.save()
-            return {'message': msg, 'walker_id': walker.walker_id}, 200
+#        # setup a shell mission walker executor
+#        try:
+#            shell_walker_executor = ShellWalkerExecutor(
+#                shell_mission,
+#                private_key_file=private_key_file)
+#            shell_walker_executor.start()
+#            msg = 'target shell execution established!'
+#            return {'message': msg, 'walker_id': walker.walker_id}, 200
+#        except:
+#            msg = 'faild to establish mission.'
+#            walker.state = -4
+#            walker.save()
+#            return {'message': msg, 'walker_id': walker.walker_id}, 200
+        shell_walker_executor = ShellWalkerExecutor(
+            shell_mission,
+            private_key_file=private_key_file)
+        shell_walker_executor.run()
+        msg = 'target shell execution established!'
+        return {'message': msg, 'walker_id': walker.walker_id}, 200
 
     """
     find out all the shell-mission walkers or one of them
@@ -147,13 +153,14 @@ class ShellWalkerAPI(Resource):
     @staticmethod
     def run(shell_walker_executor):
         shell_walker_executor.run()
-        thread.exit()
+        # thread.exit()
 
 
-class ShellWalkerExecutor(threading.Thread):
+# class ShellWalkerExecutor(threading.Thread):
+class ShellWalkerExecutor(Resource):
     def __init__(self, shell_mission, private_key_file='~/.ssh/id_rsa',
                  become_pass=None):
-        threading.Thread.__init__(self)
+        # threading.Thread.__init__(self)
         self.shell_mission = shell_mission
         self.walker = shell_mission.getWalker()
         [trails, json_trails] = shell_mission.getTrails()
@@ -178,7 +185,7 @@ class ShellWalkerExecutor(threading.Thread):
         app.logger.info(utils.logmsg(msg))
 
         [state, stats_sum, results] = self.shell_exec_adpater.run()
-        threadLock.acquire()
+        # threadLock.acquire()
         for trail in self.trails:
             host_result = results[trail.ip]
             host_stat_sum = stats_sum[trail.ip]
@@ -186,12 +193,12 @@ class ShellWalkerExecutor(threading.Thread):
             [save_state, msg] = trail.save()
         self.walker.state = state
         self.walker.save()
-        threadLock.release()
+        # threadLock.release()
 
         msg = 'walker<id:' + self.walker.walker_id + \
             '>shellExecutor task finished.'
         app.logger.info(utils.logmsg(msg))
-        thread.exit()
+        # thread.exit()
 #        try:
 #        except:
 #            msg = 'walker<' + self.walker.walker_id + '> thread cannot exit.'
