@@ -19,11 +19,11 @@ from .. import app
 from ..ansiAdapter.ansiAdapter import ScriptExecAdapter
 from .. import utils
 from ..user import auth
-import threading
-import thread
+# import threading
+# import thread
 from .. import dont_cache
 
-threadLock = threading.Lock()
+# threadLock = threading.Lock()
 
 
 class ScriptWalkerAPI(Resource):
@@ -48,21 +48,29 @@ class ScriptWalkerAPI(Resource):
         script_mission.save()
         walker.state = -1
         walker.save()
-        # setup a shell mission walker executor thread
+#        # setup a shell mission walker executor thread#
 
-        try:
-            script_walker_executor = ScriptWalkerExecutor(script_mission)
-            # run the executor thread
-            script_walker_executor.start()
+#        try:
+#            script_walker_executor = ScriptWalkerExecutor(script_mission)
+#            # run the executor thread
+#            script_walker_executor.start()#
 
-            msg = 'target script execution established!'
-            return {'message': msg, 'walker_id': walker.walker_id}, 200
+#            msg = 'target script execution established!'
+#            return {'message': msg, 'walker_id': walker.walker_id}, 200#
 
-        except:
-            msg = 'faild to establish mission.'
-            walker.state = -4
-            walker.save()
-            return {'message': msg, 'walker_id': walker.walker_id}, 200
+#        except:
+#            msg = 'faild to establish mission.'
+#            walker.state = -4
+#            walker.save()
+#            return {'message': msg, 'walker_id': walker.walker_id}, 200
+
+        script_walker_executor = ScriptWalkerExecutor(script_mission)
+        # run the executor thread
+        # script_walker_executor.start()
+        script_walker_executor.run()
+
+        msg = 'target script execution established!'
+        return {'message': msg, 'walker_id': walker.walker_id}, 200
 
     """
     find out all the script-mission walkers or one of them
@@ -351,10 +359,11 @@ class ScriptAPI(Resource):
             return [msg, None]
 
 
-class ScriptWalkerExecutor(threading.Thread):
+#class ScriptWalkerExecutor(threading.Thread):
+class ScriptWalkerExecutor(Resource):
     def __init__(self, script_mission, private_key_file='~/.ssh/id_rsa',
                  become_pass=None):
-        threading.Thread.__init__(self)
+        # threading.Thread.__init__(self)
         self.script_mission = script_mission
         self.walker = script_mission.getWalker()
         self.script = script_mission.getScript()
@@ -381,7 +390,7 @@ class ScriptWalkerExecutor(threading.Thread):
         app.logger.info(utils.logmsg(msg))
 
         [state, stats_sum, results] = self.script_exec_adpater.run()
-        threadLock.acquire()
+        # threadLock.acquire()
         for trail in self.trails:
             host_result = results[trail.ip]
             host_stat_sum = stats_sum[trail.ip]
@@ -389,9 +398,9 @@ class ScriptWalkerExecutor(threading.Thread):
             trail.save()
         self.walker.state = state
         self.walker.save()
-        threadLock.release()
+        # threadLock.release()
 
         msg = 'walker<id:' + self.walker.walker_id + \
             '>scriptExecutor task finished.'
         app.logger.info(utils.logmsg(msg))
-        thread.exit()
+        # thread.exit()
