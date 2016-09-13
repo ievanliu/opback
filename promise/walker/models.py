@@ -301,12 +301,15 @@ class Script(db.Model):
     script_lang = db.Column(db.String(32))
     is_public = db.Column(db.SmallInteger)
     valid = db.Column(db.SmallInteger)
+    # script_type may be : "ansible":1; "forward":2
+    # default:1
+    script_type = db.Column(db.SmallInteger)
 
     def __repr__(self):
         return '<script %r>' % self.script_id
 
     def __init__(self, script_name, script_text, owner,
-                 script_lang, is_public, valid=1):
+                 script_lang, is_public, valid=1, script_type=1):
         self.script_id = utils.genUuid(script_name)
         self.script_name = script_name
         self.script_text = script_text
@@ -317,6 +320,7 @@ class Script(db.Model):
         self.last_edit_owner_id = self.owner_id
         self.is_public = is_public
         self.valid = valid
+        self.script_type = script_type
 
     def save(self):
         db.session.add(self)
@@ -356,9 +360,13 @@ class Script(db.Model):
         return script
 
     @staticmethod
-    def getWithinUser(user, valid=1):
-        scripts = Script.query.filter_by(
-            owner_id=user.user_id, valid=valid).all()
+    def getWithinUser(user, valid=1, script_type=None):
+        if not script_type:
+            scripts = Script.query.filter_by(
+                owner_id=user.user_id, valid=valid).all()
+        else:
+            scripts = Script.query.filter_by(
+                owner_id=user.user_id, valid=valid, script_type=script_type)
         if scripts:
             json_scripts = scripts_schema.dump(scripts).data
             return [scripts, json_scripts]
@@ -366,12 +374,13 @@ class Script(db.Model):
             return [None, None]
 
     def update(self, script_name, script_text, script_lang, edit_user,
-               is_public):
+               is_public, script_type):
         self.script_name = script_name
         self.script_text = script_text
         self.script_lang = script_lang
         self.time_last_edit = datetime.datetime.now()
         self.is_public = is_public
+        self.script_type = script_type
 
     def setInvalid(self):
         self.valid = 0
@@ -385,16 +394,27 @@ class Script(db.Model):
         return [state, msg]
 
     @staticmethod
-    def getCallableScripts(user, script_id=None, valid=1):
+    def getCallableScripts(user, script_id=None, script_type=None, valid=1):
         if not script_id:
-            scriptUserList = db.session.query(Script, User).join(User).filter(
-                and_(
-                    or_(Script.owner_id == user.user_id,
-                        Script.is_public == 1),
-                    Script.valid == valid)).all()
+            if not script_type:
+                scriptUserList = \
+                    db.session.query(Script, User).join(User).filter(
+                    and_(
+                        or_(Script.owner_id == user.user_id,
+                            Script.is_public == 1),
+                        Script.valid == valid)).all()
+            else:
+                scriptUserList = \
+                    db.session.query(Script, User).join(User).filter(
+                    and_(
+                        or_(Script.owner_id == user.user_id,
+                            Script.script_type == script_type,
+                            Script.is_public == 1),
+                        Script.valid == valid)).all()
             return scriptUserList
         else:
-            scriptUserInfo = db.session.query(Script, User).join(User).filter(
+            scriptUserInfo = \
+                db.session.query(Script, User).join(User).filter(
                 and_(
                     or_(Script.owner_id == user.user_id,
                         Script.is_public == 1),
