@@ -145,6 +145,7 @@ def recreatedb():
 def systemupdate():
     "for system update."
     initdb()
+    db.engine.execute("ALTER TABLE script ADD script_type smallint;")
     db.engine.execute("UPDATE script SET script_type=1;")
     # print result.context.__dict__
     forward_exec_privilege = Privilege(
