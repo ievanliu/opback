@@ -10,7 +10,7 @@
 
 from .services import HostListAPI, HostAPI, \
     HostGroupListAPI, HostGroupAPI, HostSyncAPI, \
-    IPListAPI, IPAPI, ForwardInfoAPI
+    IPListAPI, IPAPI
 from .. import api
 
 """
@@ -32,9 +32,6 @@ api.add_resource(
 api.add_resource(
     IPAPI, '/api/v0.0/eater/ip/<id>',
     endpoint='et_ip_id_ep')
-api.add_resource(
-    ForwardInfoAPI, '/api/v0.0/eater/forwardinfo',
-    endpoint='et_forword_info_ep')
 
 
 """
