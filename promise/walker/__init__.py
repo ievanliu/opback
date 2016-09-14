@@ -10,6 +10,7 @@
 from .shellWalker import ShellWalkerAPI
 from .scriptWalker import ScriptWalkerAPI
 from .script import ScriptAPI
+from .forwardWalker import ForwardWalkerAPI
 # , PbWalkerAPI, ScriptWalkerAPI
 from .walker import WalkerAPI
 from .. import api
@@ -18,8 +19,8 @@ api.add_resource(
     ShellWalkerAPI, '/api/v0.0/shellwalker', endpoint='shellwalker_ep')
 api.add_resource(
     ScriptAPI, '/api/v0.0/script', endpoint='script_ep')
-#api.add_resource(
-#    FWScriptAPI, '/api/v0.0/fwscript', endpoint='fwscript_ep')
+api.add_resource(
+    ForwardWalkerAPI, '/api/v0.0/forwardwalker', endpoint='forwardwalker_ep')
 # api.add_resource(
 #     PbWalkerAPI, '/api/v0.0/pbwalker', endpoint='pbwalker_ep')
 api.add_resource(

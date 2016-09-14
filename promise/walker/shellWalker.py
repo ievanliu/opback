@@ -52,14 +52,14 @@ class ShellWalkerAPI(Resource):
 
         private_key_file = app.config['ROOT_SSH_KEY_FILE']
 
-#        # setup a shell mission walker executor
-#        try:
-#            shell_walker_executor = ShellWalkerExecutor(
-#                shell_mission,
-#                private_key_file=private_key_file)
-#            shell_walker_executor.start()
-#            msg = 'target shell execution established!'
-#            return {'message': msg, 'walker_id': walker.walker_id}, 200
+        # setup a shell mission walker executor
+        # try:
+#        shell_walker_executor = ShellWalkerExecutor(
+#            shell_mission,
+#            private_key_file=private_key_file)
+#        shell_walker_executor.start()
+#        msg = 'target shell execution established!'
+#        return {'message': msg, 'walker_id': walker.walker_id}, 200
 #        except:
 #            msg = 'faild to establish mission.'
 #            walker.state = -4

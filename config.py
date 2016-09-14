@@ -14,6 +14,7 @@ basedir = os.path.abspath(os.path.dirname('..'))
 # database access string setting, by default we use mysql
 # for common using
 SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/test'
+# SQLALCHEMY_DATABASE_URI = 'mysql://promise:111111@192.168.182.155:3306/test'
 # SQLALCHEMY_POOL_RECYCLE = 3600
 # for eater:
 # SQLALCHEMY_BINDS = {
@@ -64,6 +65,13 @@ DEFAULT_ROOT_PASSWORD = 'admin'
 WALKER_MISSION_TIMEOUT = 180  # in second
 ROOT_SSH_KEY_FILE = os.path.join(basedir, '.ssh_key/root_id_rsa')
 ADMIN_SSH_KEY_FILE = os.path.join(basedir, '.ssh_key/admin_id_rsa')
+
+"""
+    forward configuration
+"""
+FORWARD_LOGLEVEL = 'info'
+FORWARD_LOGGER_FILE = os.path.join(LOGGER_FOLDER, 'forward.log')
+FORWARD_TIMEOUT = 2
 
 """
     zabbix access configuration
