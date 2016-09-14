@@ -23,7 +23,8 @@ $ git clone https://github.com/tecstack/opback.git
 $ git branch promise
 $ cd opback
 $ pip install -r requirements.txt
-*(OSX10.10上PIL安装失败，需执行  ln -s /usr/local/include/freetype2 /usr/local/include/freetype；   xcode-select --install)
+*(OSX10.10上PIL安装失败，需执行
+ ln -s /usr/local/include/freetype2 /usr/local/include/freetype；   xcode-select --install)
 *(centos7安装mysql-python失败，执行yum install python-devel mysql-devel)
 $ python scripts/manager.py recreatedb
 $ python runserver.py
@@ -36,7 +37,8 @@ $ python runserver.py
 ```
 
 ```bash
-$ celery -A promise.eater.tasks.celery worker -B -l INFO
+$ celery worker -B -A promise.eater.tasks.celery -s .data/celerybeat-schedule 
+  -l debug --pidfile=celerybeat.pid -f .log/celerybeat.log &
 ```
 出现如下提示表示后台任务启动正常：
 ```
