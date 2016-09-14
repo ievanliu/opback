@@ -13,7 +13,7 @@ basedir = os.path.abspath(os.path.dirname('..'))
 """
 # database access string setting, by default we use mysql
 # for common using
-SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/test'
+SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/common'
 # SQLALCHEMY_POOL_RECYCLE = 3600
 # for eater:
 # SQLALCHEMY_BINDS = {

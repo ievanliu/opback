@@ -208,6 +208,7 @@ class TestServices():
         """
         # 1. no paging
         # 1.1 no extend
+        # 1.1.1 without option
         response = self.tester.get(
             '/api/v0.0/eater/hostgroup',
             headers={'token': self.token})
@@ -216,7 +217,24 @@ class TestServices():
         eq_(ret['totalpage'], False)
         eq_(response.status_code, 200)
         assert 'it' not in ret['data'][0]
+        assert 'category' in ret['data'][0]
+        assert 'name' in ret['data'][0]
+        # 1.1.2 with option
+        d = dict(opt='it%%name%%id')
+        response = self.tester.get(
+            '/api/v0.0/eater/hostgroup',
+            content_type='application/json',
+            headers={'token': self.token},
+            data=json.dumps(d))
+        assert 'data' in response.data
+        ret = json.loads(response.data)
+        eq_(ret['totalpage'], False)
+        eq_(response.status_code, 200)
+        assert 'it' not in ret['data'][0]
+        assert 'category' not in ret['data'][0]
+        assert 'name' in ret['data'][0]
         # 1.2 extend
+        # 1.2.1 without option
         d = dict(extend=True)
         response = self.tester.get(
             '/api/v0.0/eater/hostgroup',
@@ -228,6 +246,22 @@ class TestServices():
         eq_(ret['totalpage'], False)
         eq_(response.status_code, 200)
         assert 'it' in ret['data'][0]
+        assert 'category' in ret['data'][0]
+        assert 'name' in ret['data'][0]
+        # 1.2.2 with option
+        d = dict(extend=True, opt='name%%id')
+        response = self.tester.get(
+            '/api/v0.0/eater/hostgroup',
+            content_type='application/json',
+            headers={'token': self.token},
+            data=json.dumps(d))
+        assert 'data' in response.data
+        ret = json.loads(response.data)
+        eq_(ret['totalpage'], False)
+        eq_(response.status_code, 200)
+        assert 'it' not in ret['data'][0]
+        assert 'category' not in ret['data'][0]
+        assert 'name' in ret['data'][0]
 
         # 2. paging
         # 2.1 use default per page
@@ -281,44 +315,60 @@ class TestServices():
         eq_(response.status_code, 200)
 
 
-    # @with_setup(setUp, tearDown)
-    # def test_hostgroup_api(self):
-    #     """
-    #         get a hostgroup from eater
-    #     """
-    #     g = Group.query.order_by(Group.id).all()
-    #     # 1. hostgroup found
-    #     # 1.1 no extend
-    #     response = self.tester.get(
-    #         '/api/v0.0/eater/hostgroup/%s' % g[0].id,
-    #         headers={'token': self.token})
-    #     assert 'data' in response.data
-    #     eq_(response.status_code, 200)
-    #     data = json.loads(response.data)['data']
-    #     assert 'name' in data
-    #     eq_(data['name'], g[0].name)
-    #     assert 'it' in data
-    #     assert 'group' not in data['it'][0]
-    #     # 1.2 extend
-    #     d = dict(extend=True)
-    #     response = self.tester.get(
-    #         '/api/v0.0/eater/hostgroup/%s' % g[0].id,
-    #         content_type='application/json',
-    #         headers={'token': self.token},
-    #         data=json.dumps(d))
-    #     assert 'data' in response.data
-    #     eq_(response.status_code, 200)
-    #     data = json.loads(response.data)['data']
-    #     assert 'name' in data
-    #     eq_(data['name'], g[0].name)
-    #     assert 'it' in data
-    #     assert 'group' in data['it'][0]
+    @with_setup(setUp, tearDown)
+    def test_hostgroup_api(self):
+        """
+            get a hostgroup from eater
+        """
+        g = Group.query.order_by(Group.id).all()
+        # 1. hostgroup found
+        # 1.1 no extend
+        # 1.1.1 without option
+        response = self.tester.get(
+            '/api/v0.0/eater/hostgroup/%s' % g[0].id,
+            headers={'token': self.token})
+        assert 'data' in response.data
+        eq_(response.status_code, 200)
+        data = json.loads(response.data)['data']
+        assert 'name' in data
+        eq_(data['name'], g[0].name)
+        assert 'category' in data
+        assert 'it' in data
+        assert 'group' not in data['it'][0]
+        # 1.1.2 with option
+        d = dict(opt='name%%id')
+        response = self.tester.get(
+            '/api/v0.0/eater/hostgroup/%s' % g[0].id,
+            content_type='application/json',
+            headers={'token': self.token},
+            data=json.dumps(d))
+        assert 'data' in response.data
+        eq_(response.status_code, 200)
+        data = json.loads(response.data)['data']
+        assert 'name' in data
+        eq_(data['name'], g[0].name)
+        assert 'category' not in data
+        assert 'it' not in data
+        # 1.2 extend
+        d = dict(extend=True)
+        response = self.tester.get(
+            '/api/v0.0/eater/hostgroup/%s' % g[0].id,
+            content_type='application/json',
+            headers={'token': self.token},
+            data=json.dumps(d))
+        assert 'data' in response.data
+        eq_(response.status_code, 200)
+        data = json.loads(response.data)['data']
+        assert 'name' in data
+        eq_(data['name'], g[0].name)
+        assert 'it' in data
+        assert 'group' in data['it'][0]
 
-    #     # 2. hostgroup not found
-    #     response = self.tester.get(
-    #         '/api/v0.0/eater/hostgroup/nothing',
-    #         headers={'token': self.token})
-    #     assert 'error' in response.data
-    #     error = json.loads(response.data)['error']
-    #     assert 'Object Not Found' in error
-    #     eq_(response.status_code, 404)
+        # 2. hostgroup not found
+        response = self.tester.get(
+            '/api/v0.0/eater/hostgroup/nothing',
+            headers={'token': self.token})
+        assert 'error' in response.data
+        error = json.loads(response.data)['error']
+        assert 'Object Not Found' in error
+        eq_(response.status_code, 404)

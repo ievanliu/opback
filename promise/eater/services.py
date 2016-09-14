@@ -47,6 +47,10 @@ class DoraemonListAPI(Resource):
         self.parser.add_argument(
             'extend', type=inputs.boolean,
             help='extend must be boolean')
+        # options which you concern about most
+        self.parser.add_argument(
+            'opt', type=str,
+            help='options must be splited by %%')
         # multi-type parameters
         setattr(self, 'params', [])
         type_dict = {'str_params': str, 'int_params': inputs.positive}
@@ -65,18 +69,21 @@ class DoraemonListAPI(Resource):
         for x in self.params:
             if args[x]:
                 kw[x] = args[x]
+        option = args['opt'].split('%%') if args['opt'] else None
         depth = 1 if args['extend'] else 0
         page = args['page']
         if kw or not page:
-            data = self.obj.get(depth=depth, **kw)
+            data = self.obj.get(depth=depth, option=option, **kw)
         else:
             query = []
             per_page = args['per_page']
             if per_page:
                 query = self.obj.get(
-                    page=page, per_page=per_page, depth=depth, **kw)
+                    page=page, per_page=per_page, depth=depth,
+                    option=option, **kw)
             else:
-                query = self.obj.get(page=page, depth=depth, **kw)
+                query = self.obj.get(
+                    page=page, depth=depth, option=option, **kw)
             if query:
                 data, pages = query[0], query[1]
         return {'totalpage': pages, 'data': data}, 200
@@ -112,6 +119,10 @@ class DoraemonAPI(Resource):
         self.parser.add_argument(
             'extend', type=inputs.boolean,
             help='extend must be boolean')
+        # options which you concern about most
+        self.parser.add_argument(
+            'opt', type=str,
+            help='options must be splited by %%')
         # multi-type parameters
         setattr(self, 'params', [])
         type_dict = {'str_params': str, 'int_params': inputs.positive}
@@ -125,8 +136,9 @@ class DoraemonAPI(Resource):
     # get a specific object
     def get(self, id):
         args = self.parser.parse_args()
+        option = args['opt'].split('%%') if args['opt'] else None
         depth = 2 if args['extend'] else 1
-        query = self.obj.get(id=id, depth=depth)
+        query = self.obj.get(id=id, depth=depth, option=option)
         if query:
             data = query[0]
             return {'data': data}, 200
@@ -210,51 +222,51 @@ class IPAPI(DoraemonAPI):
 """
 
 
-class ForwardInfoAPI(DoraemonListAPI):
-    """
-        Forward Info Restful API.
-        Inherits from Super DataList API.
-    """
-    def __init__(self):
-        str_params = ['ip_addr']
-        obj = IP()
-        super(ForwardInfoAPI, self).__init__(str_params=str_params, obj=obj)
+# class ForwardInfoAPI(DoraemonListAPI):
+#     """
+#         Forward Info Restful API.
+#         Inherits from Super DataList API.
+#     """
+#     def __init__(self):
+#         str_params = ['ip_addr']
+#         obj = IP()
+#         super(ForwardInfoAPI, self).__init__(str_params=str_params, obj=obj)
 
-    # get whole list of the object
-    @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
-    def get(self):
-        pages, data, kw = False, [], {}
-        args = self.parser.parse_args()
-        for x in self.params:
-            if args[x]:
-                kw[x] = args[x]
-        depth = 2
-        page = args['page']
-        if kw or not page:
-            query = self.obj.get(depth=depth, **kw)
-        else:
-            query = []
-            per_page = args['per_page']
-            if per_page:
-                query = self.obj.get(
-                    page=page, per_page=per_page, depth=depth, **kw)
-            else:
-                query = self.obj.get(page=page, depth=depth, **kw)
-            if query:
-                pages = query[1]
-                query = query[0]
-        if query:
-            for x in query:
-                d = {
-                    'id': x['id'], 'ip_addr': x['ip_addr'],
-                    'connect': x['connect'],
-                    'last_update_time': x['last_update_time']}
-                if x['it']:
-                    for y in x['it']:
-                        d['model'] = y['model']
-                        d['osuser'] = y['osuser']
-                data.append(d)
-        return {'totalpage': pages, 'data': data}, 200
+#     # get whole list of the object
+#     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
+#     def get(self):
+#         pages, data, kw = False, [], {}
+#         args = self.parser.parse_args()
+#         for x in self.params:
+#             if args[x]:
+#                 kw[x] = args[x]
+#         depth = 2
+#         page = args['page']
+#         if kw or not page:
+#             query = self.obj.get(depth=depth, **kw)
+#         else:
+#             query = []
+#             per_page = args['per_page']
+#             if per_page:
+#                 query = self.obj.get(
+#                     page=page, per_page=per_page, depth=depth, **kw)
+#             else:
+#                 query = self.obj.get(page=page, depth=depth, **kw)
+#             if query:
+#                 pages = query[1]
+#                 query = query[0]
+#         if query:
+#             for x in query:
+#                 d = {
+#                     'id': x['id'], 'ip_addr': x['ip_addr'],
+#                     'connect': x['connect'],
+#                     'last_update_time': x['last_update_time']}
+#                 if x['it']:
+#                     for y in x['it']:
+#                         d['model'] = y['model']
+#                         d['osuser'] = y['osuser']
+#                 data.append(d)
+#         return {'totalpage': pages, 'data': data}, 200
 
 
 """

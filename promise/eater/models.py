@@ -88,11 +88,15 @@ class Doraemon(db.Model):
     __repr__ = __str__
 
     # output columns and relationships to dict using recursive method
-    def to_dict(self, count=0, depth=1):
-        columns = self.columns()
-        relationships = self.relationships()
+    def to_dict(self, count=0, depth=1, option=None):
+        columns = self.columns().keys()
+        relationships = self.relationships().keys()
+        # see what you concern about
+        if option and isinstance(option, list):
+            columns = [x for x in columns if x in option]
+            relationships = [x for x in relationships if x in option]
         # get columns
-        d = {k: getattr(self, k) for k in columns.keys()}
+        d = {k: getattr(self, k) for k in columns}
         # recursion ends (better limit depth to be <= 3)
         # or it may risk to be maximum recursion depth exceeded
         depth = 3 if depth > 3 else depth
@@ -100,7 +104,7 @@ class Doraemon(db.Model):
             return d
         count += 1
         # get relationships
-        for k in relationships.keys():
+        for k in relationships:
             relation = getattr(self, k)
             if relation:
                 if hasattr(relation, '__iter__'):
@@ -212,7 +216,7 @@ class Doraemon(db.Model):
     # get (a) record(s)
     # input dict{}: conditions for search
     # output json list[]: record(s) s.t. conditions
-    def get(self, page=None, per_page=20, depth=1, **kw):
+    def get(self, page=None, per_page=20, depth=1, option=None, **kw):
         if not kw:
             if page:
                 li = self.__class__.query.paginate(page, per_page, False)
@@ -222,8 +226,9 @@ class Doraemon(db.Model):
             li = self._exist(**kw)
         if li:
             if not kw and page:
-                return [x.to_dict(depth=depth) for x in li.items], li.pages
-            return [x.to_dict(depth=depth) for x in li]
+                return [x.to_dict(
+                    depth=depth, option=option) for x in li.items], li.pages
+            return [x.to_dict(depth=depth, option=option) for x in li]
         return []
 
     # get an object by id
