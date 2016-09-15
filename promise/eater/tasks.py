@@ -10,7 +10,7 @@
 from .. import app, utils
 from .schedules import celery
 from ..zabber.models import Host, HostGroup
-from .models import ITEquipment, IP, Group
+from .models import ITEquipment, IP, Group, ITModel, OSUser, Connection
 import random
 
 __DoraemonUpdateNotify = 'Doraemon Update Notify: %s.'
@@ -28,7 +28,7 @@ def host_sync(self):
             'hey guys, it\'s time to update the hosts'
         app.logger.info(utils.logmsg(msg))
         # for progress bar
-        prog = random.randint(0, 20)
+        prog = random.randint(0, 10)
         self.update_state(
             state='PROGRESS',
             meta={'current': prog, 'total': 100, 'message': ''})
@@ -45,7 +45,7 @@ def host_sync(self):
                 msg = __DoraemonUpdateNotify % ('<Group %s>' % g['id'])
                 app.logger.info(utils.logmsg(msg))
         # for progress bar
-        prog = random.randint(prog, 50)
+        prog = random.randint(prog, 30)
         self.update_state(
             state='PROGRESS',
             meta={'current': prog, 'total': 100, 'message': ''})
@@ -54,14 +54,20 @@ def host_sync(self):
         hosts = Host().get()
         # Model ITEquipment synchronization for eater
         it = ITEquipment()
+        # add default ITModel
+        model = ITModel.query.filter_by(name='bclinux7').first()
+        m_id = model.id if model else None
+        # add default OSUser
+        user = OSUser.query.filter_by(name='python_script').all()
         for h in hosts:
             g = [group.getObject(i) for i in [y['groupid']
                  for y in [x for x in h['groups']]]]
             t = it.update(id=h['hostid'], label=h['host'],
                           name=h['name'], group=g)
             if not t:
-                t = it.insert(id=h['hostid'], label=h['host'],
-                              name=h['name'], group=g)
+                t = it.insert(
+                    id=h['hostid'], label=h['host'], name=h['name'],
+                    group=g, model_id=m_id, osuser=user)
             if t:
                 msg = __DoraemonUpdateNotify % ('<ITEquipment %s>' % t['id'])
                 app.logger.info(utils.logmsg(msg))
@@ -73,6 +79,8 @@ def host_sync(self):
 
         # Model IP synchronization for eater
         ip = IP()
+        # add default Connection
+        connect = Connection.query.filter_by(method='ssh', port=22).all()
         for h in hosts:
             inf = h['interfaces']
             if inf:
@@ -80,8 +88,9 @@ def host_sync(self):
                 p = ip.update(id=inf[0]['interfaceid'],
                               ip_addr=inf[0]['ip'], it_id=h['hostid'])
                 if not p:
-                    p = ip.insert(id=inf[0]['interfaceid'],
-                                  ip_addr=inf[0]['ip'], it_id=h['hostid'])
+                    p = ip.insert(
+                        id=inf[0]['interfaceid'], ip_addr=inf[0]['ip'],
+                        it_id=h['hostid'], connect=connect)
                 if p:
                     msg = __DoraemonUpdateNotify % ('<IP %s>' % p['id'])
                     app.logger.info(utils.logmsg(msg))

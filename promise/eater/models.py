@@ -108,10 +108,11 @@ class Doraemon(db.Model):
             relation = getattr(self, k)
             if relation:
                 if hasattr(relation, '__iter__'):
-                    d[k] = [x.to_dict(count=count, depth=depth)
+                    d[k] = [x.to_dict(count=count, depth=depth, option=option)
                             for x in relation if hasattr(x, 'to_dict')]
                 elif hasattr(relation, 'to_dict'):
-                    d[k] = [relation.to_dict(count=count, depth=depth)]
+                    d[k] = [relation.to_dict(
+                        count=count, depth=depth, option=option)]
             else:
                 d[k] = []
         return d
@@ -269,6 +270,17 @@ connect2ip = db.Table(
 
 
 """
+many-to-many relationships between OSUser and Connection
+"""
+osuser2connect = db.Table(
+    'osuser2connect',
+    db.Column('connect_id', db.String(64), db.ForeignKey('connection.id')),
+    db.Column('osuser_id', db.String(64), db.ForeignKey('osuser.id')),
+    info={'bind_key': my_default_database}
+)
+
+
+"""
 many-to-many relationships between OperatingSystem and OSUser
 """
 user2os = db.Table(
@@ -356,6 +368,10 @@ class Connection(Doraemon):
     ip = db.relationship(
         'IP', secondary='connect2ip',
         enable_typechecks=False, lazy='dynamic')
+    # OS user
+    osuser = db.relationship(
+        'OSUser', secondary='osuser2connect',
+        enable_typechecks=False, lazy='dynamic')
 
 
 class Vlan(Doraemon):
@@ -424,18 +440,53 @@ class OSUser(Doraemon):
     __bind_key__ = my_default_database
     __table_args__ = (
         db.UniqueConstraint(
-            'name', 'password', 'privilege', name='_osuser_uc'),)
+            'name', 'con_pass', 'act_pass', name='_osuser_uc'),)
 
     # OS user name
     name = db.Column(db.String(64), nullable=False)
-    # OS user password
-    password = db.Column(db.String(64))
-    # OS user privilege
-    privilege = db.Column(db.String(64))
+    # OS user connection password
+    con_pass = db.Column(db.String(64))
+    # OS user activation password
+    act_pass = db.Column(db.String(64))
     # IT equipment
     it = db.relationship(
         'ITEquipment', secondary='osuser2it',
         enable_typechecks=False, lazy='dynamic')
+    # way to connect to IT equipment
+    connect = db.relationship(
+        'Connection', secondary='osuser2connect',
+        enable_typechecks=False, lazy='dynamic')
+
+    # output columns and relationships to dict using recursive method
+    def to_dict(self, count=0, depth=1, option=None):
+        columns = self.columns().keys()[:]
+        columns.remove('act_pass')
+        columns.remove('con_pass')
+        relationships = self.relationships().keys()
+        # see what you concern about
+        if option and isinstance(option, list):
+            columns = [x for x in columns if x in option]
+            relationships = [x for x in relationships if x in option]
+        # get columns
+        d = {k: getattr(self, k) for k in columns}
+        # recursion ends (better limit depth to be <= 3)
+        # or it may risk to be maximum recursion depth exceeded
+        depth = 3 if depth > 3 else depth
+        if not relationships or count == depth:
+            return d
+        count += 1
+        # get relationships
+        for k in relationships:
+            relation = getattr(self, k)
+            if relation:
+                if hasattr(relation, '__iter__'):
+                    d[k] = [x.to_dict(count=count, depth=depth)
+                            for x in relation if hasattr(x, 'to_dict')]
+                elif hasattr(relation, 'to_dict'):
+                    d[k] = [relation.to_dict(count=count, depth=depth)]
+            else:
+                d[k] = []
+        return d
 
 
 class Rack(Doraemon):

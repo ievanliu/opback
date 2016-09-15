@@ -8,6 +8,7 @@ from flask.ext.migrate import Migrate, MigrateCommand
 from promise import app, db
 from promise.user import utils as userUtils
 from promise.user.models import User, Privilege, Role
+from promise.eater.models import ITModel, Connection, OSUser
 
 migrate = Migrate(app, db)
 
@@ -107,6 +108,29 @@ def importdata():
     user3.save()
     root_user.save()
     visitor.save()
+
+    model = ITModel()
+    model.insert(name='bclinux7', vender='bclinux7')
+    model.insert(name='adx03100', vender='brocade')
+    model.insert(name='usg1000', vender='Qimingxingchen')
+    model.insert(name='mx960', vender='Juniper')
+    model.insert(name='asa', vender='Cisco')
+    model.insert(name='c4510', vender='Cisco')
+    model.insert(name='c6509', vender='Cisco')
+    model.insert(name='5548', vender='Cisco')
+
+    connect = Connection()
+    connect.insert(method='ssh', port=22)
+    connect.insert(method='telnet', port=23)
+
+    osuser = OSUser()
+    connect = Connection.query.filter_by(method='ssh', port=22).all()
+    osuser.insert(
+        name='python_script', con_pass='4W@1lHere', act_pass='EREh1L@MR0F',
+        connect=connect)
+    osuser.insert(
+        name='root', con_pass='hey!@mR0ot', act_pass='to0Rm@!yeh',
+        connect=connect)
     print 'Data imported'
 
 
