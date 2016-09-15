@@ -126,6 +126,10 @@ class ScriptWalkerAPI(Resource):
         # check if the script belongs to the current user
         script = Script.getFromIdWithinUserOrPublic(
             script_id, g.current_user)
+        if not script.script_type == 1:
+            msg = "wrong script type"
+            raise utils.InvalidAPIUsage(msg)
+
         if script:
             if not walker_name:
                 walker_name = str(walkerUtils.serialCurrentTime()) + \
@@ -151,7 +155,6 @@ class ScriptWalkerAPI(Resource):
 
     @staticmethod
     def getWalkerListOfTokenOwner():
-
         [walkers, json_walkers] = Walker.getScriptMissionWalker(g.current_user)
         msg = 'walker list of ' + g.current_user.username
         return [msg, json_walkers]
@@ -172,191 +175,7 @@ class ScriptWalkerAPI(Resource):
 #    def run(shell_walker_executor):
 #        shell_walker_executor.run()
 #        thread.exit()
-
-
-class ScriptAPI(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        super(ScriptAPI, self).__init__()
-
-    """
-    insert a new script.
-    """
-    @auth.PrivilegeAuth(privilegeRequired="scriptExec")
-    def post(self):
-        # check the arguments
-        [script_name, script_text, script_lang, is_public] = \
-            self.argCheckForPost()
-
-        # create a script object
-        script = Script(
-            script_name, script_text, g.current_user, script_lang, is_public)
-        script.save()
-        msg = 'script created.'
-        return {'message': msg, 'script_id': script.script_id}, 200
-
-    @auth.PrivilegeAuth(privilegeRequired='scriptExec')
-    def put(self):
-        # check the arguments
-        [script_id, script_name, script_text, script_lang, is_public] = \
-            self.argCheckForPut()
-        # modify target script object
-        [script, jsonScript] = Script.getFromIdWithinUser(
-            script_id, g.current_user)
-        if script:
-            script.update(
-                script_name, script_text, script_lang, g.current_user,
-                is_public)
-            script.save()
-            msg = 'script<id:' + script.script_id + '>uptaded'
-            return {'message': msg}, 200
-        else:
-            msg = 'wrong script id or its not your script'
-            raise utils.InvalidAPIUsage(msg)
-
-    @auth.PrivilegeAuth(privilegeRequired="scriptExec")
-    @dont_cache()
-    def get(self):
-        script_id = self.argCheckForGet()
-        if not script_id:
-            callableScripts = Script.getCallableScripts(g.current_user)
-            json_callableScripts = list()
-            for callableScript in callableScripts:
-                result = dict()
-                result['script_id'] = callableScript.Script.script_id
-                result['script_name'] = callableScript.Script.script_name
-                result['script_text'] = callableScript.Script.script_text
-                result['owner_name'] = callableScript.User.username
-                result['owner_id'] = callableScript.Script.owner_id
-                result['time_create'] = callableScript.Script.time_create
-                result['time_last_edit'] = callableScript.Script.time_last_edit
-                result['is_public'] = callableScript.Script.is_public
-                result['script_lang'] = callableScript.Script.script_lang
-                json_callableScripts.append(result)
-            msg = 'got script list.'
-            return {'message': msg, 'scripts': json_callableScripts}, 200
-        else:
-            callableScript = Script.getCallableScripts(
-                g.current_user, script_id)
-            if callableScript:
-                result = dict()
-                result['script_id'] = callableScript.Script.script_id
-                result['script_name'] = callableScript.Script.script_name
-                result['script_text'] = callableScript.Script.script_text
-                result['owner_name'] = callableScript.User.username
-                result['owner_id'] = callableScript.Script.owner_id
-                result['time_create'] = callableScript.Script.time_create
-                result['time_last_edit'] = callableScript.Script.time_last_edit
-                result['is_public'] = callableScript.Script.is_public
-                result['script_lang'] = callableScript.Script.script_lang
-                msg = 'got target script.'
-                return {'message': msg, 'script': result}, 200
-            else:
-                raise utils.InvalidAPIUsage(msg)
-
-    @auth.PrivilegeAuth(privilegeRequired='scriptExec')
-    def delete(self):
-        script_id = self.argCheckForDelete()
-        [script, jsonScript] = Script.getFromIdWithinUser(
-            script_id, g.current_user)
-        if not script:
-            msg = 'wrong script_id.'
-            raise utils.InvalidAPIUsage(msg)
-        [state, msg] = script.setInvalid()
-        if state:
-            return {'message': msg}, 200
-        else:
-            raise utils.InvalidAPIUsage(msg)
-
-    """
-    arguments check methods
-    """
-    def argCheckForGet(self):
-        self.reqparse.add_argument(
-            'script_id', type=str,
-            location='args', help='script id must be a string')
-        args = self.reqparse.parse_args()
-        script_id = args['script_id']
-        if not script_id:
-            script_id = None
-        return script_id
-
-    def argCheckForPost(self):
-        self.reqparse.add_argument(
-            'script_name', type=str, location='json',
-            required=True, help='iplist ip must be a list')
-        self.reqparse.add_argument(
-            'script_text', type=unicode, location='json',
-            required=True, help='script_text must be a unicode text')
-        self.reqparse.add_argument(
-            'script_lang', type=str, location='json',
-            required=True, help='osuser must be a string')
-        self.reqparse.add_argument(
-            'is_public', type=int, location='json',
-            required=True, help='is_public must be 0 or 1')
-        args = self.reqparse.parse_args()
-        script_name = args['script_name']
-        script_text = args['script_text']
-        script_lang = args['script_lang']
-        is_public = args['is_public']
-        return [script_name, script_text, script_lang, is_public]
-
-    def argCheckForPut(self):
-        self.reqparse.add_argument(
-            'script_id', type=str, location='args',
-            required=True, help='script_id must be a string')
-        self.reqparse.add_argument(
-            'script_name', type=str, location='json',
-            required=True, help='iplist_name must be a list')
-        self.reqparse.add_argument(
-            'script_text', type=unicode, location='json',
-            required=True, help='script_text must be a unicode text')
-        self.reqparse.add_argument(
-            'script_lang', type=str, location='json',
-            required=True, help='script_lang must be a string')
-        self.reqparse.add_argument(
-            'is_public', type=int, location='json',
-            required=True, help='is_public must be 0 or 1')
-        args = self.reqparse.parse_args()
-        script_id = args['script_id']
-        script_name = args['script_name']
-        script_text = args['script_text']
-        script_lang = args['script_lang']
-        is_public = args['is_public']
-        return [script_id, script_name, script_text, script_lang, is_public]
-
-    def argCheckForDelete(self):
-        self.reqparse.add_argument(
-            'script_id', type=str, required=True,
-            location='args', help='script id must be a string')
-        args = self.reqparse.parse_args()
-        script_id = args['script_id']
-        return script_id
-
-    @staticmethod
-    def getScriptListOfTokenOwner():
-        [scripts, json_scripts] = Script.getWithinUser(g.current_user)
-        if json_scripts:
-            msg = 'scripts info'
-            return [msg, json_scripts]
-        else:
-            msg = 'no scripts exist.'
-            return [msg, None]
-
-    @staticmethod
-    def getExcutableScriptsInfo():
-        pass
-
-    @staticmethod
-    def getScriptInfo(script_id):
-        [script, json_script] = Script.getFromIdWithinUser(
-            script_id, g.current_user)
-        if script:
-            msg = 'walker info'
-            return [msg, json_script]
-        else:
-            msg = 'wrong script id'
-            return [msg, None]
+#
 
 
 # class ScriptWalkerExecutor(threading.Thread):
