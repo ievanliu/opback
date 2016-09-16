@@ -102,9 +102,9 @@ def importdata():
         hashed_password=userUtils.hash_pass("mikepass"),
         role_list=[role_user_admin])
     user4 = User(
-        username='nick',
-        hashed_password=userUtils.hash_pass("nickpass"),
-        role_list=[role_network_operator])
+        username='john',
+        hashed_password=userUtils.hash_pass("johnpass"),
+        role_list=[role_operator, role_network_operator])
     # user2.addRole(role=roleInventoryAdmin)
     root_user = User(
         username=app.config['DEFAULT_ROOT_USERNAME'],
