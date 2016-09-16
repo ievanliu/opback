@@ -502,7 +502,7 @@ class Script(db.Model):
                 and_(
                     or_(Script.owner_id == user.user_id,
                         Script.is_public == 1),
-                    script_id == script_id,
+                    Script.script_id == script_id,
                     Script.valid == valid)).first()
             return scriptUserInfo
 

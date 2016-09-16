@@ -4,6 +4,14 @@ python:
 service: mysql
 before_script:
   - mysql -e 'create database test;'
+  - mkdir forward
+  - cd forward
+  - git clone https://github.com/tecstack/forward.git
+  - cd forward
+  - pip install -r requirements.txt
+  - python setup.py install
+  - cd ..
+  - cd ..
 install:
     - "pip install -r requirements.txt"
 script:
