@@ -17,9 +17,9 @@ SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/common'
 
 # SQLALCHEMY_POOL_RECYCLE = 3600
 # for eater:
-# SQLALCHEMY_BINDS = {
-#     'eater': 'mysql://dbuser:dbpassword@ip:port/eater'
-# }
+SQLALCHEMY_BINDS = {
+    'eater': 'mysql://root@127.0.0.1:3306/eater'
+}
 # when testing, put your instance setting in instance/config.py to cover it
 # SQLALCHEMY_DATABASE_URI = 'mysql://root:111111@192.168.182.50:3306/dev4test'
 
