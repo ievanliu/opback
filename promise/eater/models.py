@@ -14,7 +14,8 @@ from datetime import datetime
 
 
 # default database bound
-my_default_database = None
+# my_default_database = None
+my_default_database = 'eater'
 
 
 class Doraemon(db.Model):

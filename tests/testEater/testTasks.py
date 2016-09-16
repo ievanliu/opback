@@ -25,7 +25,8 @@ class TestTasks():
     '''
         Unit test for tasks in Eater
     '''
-    default_bind_key = None
+    # use test: default_bind_key = None
+    default_bind_key = '__all__'
 
     # establish db
     def setUp(self):
@@ -39,10 +40,10 @@ class TestTasks():
 
         # mysql database for test
         # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://dbuser:dbpassword@ip:port/common'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost:3306/test'
-        # app.config['SQLALCHEMY_BINDS'] = {
-        #     'eater': 'mysql://root:11111111@localhost:3306/eater'
-        # }
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root@localhost:3306/test'
+        app.config['SQLALCHEMY_BINDS'] = {
+            'eater': 'mysql://root@localhost:3306/test'
+        }
 
         self.tester = app.test_client(self)
 

@@ -26,6 +26,9 @@ class TestServices():
     '''
         Unit test for services in Eater
     '''
+    # use test: default_bind_key = None
+    default_bind_key = '__all__'
+
     # log in
     def setUp(self):
         app.testing = True
@@ -38,15 +41,15 @@ class TestServices():
 
         # mysql database for test
         # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://dbuser:dbpassword@ip:port/common'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost:3306/test'
-        # app.config['SQLALCHEMY_BINDS'] = {
-        #     'eater': 'mysql://root:11111111@localhost:3306/eater'
-        # }
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root@localhost:3306/test'
+        app.config['SQLALCHEMY_BINDS'] = {
+            'eater': 'mysql://root@localhost:3306/test'
+        }
 
         self.tester = app.test_client(self)
 
         # 1. db init: import user info
-        db.create_all()
+        db.create_all(bind=self.default_bind_key)
 
         # 1.1 cmdb initialization
         # initialize osuser
@@ -199,7 +202,7 @@ class TestServices():
     def tearDown(self):
         self.token = ''
         db.session.close()
-        db.drop_all()
+        db.drop_all(bind=self.default_bind_key)
 
     @with_setup(setUp, tearDown)
     def test_hostgroup_list_api_get(self):
