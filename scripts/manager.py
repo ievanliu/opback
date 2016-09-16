@@ -16,6 +16,8 @@ manager = Manager(app, usage="Perform database operations")
 
 manager.add_command('db', MigrateCommand)
 
+default_bind_key = '__all__'
+
 
 @manager.command
 def initdb():
@@ -23,7 +25,7 @@ def initdb():
     import os
     if not os.path.exists(app.config['DB_FOLDER']):
         os.mkdir(app.config['DB_FOLDER'])
-    db.create_all()
+    db.create_all(bind=default_bind_key)
     print 'Database inited, location: ' + app.config['SQLALCHEMY_DATABASE_URI']
 
 
@@ -152,7 +154,7 @@ def dropdb():
 
     "Drops database tables"
     if prompt_bool("Are you sure you want to lose all your data"):
-        db.drop_all()
+        db.drop_all(bind=default_bind_key)
         print 'Database droped.'
 
 
@@ -189,6 +191,35 @@ def systemupdate():
         hashed_password=userUtils.hash_pass("johnpass"),
         role_list=[role_network_operator, role_operator])
     user4.save()
+
+
+@manager.command
+def eatermigration():
+    "for eater migration: from database `common` to `eater`."
+    initdb()
+    db.engine.execute("DROP TABLE IF EXISTS common.computer;")
+    db.engine.execute("DROP TABLE IF EXISTS common.computer_specification;")
+    db.engine.execute("DROP TABLE IF EXISTS common.connect2ip;")
+    db.engine.execute("DROP TABLE IF EXISTS common.connection;")
+    db.engine.execute("DROP TABLE IF EXISTS common.firewall;")
+    db.engine.execute("DROP TABLE IF EXISTS common.group;")
+    db.engine.execute("DROP TABLE IF EXISTS common.if2it;")
+    db.engine.execute("DROP TABLE IF EXISTS common.interface;")
+    db.engine.execute("DROP TABLE IF EXISTS common.ip;")
+    db.engine.execute("DROP TABLE IF EXISTS common.it2group;")
+    db.engine.execute("DROP TABLE IF EXISTS common.itequipment;")
+    db.engine.execute("DROP TABLE IF EXISTS common.itmodel;")
+    db.engine.execute("DROP TABLE IF EXISTS common.network;")
+    db.engine.execute("DROP TABLE IF EXISTS common.operating_system;")
+    db.engine.execute("DROP TABLE IF EXISTS common.osuser;")
+    db.engine.execute("DROP TABLE IF EXISTS common.osuser2connect;")
+    db.engine.execute("DROP TABLE IF EXISTS common.osuser2it;")
+    db.engine.execute("DROP TABLE IF EXISTS common.physical_machine;")
+    db.engine.execute("DROP TABLE IF EXISTS common.rack")
+    db.engine.execute("DROP TABLE IF EXISTS common.router;")
+    db.engine.execute("DROP TABLE IF EXISTS common.user2os;")
+    db.engine.execute("DROP TABLE IF EXISTS common.virtual_machine;")
+    db.engine.execute("DROP TABLE IF EXISTS common.vlan;")
 
 
 def _make_context():
