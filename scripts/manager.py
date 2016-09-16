@@ -20,19 +20,30 @@ default_bind_key = '__all__'
 
 
 @manager.command
-def initdb():
+def initdb(bind=default_bind_key):
     "initialize database tables"
     import os
     if not os.path.exists(app.config['DB_FOLDER']):
         os.mkdir(app.config['DB_FOLDER'])
-    db.create_all(bind=default_bind_key)
-    print 'Database inited, location: ' + app.config['SQLALCHEMY_DATABASE_URI']
+    db.create_all(bind=bind)
+    if bind == '__all__':
+        print 'Database inited, location:\r\n[%-10s] %s' % (
+            'DEFAULT', app.config['SQLALCHEMY_DATABASE_URI'], )
+        for k, w in app.config['SQLALCHEMY_BINDS'].items():
+            print '[%-10s] %s' % (k.upper(), w)
+    elif bind is None:
+        print 'Database inited, location:\r\n[%-10s] %s' % (
+            'DEFAULT', app.config['SQLALCHEMY_DATABASE_URI'], )
+    elif bind in app.config['SQLALCHEMY_BINDS'].keys():
+        print 'Database inited, location:\r\n[%-10s] %s' % (
+            bind.upper(), app.config['SQLALCHEMY_BINDS'][bind], )
+    else:
+        print 'Unknown database: [%+10s].' % bind.upper()
 
 
 @manager.command
 def importdata():
     "Import data into database tables"
-
     user_admin_privilege = Privilege(
         privilege_name='userAdmin',
         description='user/role/privlilege administration.')
@@ -57,7 +68,6 @@ def importdata():
     script_exec_privilege.save()
     walker_info_privilege.save()
     forward_exec_privilege.save()
-
     # init roles
     role_root = Role(role_name='root', description='超级用户')
     role_operator = Role(role_name='operator', description='运维操作员')
@@ -66,7 +76,6 @@ def importdata():
     role_user_admin = Role(role_name='userAdmin', description='用户管理员')
     role_network_operator = Role(
         role_name='networkoperator', description='网络运维操作员')
-
     role_root.update(
         privileges=[
             inventory_admin_privilege, user_admin_privilege,
@@ -79,17 +88,11 @@ def importdata():
             shell_exec_privilege, script_exec_privilege,
             walker_info_privilege])
     role_network_operator.update(privileges=[forward_exec_privilege])
-
-#    db.session.add(roleRoot)
-#    db.session.add(roleOperator)
-#    db.session.add(roleInventoryAdmin)
-#    db.session.commit()  # commit the roles before user init
     role_root.save()
     role_user_admin.save()
     role_inventory_admin.save()
     role_operator.save()
     role_network_operator.save()
-
     # init users
     user1 = User(
         username='tom',
@@ -116,46 +119,37 @@ def importdata():
     visitor = User(
         username='visitor',
         hashed_password=userUtils.hash_pass('visitor'))
-
     user1.save()
     user2.save()
     user3.save()
     user4.save()
     root_user.save()
     visitor.save()
-
-    model = ITModel()
-    model.insert(name='bclinux7', vender='bclinux7')
-    model.insert(name='adx03100', vender='brocade')
-    model.insert(name='usg1000', vender='Qimingxingchen')
-    model.insert(name='mx960', vender='Juniper')
-    model.insert(name='asa', vender='Cisco')
-    model.insert(name='c4510', vender='Cisco')
-    model.insert(name='c6509', vender='Cisco')
-    model.insert(name='5548', vender='Cisco')
-
-    connect = Connection()
-    connect.insert(method='ssh', port=22)
-    connect.insert(method='telnet', port=23)
-
-    osuser = OSUser()
-    connect = Connection.query.filter_by(method='ssh', port=22).all()
-    osuser.insert(
-        name='python_script', con_pass='4W@1lHere', act_pass='EREh1L@MR0F',
-        connect=connect)
-    osuser.insert(
-        name='root', con_pass='hey!@mR0ot', act_pass='to0Rm@!yeh',
-        connect=connect)
+    # init eater
+    eater_importdata()
     print 'Data imported'
 
 
 @manager.command
-def dropdb():
-
+def dropdb(bind=default_bind_key):
     "Drops database tables"
-    if prompt_bool("Are you sure you want to lose all your data"):
-        db.drop_all(bind=default_bind_key)
-        print 'Database droped.'
+    if prompt_bool(
+        "Are you sure you want to lose all your data in bind `%s`" % (
+            bind.upper(), )):
+        db.drop_all(bind=bind)
+        if bind == '__all__':
+            print 'Database dropped, location:\r\n[%-10s] %s' % (
+                'DEFAULT', app.config['SQLALCHEMY_DATABASE_URI'], )
+            for k, w in app.config['SQLALCHEMY_BINDS'].items():
+                print '[%-10s] %s' % (k.upper(), w)
+        elif bind is None:
+            print 'Database dropped, location:\r\n[%-10s] %s' % (
+                'DEFAULT', app.config['SQLALCHEMY_DATABASE_URI'], )
+        elif bind in app.config['SQLALCHEMY_BINDS'].keys():
+            print 'Database dropped, location:\r\n[%-10s] %s' % (
+                bind.upper(), app.config['SQLALCHEMY_BINDS'][bind], )
+        else:
+            print 'Unknown database: [%+10s].' % bind.upper()
 
 
 @manager.command
@@ -194,32 +188,39 @@ def systemupdate():
 
 
 @manager.command
-def eatermigration():
-    "for eater migration: from database `common` to `eater`."
+def eater_importdata():
+    "import data to eater"
+    # init it model
+    model = ITModel()
+    model.insert(name='bclinux7', vender='bclinux7')
+    model.insert(name='adx03100', vender='brocade')
+    model.insert(name='usg1000', vender='Qimingxingchen')
+    model.insert(name='mx960', vender='Juniper')
+    model.insert(name='asa', vender='Cisco')
+    model.insert(name='c4510', vender='Cisco')
+    model.insert(name='c6509', vender='Cisco')
+    model.insert(name='5548', vender='Cisco')
+    # init connection
+    connect = Connection()
+    connect.insert(method='ssh', port=22)
+    connect.insert(method='telnet', port=23)
+    # init os user
+    osuser = OSUser()
+    connect = Connection.query.filter_by(method='ssh', port=22).all()
+    osuser.insert(
+        name='python_script', con_pass='4W@1lHere', act_pass='EREh1L@MR0F',
+        connect=connect)
+    osuser.insert(
+        name='root', con_pass='hey!@mR0ot', act_pass='to0Rm@!yeh',
+        connect=connect)
+
+
+@manager.command
+def eater_recreatedb():
+    "recreate database for eater"
+    dropdb(bind='eater')
     initdb()
-    db.engine.execute("DROP TABLE IF EXISTS common.computer;")
-    db.engine.execute("DROP TABLE IF EXISTS common.computer_specification;")
-    db.engine.execute("DROP TABLE IF EXISTS common.connect2ip;")
-    db.engine.execute("DROP TABLE IF EXISTS common.connection;")
-    db.engine.execute("DROP TABLE IF EXISTS common.firewall;")
-    db.engine.execute("DROP TABLE IF EXISTS common.group;")
-    db.engine.execute("DROP TABLE IF EXISTS common.if2it;")
-    db.engine.execute("DROP TABLE IF EXISTS common.interface;")
-    db.engine.execute("DROP TABLE IF EXISTS common.ip;")
-    db.engine.execute("DROP TABLE IF EXISTS common.it2group;")
-    db.engine.execute("DROP TABLE IF EXISTS common.itequipment;")
-    db.engine.execute("DROP TABLE IF EXISTS common.itmodel;")
-    db.engine.execute("DROP TABLE IF EXISTS common.network;")
-    db.engine.execute("DROP TABLE IF EXISTS common.operating_system;")
-    db.engine.execute("DROP TABLE IF EXISTS common.osuser;")
-    db.engine.execute("DROP TABLE IF EXISTS common.osuser2connect;")
-    db.engine.execute("DROP TABLE IF EXISTS common.osuser2it;")
-    db.engine.execute("DROP TABLE IF EXISTS common.physical_machine;")
-    db.engine.execute("DROP TABLE IF EXISTS common.rack")
-    db.engine.execute("DROP TABLE IF EXISTS common.router;")
-    db.engine.execute("DROP TABLE IF EXISTS common.user2os;")
-    db.engine.execute("DROP TABLE IF EXISTS common.virtual_machine;")
-    db.engine.execute("DROP TABLE IF EXISTS common.vlan;")
+    eater_importdata()
 
 
 def _make_context():
