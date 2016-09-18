@@ -126,22 +126,20 @@ class ScriptWalkerAPI(Resource):
         # check if the script belongs to the current user
         script = Script.getFromIdWithinUserOrPublic(
             script_id, g.current_user)
-        if not script.script_type == 1:
-            msg = "wrong script type"
-            raise utils.InvalidAPIUsage(msg)
-
-        if script:
-            if not walker_name:
-                walker_name = str(walkerUtils.serialCurrentTime()) + \
-                    '-' + str(script.script_name)
-            if params:
-                params = " ".join(params)
-            else:
-                params = None
-            return [iplist, script, os_user, params, walker_name]
-        else:
+        if not script:
             msg = 'wrong script id.'
             raise utils.InvalidAPIUsage(msg)
+        elif not script.script_type == 1:
+            msg = "wrong script type"
+            raise utils.InvalidAPIUsage(msg)
+        elif not walker_name:
+            walker_name = str(walkerUtils.serialCurrentTime()) + \
+                '-' + str(script.script_name)
+        elif params:
+            params = " ".join(params)
+        else:
+            params = None
+        return [iplist, script, os_user, params, walker_name]
 
     def argCheckForGet(self):
         self.reqparse.add_argument(

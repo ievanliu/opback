@@ -134,7 +134,7 @@ class Walker(db.Model):
 
     @staticmethod
     def getShellMissionWalker(user=None, valid=1):
-        if user:
+        if user is not None:
             walkers = db.session.query(Walker).filter(and_(
                 Walker.owner_id == user.user_id,
                 Walker.valid == valid,
@@ -445,7 +445,7 @@ class Script(db.Model):
 
     @staticmethod
     def getWithinUser(user, valid=1, script_type=None):
-        if not script_type:
+        if script_type is None:
             scripts = Script.query.filter_by(
                 owner_id=user.user_id, valid=valid).all()
         else:
@@ -479,8 +479,8 @@ class Script(db.Model):
 
     @staticmethod
     def getCallableScripts(user, script_id=None, script_type=None, valid=1):
-        if not script_id:
-            if not script_type:
+        if script_id is None:
+            if script_type is None:
                 scriptUserList = db.session.query(
                     Script, User).join(User).filter(
                     and_(
