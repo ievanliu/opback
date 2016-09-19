@@ -146,6 +146,7 @@ class ScriptWalkerAPI(Resource):
                 '-' + str(script.script_name)
         elif params:
             params = " ".join(params)
+            params = params.encode('utf-8')
         else:
             params = None
         return [iplist, script, os_user, params, walker_name]
