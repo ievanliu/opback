@@ -20,13 +20,14 @@ script_text = u"""def node(nodeInput):
             # execute succeed
             njInfo['content'][device] = version['content']
         else:
+            njInfo['chinese'] = '你好'
             njInfo['status'] = False
             njInfo['errLog'] = '%s%s:%s\\r\\n' % (
                 njInfo['errLog'], device, version['errLog'])
     return njInfo
 """
 script_file = NamedTemporaryFile(delete=False)
-script_file.write("""%s""" % script_text)
+script_file.write("""%s""" % script_text.encode('utf-8'))
 script_file.close()
 args = 'hello world'
 print script_file.name

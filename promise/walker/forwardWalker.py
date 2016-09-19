@@ -151,7 +151,7 @@ class ForwardWalkerAPI(Resource):
             walker_name = str(walkerUtils.serialCurrentTime()) + \
                 '-' + str(script.script_name)
         if params:
-            params = " ".join(params)
+            params = params
         else:
             params = None
         return [iplist, script, os_user, params, walker_name, inventory]
@@ -220,14 +220,14 @@ class ForwardWalkerExecutor(Resource):
     def buildScriptFile(self):
         script_text = self.script.script_text
         script_file = NamedTemporaryFile(delete=False)
-        script_file.write("""%s""" % script_text)
+        script_file.write("""%s""" % script_text.encode('utf-8'))
         script_file.close()
         return script_file
 
     def run(self):
         msg = 'forward walker<id:' + self.walker.walker_id + '> begin to run.'
         app.logger.info(utils.logmsg(msg))
-
+        results = self.forward.run()
         try:
             results = self.forward.run()
             os.remove(self.script_file.name)
