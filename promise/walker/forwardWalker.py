@@ -104,7 +104,7 @@ class ForwardWalkerAPI(Resource):
             'scriptid', type=str, location='json',
             required=True, help='script_id must be a string')
         self.reqparse.add_argument(
-            'params', type=str, location='json',
+            'params', type=unicode, location='json',
             help='params must be a string')
         self.reqparse.add_argument(
             'osuser', type=str, location='json',
