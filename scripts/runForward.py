@@ -15,6 +15,7 @@ script_text = u"""def node(nodeInput):
     for device in nodeInput['instance']:
         instance = nodeInput['instance'][device]
         version = instance.execute('cat /etc/redhat-release')
+        njInfo['params'] = nodeInput['parameters']
         if version['status']:
             # execute succeed
             njInfo['content'][device] = version['content']
@@ -27,6 +28,7 @@ script_text = u"""def node(nodeInput):
 script_file = NamedTemporaryFile(delete=False)
 script_file.write("""%s""" % script_text)
 script_file.close()
+args = 'hello world'
 print script_file.name
 
 inventory = [
@@ -40,7 +42,7 @@ inventory = [
          connect='ssh', conpass='111111', actpass='',
          remote_port=22, remote_user='maiyifan',)]
 forward = Forward(
-    worker=4, script=script_file.name, args={},
+    worker=4, script=script_file.name, args=args,
     loglevel='info', logfile='.log/forward.log',
     no_std_log=True, out='stdout',
     inventory=inventory, timeout=2)

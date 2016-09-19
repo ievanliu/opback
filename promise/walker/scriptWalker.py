@@ -63,8 +63,17 @@ class ScriptWalkerAPI(Resource):
 #            walker.state = -4
 #            walker.save()
 #            return {'message': msg, 'walker_id': walker.walker_id}, 200
+        if os_user == 'root':
+            private_key_file = app.config['ROOT_SSH_KEY_FILE']
+        elif os_user == 'admin':
+            private_key_file = app.config['ADMIN_SSH_KEY_FILE']
+        else:
+            msg = 'wrong os user.'
+            raise utils.InvalidAPIUsage(msg)
 
-        script_walker_executor = ScriptWalkerExecutor(script_mission)
+        script_walker_executor = ScriptWalkerExecutor(
+            script_mission=script_mission,
+            private_key_file=private_key_file)
         # run the executor thread
         # script_walker_executor.start()
         script_walker_executor.run()
