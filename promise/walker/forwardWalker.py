@@ -227,7 +227,7 @@ class ForwardWalkerExecutor(Resource):
     def run(self):
         msg = 'forward walker<id:' + self.walker.walker_id + '> begin to run.'
         app.logger.info(utils.logmsg(msg))
-        results = self.forward.run()
+
         try:
             results = self.forward.run()
             os.remove(self.script_file.name)
@@ -235,6 +235,9 @@ class ForwardWalkerExecutor(Resource):
             msg = 'Error: invalid script context, tmp file name ' + \
                 self.script_file.name
             app.logger.warning(utils.logmsg(msg))
+            self.walker.state = 1
+            self.walker.save()
+            raise utils.InvalidAPIUsage(msg)
 #        except:
 #            msg = "unknown Forward Error"
 #            app.logger.info(utils.logmsg(msg))#
