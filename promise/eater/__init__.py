@@ -10,7 +10,7 @@
 
 from .services import HostListAPI, HostAPI, \
     HostGroupListAPI, HostGroupAPI, HostSyncAPI, \
-    IPListAPI, IPAPI
+    IPListAPI, IPAPI, NetworkSyncAPI
 from .. import api
 
 """
@@ -42,3 +42,8 @@ api.add_resource(
 api.add_resource(
     HostSyncAPI, '/api/v0.0/eater/hostsync/<id>',
     endpoint='et_host_sync_id_ep')
+api.add_resource(
+    NetworkSyncAPI, '/api/v0.0/eater/netsync', endpoint='et_net_sync_ep')
+api.add_resource(
+    NetworkSyncAPI, '/api/v0.0/eater/netsync/<id>',
+    endpoint='et_net_sync_id_ep')

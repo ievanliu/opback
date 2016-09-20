@@ -61,5 +61,36 @@ class TestTasks():
         """
             host synchronization for eater
         """
-        eq_(host_sync()['message'], 'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')
-        eq_(host_sync()['message'], 'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')
+        # insert
+        eq_(host_sync()['message'],
+            'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')
+        # update
+        eq_(host_sync()['message'],
+            'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')
+
+    @with_setup(setUp, tearDown)
+    def test_network_refresh(self):
+        """
+            network synchronization for eater
+        """
+        import MySQLdb
+        try:
+            # run test if remote database exists else do nothing
+            connect = MySQLdb.connect(
+                host= app.config['FORWARD_DB_HOST'],
+                user=app.config['FORWARD_DB_USER'],
+                passwd=app.config['FORWARD_DB_PASS'],
+                db=app.config['FORWARD_DB_NAME'],
+                port=app.config['FORWARD_DB_PORT'],
+                connect_timeout=app.config['FORWARD_DB_TIMEOUT'])
+            connect.close()
+            # no itequipments
+            eq_(network_sync()['message'],
+                'Doraemon Update Notify: Network Infos are Up-to-the-Minute.')
+            # some itequipmnets
+            eq_(host_sync()['message'],
+                'Doraemon Update Notify: Host Infos are Up-to-the-Minute.')
+            eq_(network_sync()['message'],
+                'Doraemon Update Notify: Network Infos are Up-to-the-Minute.')
+        except MySQLdb.Error:
+            pass

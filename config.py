@@ -98,3 +98,13 @@ CELERYBEAT_SCHEDULE_FILENAME = os.path.join(DB_FOLDER, 'celerybeat-schedule')
 
 from celery import platforms
 platforms.C_FORCE_ROOT = True
+
+"""
+    forward database configuration
+"""
+FORWARD_DB_USER = 'root'
+FORWARD_DB_PASS = ''
+FORWARD_DB_HOST = '127.0.0.1'
+FORWARD_DB_PORT = 3306
+FORWARD_DB_NAME = 'forward'
+FORWARD_DB_TIMEOUT = 2

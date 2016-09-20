@@ -20,5 +20,11 @@ celery.conf.update(
             # 'schedule': crontab(minute='*/2'),
             'schedule': crontab(hour=0, minute=0),
         },
+        'network-synchronization-daily': {
+            'task': 'network_sync',
+            # 'schedule': timedelta(seconds=5),
+            # 'schedule': crontab(minute='*/2'),
+            'schedule': crontab(hour=0, minute=5),
+        },
     }
 )

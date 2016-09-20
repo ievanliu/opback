@@ -32,7 +32,7 @@ class DoraemonListAPI(Resource):
     __abstract__ = True
 
     # constructor
-    def __init__(self, obj, **kw):
+    def __init__(self, obj, ignore=None, **kw):
         super(DoraemonListAPI, self).__init__()
         self.parser = reqparse.RequestParser()
         # page
@@ -60,6 +60,7 @@ class DoraemonListAPI(Resource):
                 for x in w:
                     self.parser.add_argument(x, type=type_dict[k])
         setattr(self, 'obj', obj)
+        setattr(self, 'ignore', ignore)
 
     # get whole list of the object
     @auth.PrivilegeAuth(privilegeRequired="inventoryAdmin")
@@ -73,17 +74,19 @@ class DoraemonListAPI(Resource):
         depth = 1 if args['extend'] else 0
         page = args['page']
         if kw or not page:
-            data = self.obj.get(depth=depth, option=option, **kw)
+            data = self.obj.get(
+                depth=depth, option=option, ignore=self.ignore, **kw)
         else:
             query = []
             per_page = args['per_page']
             if per_page:
                 query = self.obj.get(
                     page=page, per_page=per_page, depth=depth,
-                    option=option, **kw)
+                    option=option, ignore=self.ignore, **kw)
             else:
                 query = self.obj.get(
-                    page=page, depth=depth, option=option, **kw)
+                    page=page, depth=depth, option=option,
+                    ignore=self.ignore, **kw)
             if query:
                 data, pages = query[0], query[1]
         return {'totalpage': pages, 'data': data}, 200
@@ -112,7 +115,7 @@ class DoraemonAPI(Resource):
         privilegeRequired="inventoryAdmin")]
 
     # constructor
-    def __init__(self, obj, **kw):
+    def __init__(self, obj, ignore=None, **kw):
         super(DoraemonAPI, self).__init__()
         self.parser = reqparse.RequestParser()
         # if ask for more specific informations
@@ -132,13 +135,15 @@ class DoraemonAPI(Resource):
                 for x in w:
                     self.parser.add_argument(x, type=type_dict[k])
         setattr(self, 'obj', obj)
+        setattr(self, 'ignore', ignore)
 
     # get a specific object
     def get(self, id):
         args = self.parser.parse_args()
         option = args['opt'].split('%%') if args['opt'] else None
         depth = 2 if args['extend'] else 1
-        query = self.obj.get(id=id, depth=depth, option=option)
+        query = self.obj.get(
+            id=id, depth=depth, option=option, ignore=self.ignore)
         if query:
             data = query[0]
             return {'data': data}, 200
@@ -155,8 +160,10 @@ class HostListAPI(DoraemonListAPI):
     """
     def __init__(self):
         str_params = ('category', 'label', 'name', 'os_id', 'setup_time')
+        ignore = ('con_pass',)
         obj = ITEquipment()
-        super(HostListAPI, self).__init__(str_params=str_params, obj=obj)
+        super(HostListAPI, self).__init__(
+            str_params=str_params, obj=obj, ignore=ignore)
 
 
 class HostAPI(DoraemonAPI):
@@ -166,8 +173,10 @@ class HostAPI(DoraemonAPI):
     """
     def __init__(self):
         str_params = []
+        ignore = ('con_pass',)
         obj = ITEquipment()
-        super(HostAPI, self).__init__(str_params=str_params, obj=obj)
+        super(HostAPI, self).__init__(
+            str_params=str_params, obj=obj, ignore=ignore)
 
 
 class HostGroupListAPI(DoraemonListAPI):
@@ -176,7 +185,7 @@ class HostGroupListAPI(DoraemonListAPI):
         Inherits from Super DataList API.
     """
     def __init__(self):
-        str_params = ['name']
+        str_params = ('name', )
         obj = Group()
         super(HostGroupListAPI, self).__init__(
             str_params=str_params, obj=obj)
@@ -213,8 +222,10 @@ class IPAPI(DoraemonAPI):
     """
     def __init__(self):
         str_params = []
+        ignore = ('con_pass',)
         obj = IP()
-        super(IPAPI, self).__init__(str_params=str_params, obj=obj)
+        super(IPAPI, self).__init__(
+            str_params=str_params, obj=obj, ignore=ignore)
 
 
 """
@@ -272,7 +283,7 @@ class IPAPI(DoraemonAPI):
 """
     Task Services
 """
-from .tasks import host_sync
+from .tasks import host_sync, network_sync
 
 
 class DoraemonTaskAPI(Resource):
@@ -334,3 +345,13 @@ class HostSyncAPI(DoraemonTaskAPI):
     def __init__(self):
         super(HostSyncAPI, self).__init__(
             task_name='host_sync')
+
+
+class NetworkSyncAPI(DoraemonTaskAPI):
+    """
+        Network Synchronization Restful API.
+        Inherits from Super Task API.
+    """
+    def __init__(self):
+        super(NetworkSyncAPI, self).__init__(
+            task_name='network_sync')

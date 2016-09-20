@@ -13,6 +13,17 @@ import re
 from datetime import datetime
 
 
+def execute(sql):
+    try:
+        db.engine.execute(sql)
+        db.session.commit()
+        return True
+    except Exception as e:
+        db.session.rollback()
+        msg = 'Tabel Execute Exception: %s' % e
+        app.logger.error(utils.logmsg(msg))
+    return False
+
 # default database bound
 # my_default_database = None
 my_default_database = 'eater'
@@ -52,7 +63,8 @@ class Doraemon(db.Model):
     # last update time
     @declared_attr
     def last_update_time(cls):
-        return db.Column(db.DateTime, onupdate=datetime.now())
+        return db.Column(
+            db.DateTime, onupdate=datetime.now(), default=datetime.now())
 
     # name list of base classes
     def bases(self):
@@ -65,9 +77,19 @@ class Doraemon(db.Model):
     def columns(self):
         return self.__class__.__mapper__.columns.__dict__['_data']
 
+    # list of model columns: not include columns of super classes
+    def own_columns(self):
+        return {k: w for k, w in self.columns().items()
+                if self.__tablename__ in str(w)}
+
     # list of model relationships
     def relationships(self):
         return self.__class__.__mapper__.relationships.__dict__['_data']
+
+    # list of model relationships: not include relationships of super classes
+    def own_relationships(self):
+        return {k: w for k, w in self.relationships().items()
+                if self.__class__.__name__ in str(w)}
 
     # constructor
     def __init__(self, **kw):
@@ -89,11 +111,15 @@ class Doraemon(db.Model):
     __repr__ = __str__
 
     # output columns and relationships to dict using recursive method
-    def to_dict(self, count=0, depth=1, option=None):
+    def to_dict(self, count=0, depth=1, option=None, ignore=None):
         columns = self.columns().keys()
         relationships = self.relationships().keys()
+        # if you want to drop something
+        # `ignore` has higher priority than `option`
+        if ignore and (isinstance(ignore, list) or isinstance(ignore, tuple)):
+            columns = [x for x in columns if x not in ignore]
         # see what you concern about
-        if option and isinstance(option, list):
+        if option and (isinstance(option, list) or isinstance(option, tuple)):
             columns = [x for x in columns if x in option]
             relationships = [x for x in relationships if x in option]
         # get columns
@@ -109,11 +135,13 @@ class Doraemon(db.Model):
             relation = getattr(self, k)
             if relation:
                 if hasattr(relation, '__iter__'):
-                    d[k] = [x.to_dict(count=count, depth=depth, option=option)
-                            for x in relation if hasattr(x, 'to_dict')]
+                    d[k] = [x.to_dict(
+                        count=count, depth=depth, option=option, ignore=ignore)
+                        for x in relation if hasattr(x, 'to_dict')]
                 elif hasattr(relation, 'to_dict'):
                     d[k] = [relation.to_dict(
-                        count=count, depth=depth, option=option)]
+                        count=count, depth=depth, option=option,
+                        ignore=ignore)]
             else:
                 d[k] = []
         return d
@@ -180,13 +208,13 @@ class Doraemon(db.Model):
     # input dict{}:
     # whole factors (except id, which is optional) of a new record
     # output dict{}: the inserted new record
-    def insert(self, **kw):
+    def insert(self, depth=1, ignore=None, **kw):
         if kw:
             obj = self.__class__(**kw)
             db.session.add(obj)
             try:
                 db.session.commit()
-                return obj.to_dict()
+                return obj.to_dict(depth=depth, ignore=ignore)
             except Exception, e:
                 db.session.rollback()
                 msg = self.__DoraemonContraintException % e
@@ -196,7 +224,7 @@ class Doraemon(db.Model):
     # update a record
     # input: str: id, dict{}: factors to update
     # output dict{}: the updated record
-    def update(self, id, **kw):
+    def update(self, id, depth=1, ignore=None, **kw):
         obj = self.__class__.query.filter_by(id=id).first()
         if obj:
             cols, relations, isColComplete, isRelComplete = \
@@ -208,7 +236,7 @@ class Doraemon(db.Model):
             setattr(obj, 'last_update_time', datetime.now())
             try:
                 db.session.commit()
-                return obj.to_dict()
+                return obj.to_dict(depth=depth, ignore=ignore)
             except Exception, e:
                 db.session.rollback()
                 msg = self.__DoraemonContraintException % e
@@ -218,7 +246,8 @@ class Doraemon(db.Model):
     # get (a) record(s)
     # input dict{}: conditions for search
     # output json list[]: record(s) s.t. conditions
-    def get(self, page=None, per_page=20, depth=1, option=None, **kw):
+    def get(self, page=None, per_page=20, depth=1, option=None,
+            ignore=None, **kw):
         if not kw:
             if page:
                 li = self.__class__.query.paginate(page, per_page, False)
@@ -228,9 +257,11 @@ class Doraemon(db.Model):
             li = self._exist(**kw)
         if li:
             if not kw and page:
-                return [x.to_dict(
-                    depth=depth, option=option) for x in li.items], li.pages
-            return [x.to_dict(depth=depth, option=option) for x in li]
+                return [
+                    x.to_dict(depth=depth, option=option, ignore=ignore)
+                    for x in li.items], li.pages
+            return [x.to_dict(
+                depth=depth, option=option, ignore=ignore) for x in li]
         return []
 
     # get an object by id
@@ -439,16 +470,14 @@ class OSUser(Doraemon):
         Set 'enable_typechecks=False' to enable subtype polymorphism.
     """
     __bind_key__ = my_default_database
-    __table_args__ = (
-        db.UniqueConstraint(
-            'name', 'con_pass', 'act_pass', name='_osuser_uc'),)
+    # __table_args__ = (
+    #     db.UniqueConstraint(
+    #         'name', 'con_pass', name='_osuser_uc', ),)
 
     # OS user name
     name = db.Column(db.String(64), nullable=False)
     # OS user connection password
-    con_pass = db.Column(db.String(64))
-    # OS user activation password
-    act_pass = db.Column(db.String(64))
+    con_pass = db.Column(db.String(256))
     # IT equipment
     it = db.relationship(
         'ITEquipment', secondary='osuser2it',
@@ -457,37 +486,6 @@ class OSUser(Doraemon):
     connect = db.relationship(
         'Connection', secondary='osuser2connect',
         enable_typechecks=False, lazy='dynamic')
-
-    # output columns and relationships to dict using recursive method
-    def to_dict(self, count=0, depth=1, option=None):
-        columns = self.columns().keys()[:]
-        columns.remove('act_pass')
-        columns.remove('con_pass')
-        relationships = self.relationships().keys()
-        # see what you concern about
-        if option and isinstance(option, list):
-            columns = [x for x in columns if x in option]
-            relationships = [x for x in relationships if x in option]
-        # get columns
-        d = {k: getattr(self, k) for k in columns}
-        # recursion ends (better limit depth to be <= 3)
-        # or it may risk to be maximum recursion depth exceeded
-        depth = 3 if depth > 3 else depth
-        if not relationships or count == depth:
-            return d
-        count += 1
-        # get relationships
-        for k in relationships:
-            relation = getattr(self, k)
-            if relation:
-                if hasattr(relation, '__iter__'):
-                    d[k] = [x.to_dict(count=count, depth=depth)
-                            for x in relation if hasattr(x, 'to_dict')]
-                elif hasattr(relation, 'to_dict'):
-                    d[k] = [relation.to_dict(count=count, depth=depth)]
-            else:
-                d[k] = []
-        return d
 
 
 class Rack(Doraemon):
@@ -515,7 +513,8 @@ class ITEquipment(Doraemon):
     __bind_key__ = my_default_database
     __table_args__ = (
         db.UniqueConstraint(
-            'label', 'name', 'setup_time', 'os_id', name='_it_uc'),)
+            'label', 'name', 'setup_time', 'os_id', 'model_id',
+            name='_it_uc'),)
 
     # IT equipment label
     label = db.Column(db.String(64), unique=True)
@@ -659,6 +658,8 @@ class Network(ITEquipment):
     id = db.Column(
         db.String(64), db.ForeignKey('itequipment.id'),
         primary_key=True)
+    # Network enable password
+    enable_pass = db.Column(db.String(256))
 
 
 class Firewall(Network):
