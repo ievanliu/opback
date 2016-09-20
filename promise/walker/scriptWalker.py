@@ -63,8 +63,17 @@ class ScriptWalkerAPI(Resource):
 #            walker.state = -4
 #            walker.save()
 #            return {'message': msg, 'walker_id': walker.walker_id}, 200
+        if os_user == 'root':
+            private_key_file = app.config['ROOT_SSH_KEY_FILE']
+        elif os_user == 'admin':
+            private_key_file = app.config['ADMIN_SSH_KEY_FILE']
+        else:
+            msg = 'wrong os user.'
+            raise utils.InvalidAPIUsage(msg)
 
-        script_walker_executor = ScriptWalkerExecutor(script_mission)
+        script_walker_executor = ScriptWalkerExecutor(
+            script_mission=script_mission,
+            private_key_file=private_key_file)
         # run the executor thread
         # script_walker_executor.start()
         script_walker_executor.run()
@@ -102,7 +111,7 @@ class ScriptWalkerAPI(Resource):
             'scriptid', type=str, location='json',
             required=True, help='script_id must be a string')
         self.reqparse.add_argument(
-            'params', type=list, location='json',
+            'params', type=unicode, location='json',
             help='params must be a string')
         self.reqparse.add_argument(
             'osuser', type=str, location='json',
@@ -126,22 +135,21 @@ class ScriptWalkerAPI(Resource):
         # check if the script belongs to the current user
         script = Script.getFromIdWithinUserOrPublic(
             script_id, g.current_user)
-        if not script.script_type == 1:
-            msg = "wrong script type"
-            raise utils.InvalidAPIUsage(msg)
-
-        if script:
-            if not walker_name:
-                walker_name = str(walkerUtils.serialCurrentTime()) + \
-                    '-' + str(script.script_name)
-            if params:
-                params = " ".join(params)
-            else:
-                params = None
-            return [iplist, script, os_user, params, walker_name]
-        else:
+        if not script:
             msg = 'wrong script id.'
             raise utils.InvalidAPIUsage(msg)
+        elif not script.script_type == 1:
+            msg = "wrong script type"
+            raise utils.InvalidAPIUsage(msg)
+        elif not walker_name:
+            walker_name = str(walkerUtils.serialCurrentTime()) + \
+                '-' + str(script.script_name)
+        elif params:
+            params = " ".join(params)
+            params = params.encode('utf-8')
+        else:
+            params = None
+        return [iplist, script, os_user, params, walker_name]
 
     def argCheckForGet(self):
         self.reqparse.add_argument(

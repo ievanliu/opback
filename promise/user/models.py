@@ -107,9 +107,9 @@ class User(db.Model):
 
     @staticmethod
     def getValidUser(username=None, user_id=None):
-        if username and not user_id:
+        if username is not None and user_id is None:
             user = User.query.filter_by(username=username, valid=1).first()
-        elif not username and user_id:
+        elif username is None and user_id is not None:
             user = User.query.filter_by(user_id=user_id, valid=1).first()
         elif username and user_id:
             user = User.query.filter_by(
@@ -286,16 +286,17 @@ class Role(db.Model):
 
     @staticmethod
     def getValidRole(role_name=None, role_id=None, valid=1):
-        if role_name and not role_id:
+        if role_name is not None and role_id is None:
             role = Role.query.filter_by(
                 role_name=role_name, valid=valid).first()
-        elif not role_name and role_id:
+        elif role_name is None and role_id is not None:
             role = Role.query.filter_by(role_id=role_id, valid=valid).first()
         elif role_name and role_id:
             role = Role.query.filter_by(
                 role_id=role_id, role_name=role_name, valid=valid).first()
         else:
             role = Role.query.filter_by(valid=valid).all()
+            print "use else"
         return role
 
     def getPrivilegeList(self, valid=1):
@@ -387,10 +388,10 @@ class Privilege(db.Model):
 
     @staticmethod
     def getValidPrivilege(privilege_id=None, privilege_name=None, valid=1):
-        if privilege_id and not privilege_name:
+        if privilege_id is not None and privilege_name is None:
             privilege = Privilege.query.filter_by(
                 privilege_id=privilege_id, valid=1).first()
-        elif not privilege_id and privilege_name:
+        elif privilege_id is None and privilege_name is not None:
             privilege = Privilege.query.filter_by(
                 privilege_name=privilege_name, valid=1).first()
         elif privilege_id and privilege_name:

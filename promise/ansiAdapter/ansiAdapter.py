@@ -222,7 +222,7 @@ class ScriptExecAdapter(object):
         self.hosts_file.write("""[run_hosts]\n%s""" % hostsString)
         self.hosts_file.close()
         self.script_file = NamedTemporaryFile(delete=False)
-        self.script_file.write("""%s""" % script_text)
+        self.script_file.write("""%s""" % script_text.encode('utf-8'))
         self.script_file.close()
 
         # This was my attempt to pass in hosts directly.
@@ -248,7 +248,9 @@ class ScriptExecAdapter(object):
             hosts='all',
             gather_facts='no',
             tasks=[
-                dict(script=self.script_file.name + ' ' + str(params),
+                dict(
+                    script=self.script_file.name + ' ' + \
+                    params.encode('utf-8'),
                      register='script_out', no_log=True)])
 #            tasks=[
 #                dict(script=self.script_file.name + ' ' + str(params),

@@ -217,8 +217,9 @@ class UserAPI(Resource):
         if username:
             user = User.getValidUser(username=username)
             if user:
-                msg = 'user name is in used.'
-                raise utils.InvalidAPIUsage(msg)
+                if not user.user_id == user_id:
+                    msg = 'user name is in used.'
+                    raise utils.InvalidAPIUsage(msg)
         elif username is '':
             msg = 'user name should not be empty string.'
             raise utils.InvalidAPIUsage(msg)
@@ -292,6 +293,7 @@ class RoleAPI(Resource):
         """
         [target_role, role_name, description, privilege_list, user_list] = \
             self.argCheckForPut()
+
         # update user
         target_role.update(
             role_name=role_name, privileges=privilege_list, users=user_list,
@@ -378,8 +380,49 @@ class RoleAPI(Resource):
 
     def argCheckForPut(self):
         role = self.argCheckForDelete()
-        [role_name, description, privilege_list, user_list] = \
-            self.argCheckForPost()
+
+        self.reqparse.add_argument(
+            'role_name', type=str, location='json',
+            required=True, help='role name must be string')
+        self.reqparse.add_argument(
+            'description', type=unicode, location='json',
+            help='description must be string')
+        self.reqparse.add_argument(
+            'privilege_id_list', type=list, location='json',
+            help='privilege id must be string list')
+        self.reqparse.add_argument(
+            'user_id_list', type=list, location='json',
+            help='user id must be list')
+
+        args = self.reqparse.parse_args()
+        role_name = args['role_name']
+        description = args['description']
+        privilege_id_list = args['privilege_id_list']
+        user_id_list = args['user_id_list']
+
+        role_of_name = Role.getValidRole(role_name=role_name)
+        if role_of_name:
+            if not role.role_id == role_of_name.role_id:
+                msg = 'role name is in used.'
+                raise utils.InvalidAPIUsage(msg)
+        user_list = list()
+        if user_id_list:
+            for user_id in user_id_list:
+                user = User.getValidUser(user_id=user_id)
+                if not user:
+                    msg = 'invalid user id:' + user_id
+                    raise utils.InvalidAPIUsage(msg)
+                user_list.append(user)
+
+        privilege_list = list()
+        if privilege_id_list:
+            for privilege_id in privilege_id_list:
+                privilege = Privilege.getValidPrivilege(
+                    privilege_id=privilege_id)
+                if not privilege:
+                    raise utils.InvalidAPIUsage(
+                        'invalid privilege id:' + privilege_id)
+                privilege_list.append(privilege)
         return [role, role_name, description, privilege_list, user_list]
 
 

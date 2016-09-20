@@ -50,8 +50,13 @@ class ShellWalkerAPI(Resource):
         shell_mission.save()
         walker.state = -1
         walker.save()
-
-        private_key_file = app.config['ROOT_SSH_KEY_FILE']
+        if os_user == 'root':
+            private_key_file = app.config['ROOT_SSH_KEY_FILE']
+        elif os_user == 'admin':
+            private_key_file = app.config['ADMIN_SSH_KEY_FILE']
+        else:
+            msg = 'wrong os user.'
+            raise utils.InvalidAPIUsage(msg)
 
         # setup a shell mission walker executor
         # try:

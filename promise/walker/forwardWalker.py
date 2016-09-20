@@ -104,7 +104,7 @@ class ForwardWalkerAPI(Resource):
             'scriptid', type=str, location='json',
             required=True, help='script_id must be a string')
         self.reqparse.add_argument(
-            'params', type=list, location='json',
+            'params', type=unicode, location='json',
             help='params must be a string')
         self.reqparse.add_argument(
             'osuser', type=str, location='json',
@@ -151,7 +151,7 @@ class ForwardWalkerAPI(Resource):
             walker_name = str(walkerUtils.serialCurrentTime()) + \
                 '-' + str(script.script_name)
         if params:
-            params = " ".join(params)
+            params = params
         else:
             params = None
         return [iplist, script, os_user, params, walker_name, inventory]
@@ -209,8 +209,9 @@ class ForwardWalkerExecutor(Resource):
         self.hostnames = forward_mission.getIplist()
         self.remote_user = forward_mission.osuser
         self.script_file = self.buildScriptFile()
+        self.params = forward_mission.params
         self.forward = Forward(
-            worker=4, script=self.script_file.name, args={},
+            worker=4, script=self.script_file.name, args=self.params,
             loglevel=app.config['FORWARD_LOGLEVEL'],
             logfile=app.config['FORWARD_LOGGER_FILE'],
             no_std_log=True, out='stdout',
@@ -219,7 +220,7 @@ class ForwardWalkerExecutor(Resource):
     def buildScriptFile(self):
         script_text = self.script.script_text
         script_file = NamedTemporaryFile(delete=False)
-        script_file.write("""%s""" % script_text)
+        script_file.write("""%s""" % script_text.encode('utf-8'))
         script_file.close()
         return script_file
 
@@ -230,11 +231,13 @@ class ForwardWalkerExecutor(Resource):
         try:
             results = self.forward.run()
             os.remove(self.script_file.name)
-            print results
         except ForwardError:
             msg = 'Error: invalid script context, tmp file name ' + \
                 self.script_file.name
             app.logger.warning(utils.logmsg(msg))
+            self.walker.state = 1
+            self.walker.save()
+            raise utils.InvalidAPIUsage(msg)
 #        except:
 #            msg = "unknown Forward Error"
 #            app.logger.info(utils.logmsg(msg))#
