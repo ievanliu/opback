@@ -229,7 +229,7 @@ def eater_importdata():
     connect1 = Connection.query.filter_by(id='conn-0001').first()
     connect2 = Connection.query.filter_by(id='conn-0002').first()
     osuser.insert(
-        name='python_script',
+        id='u-0001', name='python_script',
         con_pass='50526d5765504b52ad9234f8c6723e5352d966203cd701401a006955abf8'
                  '92e6fa5d88e4a740fc95c4b33dad17518c825dafb65c9ad891ed90d1634f'
                  '532b55b1249f821a2e8480b22aa25350673cdd75b15d9cf3bf156d79168e'
@@ -237,7 +237,7 @@ def eater_importdata():
                  '7b298375a4563199',
         connect=[connect1, connect2])
     osuser.insert(
-        name='python_script',
+        id='u-0002', name='python_script',
         con_pass='4a6f9a31a1033319f3bf3852c8eef2ce62c607c5d40b50670234a2ea72ca'
                  'af77668f34a4f32c422be4f107071c370cde9c9b872134414674fe8f457c'
                  'a2489fd55b5e2b637d0536ba5dc42815b55ed4a83eb1603b0af7edc8f5cc'
@@ -245,7 +245,7 @@ def eater_importdata():
                  '80c053212e33a680',
         connect=[connect1])
     osuser.insert(
-        name='admin',
+        id='u-0003', name='admin',
         con_pass='50526d5765504b52ad9234f8c6723e5352d966203cd701401a006955abf8'
                  '92e6fa5d88e4a740fc95c4b33dad17518c825dafb65c9ad891ed90d1634f'
                  '532b55b1249f821a2e8480b22aa25350673cdd75b15d9cf3bf156d79168e'
@@ -253,7 +253,7 @@ def eater_importdata():
                  '7b298375a4563199',
         connect=[connect1])
     osuser.insert(
-        name='wangluozu',
+        id='u-0004', name='wangluozu',
         con_pass='5269742d141b86c0856012d2ba344c736a54ec85df77f93a0d433e9827fb'
                  '259f0355dec6ab5a09698b2cdfcdf84acf0b8cbcef4ea9b8da6c9699f2ed'
                  '748d90af987000878b1c1581301af2c1e9d638432f46c3ac5f8e65dd640a'

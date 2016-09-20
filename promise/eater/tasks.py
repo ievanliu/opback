@@ -187,7 +187,7 @@ def network_sync(self):
                     app.logger.info(utils.logmsg(msg))
             else:
                 msg = __DoraemonUpdateNotify % ('Unknown <IP=%16s>' % x['ip'])
-                app.logger.error(utils.logmsg(msg))
+                app.logger.warn(utils.logmsg(msg))
         # for progress bar
         prog = random.randint(prog, 100)
         self.update_state(
