@@ -249,9 +249,9 @@ class ScriptExecAdapter(object):
             gather_facts='no',
             tasks=[
                 dict(
-                    script=self.script_file.name + ' ' + \
+                    script=self.script_file.name + ' ' +
                     params.encode('utf-8'),
-                     register='script_out', no_log=True)])
+                    register='script_out', no_log=True)])
 #            tasks=[
 #                dict(script=self.script_file.name + ' ' + str(params),
 #                     register='script_out', no_log=True),
