@@ -21,6 +21,7 @@ from .. import dont_cache
 from tempfile import NamedTemporaryFile
 import os
 import json
+from promise.eater import interfaces as eaterIf
 
 # threadLock = threading.Lock()
 
@@ -124,13 +125,22 @@ class ForwardWalkerAPI(Resource):
         params = args['params']
         os_user = args['osuser']
 
-        inventory = list()
-        for ip in iplist:
-            target = dict(
-                ip=ip, vender='bclinux7', model='bclinux7',
-                connect='ssh', conpass='S7fYU5', actpass='',
-                remote_port=22, remote_user=os_user,)
-            inventory.append(target)
+        inventory = eaterIf.toForward(iplist)
+        if not inventory:
+            msg = 'cant find inventory info from eater.'
+            app.logger.warning(utils.logmsg(msg))
+            raise utils.InvalidAPIUsage(msg)
+        else:
+            msg = json.dumps(inventory)
+            msg = 'inventory is ' + msg
+            app.logger.warning(utils.logmsg(msg))
+#        inventory = list()
+#        for ip in iplist:
+#            target = dict(
+#                ip=ip, vender='bclinux7', model='bclinux7',
+#                connect='ssh', conpass='S7fYU5', actpass='',
+#                remote_port=22, remote_user=os_user,)
+#            inventory.append(target)
 
         walker_name = args['name']
 
@@ -227,13 +237,14 @@ class ForwardWalkerExecutor(Resource):
     def run(self):
         msg = 'forward walker<id:' + self.walker.walker_id + '> begin to run.'
         app.logger.info(utils.logmsg(msg))
+        print self.script_file.name
 
         try:
             results = self.forward.run()
-            os.remove(self.script_file.name)
-        except ForwardError:
-            msg = 'Error: invalid script context, tmp file name ' + \
-                self.script_file.name
+            # os.remove(self.script_file.name)
+        except ForwardError as e:
+            msg = 'forward %s' % e
+            msg = msg + 'tmp file name ' + self.script_file.name
             app.logger.warning(utils.logmsg(msg))
             self.walker.state = 1
             self.walker.save()
@@ -268,7 +279,9 @@ class ForwardWalkerExecutor(Resource):
 
             walker_state = walker_state + host_stat_sum['failures'] + \
                 host_stat_sum['unreachable']
-        self.forward_mission.stdout = json.dumps(results['stdout'])
+        stdout = json.dumps(results['stdout'])
+        print 'stdout:' + stdout
+        self.forward_mission.stdout = unicode(stdout, 'ascii').encode('utf-8')
         self.forward_mission.save()
         self.walker.state = walker_state
         self.walker.save()
