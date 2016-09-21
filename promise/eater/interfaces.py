@@ -17,11 +17,12 @@ def toForward(ip_list):
             'enable_pass', 'model', 'name', 'vender', 'osuser', 'con_pass',
             'connect', 'method', 'port', 'ip', 'id')
         inventory = []
+        network = Network()
         for x in ip_list:
             ip = IP.query.filter_by(ip_addr=x).first()
             id = ip.it_id if ip else None
             if id:
-                y = Network().get(id=id, depth=3, option=option)
+                y = network.get(id=id, depth=3, option=option)
                 if y:
                     y = y[0]
                     d = dict(ip=x, actpass=y['enable_pass'])
