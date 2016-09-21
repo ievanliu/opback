@@ -3,7 +3,8 @@
 #
 from forward.api import Forward
 from tempfile import NamedTemporaryFile
-script_text = u"""def node(nodeInput):
+script_text = u"""# -*- coding:utf-8 -*-
+def node(nodeInput):
     # init njInfo
     njInfo = {
         'status':True,
@@ -20,10 +21,10 @@ script_text = u"""def node(nodeInput):
             # execute succeed
             njInfo['content'][device] = version['content']
         else:
-            njInfo['chinese'] = '你好'
             njInfo['status'] = False
             njInfo['errLog'] = '%s%s:%s\\r\\n' % (
                 njInfo['errLog'], device, version['errLog'])
+    njInfo['chinese'] = '你好'
     return njInfo
 """
 script_file = NamedTemporaryFile(delete=False)
