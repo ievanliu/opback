@@ -7,10 +7,12 @@
 #
 # This is the interface module of eater package.
 
+from .. import app
 from .models import Network, IP
+from .utils import decrypt
 
 
-def toForward(ip_list):
+def to_forward(ip_list):
     """ Inventory Args Interface for Forward """
     if ip_list and (isinstance(ip_list, list) or isinstance(ip_list, tuple)):
         option = (
@@ -25,26 +27,34 @@ def toForward(ip_list):
                 y = network.get(id=id, depth=3, option=option)
                 if y:
                     y = y[0]
-                    d = dict(ip=x, actpass=y['enable_pass'])
+                    d = dict(ip=x, actpass=decrypt(
+                        privatekey=app.config['FORWARD_USER_PRIVATE_KEY'],
+                        ciphertext=y['enable_pass']))
                     d['model'] = y['model'][0]['name'] if y['model'] else ''
                     d['vender'] = y['model'][0]['vender'] if y['model'] else ''
-                    d['connection'] = []
                     connect = None
                     for k in y['ip']:
                         if k['id'] == ip.id:
                             connect = k['connect']
                             break
-                    if connect:
-                        if y['osuser']:
-                            for m in y['osuser']:
+                    if connect and y['osuser']:
+                        for m in y['osuser']:
+                            if m['name'] == app.config['FORWARD_USERNAME']:
                                 for k in m['connect']:
                                     if k in connect:
-                                        d['connection'].append(dict(
-                                            connect=k['method'],
-                                            remote_port=k['port'],
-                                            remote_user=m['name'],
-                                            conpass=m['con_pass'],
-                                            user_id=m['id']))
+                                        d['connect'] = k['method']
+                                        d['remote_port'] = k['port']
+                                        d['remote_user'] = m['name']
+                                        d['conpass'] = decrypt(
+                                            privatekey=app.config[
+                                                'FORWARD_USER_PRIVATE_KEY'],
+                                            ciphertext=m['con_pass'])
+                                        break
+                                if len(d) == 6:
+                                    break
+                    else:
+                        d['connect'], d['remote_port'] = '', ''
+                        d['remote_user'], d['conpass'] = '', ''
                     inventory.append(d)
             else:
                 pass

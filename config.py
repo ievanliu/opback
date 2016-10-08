@@ -72,6 +72,10 @@ ADMIN_SSH_KEY_FILE = os.path.join(basedir, '.ssh_key/admin_id_rsa')
 FORWARD_LOGLEVEL = 'info'
 FORWARD_LOGGER_FILE = os.path.join(LOGGER_FOLDER, 'forward.log')
 FORWARD_TIMEOUT = 2
+FORWARD_USERNAME = 'python_script'
+FORWARD_USER_PRIVATE_KEY = os.path.join(
+    basedir, '.ssh_key/forward_private_rsa')
+FORWARD_USER_PUBLIC_KEY = os.path.join(basedir, '.ssh_key/forward_public_rsa')
 
 """
     zabbix access configuration

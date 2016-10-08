@@ -40,3 +40,25 @@ def verify_password(password, password_hash):
         if new_hash:
             password_hash = new_hash
     return valid, password_hash
+
+
+import binascii
+import rsa
+
+
+def decrypt(privatekey, ciphertext):
+    with open(privatekey) as privatefile:
+        p = privatefile.read()
+        pri = rsa.PrivateKey.load_pkcs1(p)
+    ciphertextAscii = binascii.a2b_hex(ciphertext)
+    plaintext = rsa.decrypt(ciphertextAscii, pri)
+    return plaintext
+
+
+def encrypt(publickey, plaintext):
+    with open(publickey) as publicfile:
+        p = publicfile.read()
+        pub = rsa.PublicKey.load_pkcs1(p)
+    ciphertextAscii = rsa.encrypt(plaintext, pub)
+    ciphertext = binascii.b2a_hex(ciphertextAscii)
+    return ciphertext

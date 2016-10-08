@@ -12,12 +12,12 @@ sys.path.append('.')
 
 from nose.tools import *
 import os
+from mock import patch, Mock
 
 # from sqlite3 import dbapi2 as sqlite3
 
 from promise import app, db
 from promise.eater.models import *
-from promise.eater.interfaces import *
 
 
 class TestInterfaces():
@@ -38,7 +38,6 @@ class TestInterfaces():
         #                 app.config['DB_FILE'])
 
         # mysql database for test
-        # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://dbuser:dbpassword@ip:port/common'
         app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root@localhost:3306/test'
         app.config['SQLALCHEMY_BINDS'] = {
             'eater': 'mysql://root@localhost:3306/test'
@@ -47,7 +46,6 @@ class TestInterfaces():
         self.tester = app.test_client(self)
 
         # database initialization
-        # db.drop_all(bind=self.default_bind_key)
         db.create_all(bind=self.default_bind_key)
 
         # table initialization
@@ -166,5 +164,12 @@ class TestInterfaces():
             to forward
         """
         ip_list = ['127.0.0.1', '127.0.0.2', '127.0.0.3']
-        # eq_(toForward(ip_list), None)
-        eq_(toForward(ip_list)[0]['model'], 'n7010')
+        result = None
+        passwords = Mock(return_value='111111')
+        # eq_(passwords.return_value, '111111')
+        with patch('promise.eater.interfaces.decrypt', passwords):
+            from promise.eater.interfaces import to_forward
+            result = to_forward(ip_list)
+        # eq_(result, None)
+        eq_(result[0]['model'], 'n7010')
+        eq_(result[0]['actpass'], '111111')
